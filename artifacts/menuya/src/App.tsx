@@ -1,0 +1,517 @@
+import './menuya.css';
+import * as React from 'react';
+import { type FormEvent, type ReactNode, useEffect, useState } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ErrorBoundary } from '@/components/error-boundary';
+import { Toaster } from '@/components/ui/toaster';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import NotFound from '@/pages/not-found';
+import { Link, Route, Switch, Router as WouterRouter, useLocation, useParams } from 'wouter';
+import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BarChart3, Bell, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, ClipboardList, Clock3, CreditCard, ExternalLink, Eye, EyeOff, LayoutDashboard, LogOut, Menu, MoreHorizontal, Package, Pencil, Plus, Search, Settings, ShieldCheck, ShoppingBag, ShoppingCart, Store, Tag, Trash2, TrendingUp, Users, X, Zap } from 'lucide-react';
+import { type AuditLog, type Business, type CatalogEvent, type Category, type Customer, type DemoData, type Order, type OrderStatus, type Plan, type Product, type ProductChoice, repository } from '@/lib/menuya-data';
+
+const queryClient = new QueryClient();
+const money = (value: number) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value);
+const shortDate = (date: string) => new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short' }).format(new Date(date));
+const statusLabel: Record<string, string> = { pendiente: 'Pendiente', confirmado: 'Confirmado', preparando: 'En preparación', listo: 'Listo', en_camino: 'En camino', entregado: 'Entregado', cancelado: 'Cancelado', activo: 'Activo', rechazado: 'Rechazado', suspendido: 'Suspendido', activa: 'Activa', vencida: 'Vencida' };
+const productLimitLabel = (limit: number) => limit >= 999999 ? 'ilimitados' : String(limit);
+const adminLinks = [['/admin', 'Resumen', LayoutDashboard], ['/admin/businesses', 'Comercios', Store], ['/admin/requests', 'Solicitudes', ClipboardList], ['/admin/users', 'Usuarios', Users], ['/admin/plans', 'Planes', Tag], ['/admin/subscriptions', 'Suscripciones', CreditCard], ['/admin/settings', 'Ajustes', Settings], ['/admin/audit', 'Auditoría', Activity]] as const;
+const shopLinks = [['/app', 'Inicio', LayoutDashboard], ['/app/catalog', 'Catálogo', ShoppingBag], ['/app/products', 'Productos', Package], ['/app/categories', 'Categorías', Tag], ['/app/orders', 'Pedidos', ClipboardList], ['/app/customers', 'Clientes', Users], ['/app/editor', 'Editor de tienda', Pencil], ['/app/analytics', 'Analítica', BarChart3], ['/app/settings', 'Ajustes', Settings], ['/app/subscription', 'Mi plan', CreditCard]] as const;
+type Session = { userId: string; role: 'admin' | 'owner' } | null;
+type FormField = { name: string; label: string; type?: string; value?: string | number | boolean; options?: string[]; required?: boolean };
+type CartLine = { key: string; productId: string; cantidad: number; variante?: ProductChoice; complementos: ProductChoice[] };
+const choiceText = (choices: ProductChoice[] = []) => choices.map(choice => `${choice.nombre}|${choice.precio_extra}`).join('\n');
+const parseChoices = (value: string | boolean | undefined) => String(value || '').split('\n').map(row => row.trim()).filter(Boolean).map(row => {
+  const [nombre, price = '0'] = row.split('|');
+  return { id: repository.id(), nombre: nombre.trim(), precio_extra: Number(price.replace(/[^\d.-]/g, '')) || 0 };
+}).filter(choice => choice.nombre);
+
+function RoutedErrorBoundary({ children }: { children: ReactNode }) {
+  const [location] = useLocation();
+  return <ErrorBoundary resetKey={location}>{children}</ErrorBoundary>;
+}
+function Brand({ inverse = false }: { inverse?: boolean }) {
+  return <Link href="/" className={`brand ${inverse ? 'brand-inverse' : ''}`} data-testid="link-menuya-home"><span className="brand-mark">m</span><span>menuya<span className="brand-dot">.</span></span></Link>;
+}
+function Button({ children, onClick, kind = 'solid', className = '', type = 'button', disabled = false, testId }: { children: ReactNode; onClick?: () => void; kind?: string; className?: string; type?: 'button' | 'submit'; disabled?: boolean; testId?: string }) {
+  return <button type={type} onClick={onClick} disabled={disabled} data-testid={testId} className={`btn btn-${kind} ${className}`}>{children}</button>;
+}
+function Field({ field, onChange }: { field: FormField; onChange: (name: string, value: string | boolean) => void }) {
+  return <label className="field"><span>{field.label}{field.required ? ' *' : ''}</span>
+      {field.options ? <select name={field.name} required={field.required} value={String(field.value ?? '')} onChange={e => onChange(field.name, e.target.value)} data-testid={`select-${field.name}`}>{field.options.map(o => <option key={o} value={o}>{statusLabel[o] || o}</option>)}</select>
+      : field.type === 'textarea' ? <textarea name={field.name} required={field.required} defaultValue={String(field.value ?? '')} onChange={e => onChange(field.name, e.target.value)} data-testid={`input-${field.name}`} />
+      : field.type === 'checkbox' ? <input name={field.name} type="checkbox" defaultChecked={Boolean(field.value)} onChange={e => onChange(field.name, e.target.checked)} data-testid={`input-${field.name}`} />
+      : <input name={field.name} required={field.required} type={field.type || 'text'} defaultValue={String(field.value ?? '')} onChange={e => onChange(field.name, e.target.value)} data-testid={`input-${field.name}`} />}
+  </label>;
+}
+function Modal({ title, close, children }: { title: string; close: () => void; children: ReactNode }) {
+  return <div className="modal-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) close(); }}><section className="modal" role="dialog" aria-modal="true" aria-label={title}><header className="modal-head"><div><span className="eyebrow">MENUYA · DEMO</span><h2>{title}</h2></div><button className="icon-btn" onClick={close} aria-label="Cerrar" data-testid="button-close-modal"><X size={18} /></button></header>{children}</section></div>;
+}
+function AuthPage({ mode, data, onLogin, onRegister }: { mode: 'login' | 'register' | 'forgot'; data: DemoData; onLogin: (email: string, password: string) => string | null; onRegister: (values: Record<string, string>) => string | null }) {
+  const [, setLocation] = useLocation();
+  const [error, setError] = useState('');
+  const [done, setDone] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [sample, setSample] = useState('brasa');
+  const sampleBiz = data.businesses.find(b => b.id === sample);
+  const submit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); setError('');
+    const values = Object.fromEntries(new FormData(e.currentTarget).entries()) as Record<string, string>;
+    const message = mode === 'login' ? onLogin(values.email, values.password) : mode === 'register' ? onRegister(values) : null;
+    if (message) setError(message); else if (mode === 'forgot') setDone(true); else setLocation(mode === 'login' ? (values.email === 'admin@menuya.com' ? '/admin' : '/app') : '/login');
+  };
+  return <div className="auth-layout"><aside className="auth-story"><Brand inverse /><div className="story-copy"><span className="eyebrow light">UNA TIENDA PROPIA, EN SERIO</span><h1>Tu negocio<br />merece su<br /><em>propia vitrina.</em></h1><p>Un catálogo que se siente tuyo. Pedidos organizados. Todo en un solo lugar.</p><div className="mini-store-preview"><div className="mini-preview-top"><span className="mini-avatar">{sampleBiz?.nombre.charAt(0)}</span><span><b>{sampleBiz?.nombre}</b><small>Catálogo digital · Abierto</small></span><ArrowRight size={17} /></div><div className="preview-products"><span /><span /><span /></div><div className="preview-caption">Así podría verse tu tienda</div></div></div><div className="auth-foot">Hecho para el comercio de aquí. <span>Atom Labs</span></div></aside>
+    <main className="auth-main"><div className="auth-mobile-brand"><Brand /></div><div className="auth-form-wrap"><span className="eyebrow">{mode === 'register' ? 'EMPIEZA EN MINUTOS' : mode === 'forgot' ? 'RECUPERA EL ACCESO' : 'QUÉ BUENO VERTE'}</span><h2>{mode === 'register' ? 'Abre tu tienda digital' : mode === 'forgot' ? '¿Olvidaste tu clave?' : 'Entra a tu espacio'}</h2><p className="subtle">{mode === 'register' ? 'Cuéntanos un poco de tu negocio.' : mode === 'forgot' ? 'Te enviaremos las instrucciones para recuperar tu cuenta.' : 'Tu negocio sigue justo donde lo dejaste.'}</p>
+      {error && <div className="notice notice-error" role="alert">{error}</div>}{done && <div className="notice notice-success">Si el correo existe, recibirás instrucciones para continuar.</div>}
+      <form onSubmit={submit} className="form-stack">
+        {mode === 'register' && <><Field field={{ name: 'nombre', label: 'Tu nombre', required: true }} onChange={() => {}} /><Field field={{ name: 'negocio', label: 'Nombre del negocio', required: true }} onChange={() => {}} /><div className="field"><span>Sector</span><select name="sector" required data-testid="select-sector">{['Restaurante', 'Ropa', 'Barbería', 'Tecnología', 'Panadería', 'Otro'].map(x => <option key={x}>{x}</option>)}</select></div><Field field={{ name: 'telefono', label: 'Teléfono', required: true }} onChange={() => {}} /></>}
+        <Field field={{ name: 'email', label: 'Correo electrónico', type: 'email', required: true }} onChange={() => {}} />
+        {mode !== 'forgot' && <label className="field"><span>Contraseña</span><div className="password-wrap"><input name="password" required type={showPassword ? 'text' : 'password'} data-testid="input-password" /><button type="button" className="password-eye" onClick={() => setShowPassword(!showPassword)} aria-label="Mostrar u ocultar contraseña">{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div></label>}
+        {mode === 'register' && <p className="fine-print">La aprobación de comercios está configurada en modo <b>{data.platform.approval}</b>. Esta demo guarda la información solo en este navegador.</p>}
+        <Button type="submit" className="full-btn" testId="button-auth-submit">{mode === 'register' ? 'Crear mi tienda' : mode === 'forgot' ? 'Enviar instrucciones' : 'Entrar'} <ArrowRight size={16} /></Button>
+      </form>
+      {mode === 'login' && <><div className="auth-divider"><span>o prueba la demo</span></div><div className="sample-login"><div className="field"><span>Comercio de muestra</span><select value={sample} onChange={e => setSample(e.target.value)} data-testid="select-demo-business">{data.businesses.filter(b => b.estado === 'activo').map(b => <option key={b.id} value={b.id}>{b.nombre}</option>)}</select></div><Button kind="soft" className="full-btn" onClick={() => { const user = data.users.find(u => u.id === sampleBiz?.owner_id); if (user) onLogin(user.email, user.password); setLocation('/app'); }} testId="button-demo-business">Entrar a {sampleBiz?.nombre} <ArrowRight size={16} /></Button></div><p className="demo-creds">Admin demo: <b>admin@menuya.com</b> · <b>MenuyaDemo2026!</b></p><Link href="/forgot-password" className="text-link">¿Olvidaste tu contraseña?</Link></>}
+      {mode !== 'forgot' && <p className="auth-switch">{mode === 'register' ? '¿Ya tienes cuenta?' : '¿Tienes un comercio?' } <Link href={mode === 'register' ? '/login' : '/register'}>{mode === 'register' ? 'Inicia sesión' : 'Crea tu tienda'}</Link></p>}
+      {mode === 'forgot' && <Link href="/login" className="back-link"><ArrowLeft size={15} /> Volver a iniciar sesión</Link>}
+      <p className="security-note"><ShieldCheck size={14} /> Acceso demostrativo. No es seguro ni multiusuario de producción.</p>
+    </div></main></div>;
+}
+
+function Landing({ data }: { data: DemoData }) {
+  return <div className="landing"><header className="landing-nav"><Brand /><nav><a href="#como-funciona">Cómo funciona</a><a href="#negocios">Para tu negocio</a></nav><div className="landing-actions"><Link href="/login" className="nav-login">Iniciar sesión</Link><Link href="/register" className="btn btn-solid" data-testid="link-create-store">Crear mi tienda <ArrowRight size={15} /></Link></div></header>
+    <section className="hero"><div className="hero-copy"><span className="eyebrow"><i className="eyebrow-dot" /> TU NEGOCIO, EN SU PROPIO LUGAR</span><h1>Una tienda digital<br />que <em>sí se siente tuya.</em></h1><p>Publica tu catálogo, recibe pedidos y enfócate en lo que haces mejor. Sin enredos. Sin comisiones por venta.</p><div className="hero-ctas"><Link href="/register" className="btn btn-solid btn-large" data-testid="link-start-free">Abre tu tienda gratis <ArrowRight size={17} /></Link><Link href="/brasa" className="hero-secondary">Mira una tienda de ejemplo <ArrowRight size={15} /></Link></div><div className="hero-proof"><div className="proof-avatars"><b>I</b><b>H</b><b>M</b></div><span>Negocios locales, más cerca de sus clientes</span></div></div>
+      <div className="hero-art" aria-label="Vista previa de catálogo digital"><div className="art-topline"><span>MENUYA / VITRINA DIGITAL</span><span>BOGOTÁ, CO</span></div><div className="store-card"><div className="store-cover"><div className="cover-circle" /><span>HECHO CON CALMA<br />PARA COMPARTIR</span></div><div className="store-info"><div className="store-logo">b.</div><div><h3>La Brasa de Inés</h3><span>Comida honesta · Bogotá</span></div><span className="open-label"><i /> Abierto</span></div><div className="store-search"><Search size={15} /> ¿Qué se te antoja hoy?</div><div className="store-tabs"><b>Favoritos</b><span>Platos fuertes</span><span>Para compartir</span></div><div className="product-preview"><div className="food-art food-a"><span>01 / BRASA LENTA</span></div><div className="product-details"><small>EL FAVORITO</small><b>Pollo al carbón</b><span>Marinado de la casa, papas criollas y ají.</span><strong>{money(28900)} <i>+</i></strong></div></div><div className="store-card-foot"><span>Pedidos directos</span><span className="tiny-dot" /> <span>Tu negocio, sin intermediarios</span></div></div><div className="floating-sticker"><ShoppingBag size={17} /><span><b>Pedido recibido</b><small>#004 · Hace un momento</small></span><CheckCircle2 size={18} /></div><div className="art-index">01 — UN CATÁLOGO<br />CON TU ESTILO</div></div>
+    </section>
+    <section className="ticker"><div>HECHO PARA NEGOCIOS REALES <i>✳</i> TU MARCA, TU ESPACIO <i>✳</i> PEDIDOS SIN ENREDOS <i>✳</i> HECHO PARA NEGOCIOS REALES <i>✳</i> TU MARCA, TU ESPACIO <i>✳</i></div></section>
+    <section className="how-section" id="como-funciona"><div className="section-label">MENOS VUELTAS, MÁS NEGOCIO <span>01 — CÓMO FUNCIONA</span></div><div className="how-grid"><h2>De tu mostrador<br />a la pantalla.<br /><em>Así de simple.</em></h2><div className="steps"><article><span>01</span><div><h3>Arma tu vitrina</h3><p>Sube tus productos, define tus categorías y ponle tus colores. Que se sienta como tu negocio.</p></div></article><article><span>02</span><div><h3>Comparte tu enlace</h3><p>Tu tienda tiene una dirección propia. Envíala por WhatsApp, ponla en tu bio o imprímela en un QR.</p></div></article><article><span>03</span><div><h3>Recibe pedidos claros</h3><p>El pedido llega organizado con cliente, productos y forma de entrega. Tú decides cómo cobrar.</p></div></article></div></div></section>
+    <section className="sector-section" id="negocios"><div className="section-label">UN LUGAR PARA CADA QUIEN <span>02 — HECHO PARA COMERCIO LOCAL</span></div><div className="sector-head"><h2>Del primer café<br />al último corte.</h2><p>Cada negocio tiene su manera de hacer las cosas. Tu tienda digital también debería tenerla.</p></div><div className="sector-list">{[['01','Restaurantes','Menú que da hambre, pedidos que llegan completos.','brasa'],['02','Moda independiente','Tus colecciones, ordenadas como las pensaste.','hilo'],['03','Servicios y barberías','Muestra tus servicios y recibe solicitudes.','barrio'],['04','Tecnología y más','Productos claros, precios al día, atención directa.','nodo']].map(([n,t,d,s])=><Link href={`/${s}`} key={s} className="sector-row"><span>{n}</span><b>{t}</b><p>{d}</p><ArrowRight size={18} /></Link>)}</div></section>
+    <section className="closing-cta"><span className="eyebrow light">SIN COMPLICAR LO QUE YA SABES HACER</span><h2>Tu tienda abre<br />cuando tú quieras.</h2><Link href="/register" className="btn btn-light btn-large">Empieza gratis <ArrowRight size={17} /></Link><div className="closing-mark">m.</div></section>
+    <footer className="landing-footer"><Brand /><span>Una herramienta de Atom Labs</span><span>Demostración local · Datos guardados en tu navegador</span><Link href="/login">Acceso demo <ArrowRight size={14} /></Link></footer>
+  </div>;
+}
+
+function AppShell({ data, session, update, logout, children, business, activePath }: { data: DemoData; session: Session; update: (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => void; logout: () => void; children: ReactNode; business?: Business; activePath: string }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const isAdmin = session?.role === 'admin';
+  const links = isAdmin ? adminLinks : shopLinks;
+  const [location, setLocation] = useLocation();
+  const user = data.users.find(u => u.id === session?.userId);
+  const switchBusiness = (id: string) => { localStorage.setItem('menuya-business', id); setLocation('/app'); window.dispatchEvent(new Event('menuya-business-change')); };
+  return <div className="dashboard-shell">
+    <aside className={`sidebar ${mobileOpen ? 'sidebar-open' : ''}`}><div className="side-brand-row"><Brand inverse /><button className="icon-btn mobile-close" onClick={() => setMobileOpen(false)}><X size={18} /></button></div>{!isAdmin && <div className="business-select"><span className="business-initial">{business?.nombre.charAt(0)}</span><span><small>TIENDA ACTIVA</small><b>{business?.nombre}</b></span><ChevronDown size={14} /></div>}
+      <div className="side-caption">{isAdmin ? 'PLATAFORMA' : 'GESTIONA TU TIENDA'}</div><nav className="side-nav">{links.map(([href, label, Icon]) => <Link href={href} key={href} onClick={() => setMobileOpen(false)} className={`side-link ${activePath === href ? 'side-link-active' : ''}`} data-testid={`link-nav-${label.toLowerCase().replaceAll(' ', '-')}`}><Icon size={17} /><span>{label}</span>{label === 'Pedidos' && data.orders.filter(o => o.business_id === business?.id && o.estado === 'pendiente').length > 0 && <i className="nav-count">{data.orders.filter(o => o.business_id === business?.id && o.estado === 'pendiente').length}</i>}</Link>)}</nav>
+      <div className="sidebar-bottom">{!isAdmin && business && <Link href={`/${business.slug}`} className="store-link"><ExternalLink size={15} /> Ver tienda pública <ArrowRight size={13} /></Link>}<div className="user-chip"><span className="user-avatar">{user?.nombre.split(' ').map(x => x[0]).slice(0, 2).join('')}</span><span className="user-meta"><b>{user?.nombre}</b><small>{isAdmin ? 'Administrador demo' : 'Propietario'}</small></span><button className="icon-btn logout-btn" aria-label="Cerrar sesión" onClick={logout} data-testid="button-logout"><LogOut size={16} /></button></div><div className="local-note"><ShieldCheck size={13} /> Demo local · No es producción</div></div></aside>
+    <main className="workspace"><header className="workspace-top"><button className="icon-btn mobile-menu" onClick={() => setMobileOpen(true)} aria-label="Abrir menú"><Menu size={19} /></button><div className="crumb">{isAdmin ? 'Atom Labs' : business?.nombre}<ChevronRight size={14} /><span>{links.find(x => x[0] === activePath)?.[1] || 'Inicio'}</span></div><div className="top-actions">{!isAdmin && data.businesses.filter(b => user?.business_ids.includes(b.id)).length > 1 && <select aria-label="Cambiar comercio" value={business?.id} onChange={e => switchBusiness(e.target.value)}>{data.businesses.filter(b => user?.business_ids.includes(b.id)).map(b => <option key={b.id} value={b.id}>{b.nombre}</option>)}</select>}<Link href={isAdmin ? '/admin/settings' : '/app/orders'} className="top-icon" aria-label="Notificaciones"><Bell size={17} /><i /></Link><span className="top-avatar">{user?.nombre.slice(0, 1)}</span></div></header><div className="page-content">{children}</div></main>
+    {mobileOpen && <button aria-label="Cerrar menú" className="mobile-shade" onClick={() => setMobileOpen(false)} />}
+  </div>;
+}
+function PageTitle({ eyebrow, title, description, action }: { eyebrow: string; title: string; description?: string; action?: ReactNode }) {
+  return <div className="page-title"><div><span className="eyebrow">{eyebrow}</span><h1>{title}</h1>{description && <p>{description}</p>}</div>{action && <div className="title-action">{action}</div>}</div>;
+}
+function Metric({ label, value, note, icon: Icon, trend }: { label: string; value: string; note: string; icon: typeof ShoppingBag; trend?: string }) {
+  return <article className="metric"><div className="metric-top"><span>{label}</span><Icon size={18} /></div><b>{value}</b><div className="metric-foot">{trend && <span className="trend"><TrendingUp size={13} /> {trend}</span>}<span>{note}</span></div></article>;
+}
+function Empty({ title, text, action }: { title: string; text: string; action?: ReactNode }) { return <div className="empty-state"><div className="empty-icon"><ShoppingBag size={21} /></div><h3>{title}</h3><p>{text}</p>{action}</div>; }
+function Status({ value }: { value: string }) { return <span className={`status status-${value}`}>{statusLabel[value] || value}</span>; }
+
+function DataTable({ headers, children, empty }: { headers: string[]; children: ReactNode; empty?: string }) {
+  return <div className="table-wrap"><table><thead><tr>{headers.map(h => <th key={h}>{h}</th>)}</tr></thead><tbody>{children}</tbody></table>{empty && <div className="table-empty">{empty}</div>}</div>;
+}
+function FormModal({ title, fields, close, submit, submitText = 'Guardar' }: { title: string; fields: FormField[]; close: () => void; submit: (values: Record<string, string | boolean>) => void; submitText?: string }) {
+  const [values, setValues] = useState<Record<string, string | boolean>>(() => fields.reduce((result, field) => {
+    result[field.name] = field.type === 'checkbox' ? Boolean(field.value) : String(field.value ?? field.options?.[0] ?? '');
+    return result;
+  }, {} as Record<string, string | boolean>));
+  return <Modal title={title} close={close}><form className="modal-form" onSubmit={e => { e.preventDefault(); submit(values); }}><div className="form-grid">{fields.map(f => <Field key={f.name} field={f} onChange={(n, v) => setValues(prev => ({ ...prev, [n]: v }))} />)}</div><div className="modal-actions"><Button kind="ghost" onClick={close}>Cancelar</Button><Button type="submit" testId="button-save-form"><Check size={16} /> {submitText}</Button></div></form></Modal>;
+}
+
+function MerchantPage({ path, data, business, update }: { path: string; data: DemoData; business: Business; update: (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => void }) {
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState('todos');
+  const [categoryFilter, setCategoryFilter] = useState('todos');
+  const [orderFrom, setOrderFrom] = useState('');
+  const [orderTo, setOrderTo] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [modal, setModal] = useState<{ title: string; fields: FormField[]; save: (v: Record<string, string | boolean>) => void } | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const cats = data.categories.filter(c => c.business_id === business.id).sort((a, b) => a.orden - b.orden);
+  const products = data.products.filter(p => p.business_id === business.id);
+  const orders = data.orders.filter(o => o.business_id === business.id).sort((a, b) => b.created_at.localeCompare(a.created_at));
+  const customers = data.customers.filter(c => c.business_id === business.id);
+  const settings = data.settings.find(s => s.business_id === business.id)!;
+  const subscription = data.subscriptions.find(s => s.business_id === business.id);
+  const plan = data.plans.find(p => p.id === subscription?.plan_id);
+  const productLimit = plan?.max_productos ?? 15;
+  const openModal = (title: string, fields: FormField[], save: (v: Record<string, string | boolean>) => void) => setModal({ title, fields, save });
+  const createProduct = (initial?: Product) => {
+    if (!initial && products.length >= productLimit) {
+      update(d => d, `Límite alcanzado: tu plan permite ${productLimitLabel(productLimit)} productos.`, 'Límite del plan');
+      return;
+    }
+    openModal(initial ? 'Editar producto' : 'Nuevo producto', [
+    { name: 'nombre', label: 'Nombre', value: initial?.nombre, required: true }, { name: 'precio', label: 'Precio (COP)', type: 'number', value: initial?.precio, required: true },
+    { name: 'descripcion', label: 'Descripción', type: 'textarea', value: initial?.descripcion }, { name: 'imagen', label: 'Imagen (URL opcional)', value: initial?.imagen || '' }, { name: 'category_id', label: 'Categoría', value: initial?.category_id || cats[0]?.id, options: cats.map(c => c.id) },
+    { name: 'variantes', label: 'Variantes (una por línea: Nombre|recargo)', type: 'textarea', value: choiceText(initial?.variantes) }, { name: 'complementos', label: 'Complementos (una por línea: Nombre|recargo)', type: 'textarea', value: choiceText(initial?.complementos) },
+    { name: 'precio_anterior', label: 'Precio anterior (opcional)', type: 'number', value: initial?.precio_anterior || '' }, { name: 'stock', label: 'Stock', type: 'number', value: initial?.stock || 0 },
+    { name: 'disponible', label: 'Disponible', type: 'checkbox', value: initial?.disponible ?? true }, { name: 'destacado', label: 'Destacado', type: 'checkbox', value: initial?.destacado ?? false },
+  ], v => {
+    const item: Product = { id: initial?.id || repository.id(), business_id: business.id, category_id: String(v.category_id || cats[0]?.id || ''), nombre: String(v.nombre), descripcion: String(v.descripcion || ''), precio: Number(v.precio), precio_anterior: Number(v.precio_anterior) || undefined, imagen: String(v.imagen || '') || undefined, activo: initial?.activo ?? true, disponible: Boolean(v.disponible), destacado: Boolean(v.destacado), stock: Number(v.stock), variantes: parseChoices(v.variantes), complementos: parseChoices(v.complementos) };
+    update(d => ({ ...d, products: initial ? d.products.map(p => p.id === initial.id ? item : p) : [...d.products, item] }), initial ? 'Producto actualizado' : 'Producto creado', item.nombre); setModal(null);
+    });
+  };
+  const addCategory = (initial?: Category) => openModal(initial ? 'Editar categoría' : 'Nueva categoría', [{ name: 'nombre', label: 'Nombre', value: initial?.nombre, required: true }, { name: 'orden', label: 'Orden', type: 'number', value: initial?.orden || cats.length + 1 }, { name: 'activo', label: 'Visible en tienda', type: 'checkbox', value: initial?.activo ?? true }], v => {
+    const item: Category = { id: initial?.id || repository.id(), business_id: business.id, nombre: String(v.nombre), orden: Number(v.orden), activo: Boolean(v.activo) };
+    update(d => ({ ...d, categories: initial ? d.categories.map(c => c.id === item.id ? item : c) : [...d.categories, item] }), 'Categoría guardada', item.nombre); setModal(null);
+  });
+  const filteredProducts = products.filter(p => p.nombre.toLowerCase().includes(search.toLowerCase()) && (categoryFilter === 'todos' || p.category_id === categoryFilter) && (filter === 'todos' || (filter === 'activos' ? p.activo && p.disponible : !p.disponible || !p.activo)));
+  const filteredOrders = orders.filter(o => {
+    const orderDate = o.created_at.slice(0, 10);
+    return `${o.numero} ${data.customers.find(c => c.id === o.customer_id)?.nombre || ''}`.toLowerCase().includes(search.toLowerCase())
+      && (filter === 'todos' || o.estado === filter)
+      && (!orderFrom || orderDate >= orderFrom) && (!orderTo || orderDate <= orderTo);
+  });
+  const HeaderAction = ({ text, onClick }: { text: string; onClick: () => void }) => <Button onClick={onClick} testId="button-create"><Plus size={16} /> {text}</Button>;
+
+  if (path === '/app' || path === '/app/') {
+    const todayOrders = orders.filter(o => new Date(o.created_at).toDateString() === new Date().toDateString());
+    const totalSales = orders.filter(o => o.estado !== 'cancelado').reduce((s, o) => s + o.total, 0);
+    return <><PageTitle eyebrow="TU NEGOCIO, EN UN VISTAZO" title={`Hola, ${data.users.find(u => u.id === business.owner_id)?.nombre.split(' ')[0] || 'bienvenido'}.`} description="Esto es lo que está pasando en tu tienda." action={<Link href={`/${business.slug}`} className="btn btn-outline" target="_blank"><Eye size={16} /> Ver mi tienda</Link>} />
+      {business.estado !== 'activo' && <div className="notice notice-warn"><Clock3 size={18} /><span><b>Tu tienda está {statusLabel[business.estado]?.toLowerCase()}.</b> {business.estado === 'pendiente' ? 'La tienda no será visible al público hasta su aprobación.' : 'Contacta al equipo de MENUYA si necesitas ayuda.'}</span></div>}
+      <div className="metrics-grid"><Metric label="Pedidos recibidos" value={String(orders.length)} note={`${todayOrders.length} hoy`} icon={ShoppingCart} trend="+12%" /><Metric label="Ventas registradas" value={money(totalSales)} note="Acumulado de demo" icon={TrendingUp} trend="+8%" /><Metric label="Productos publicados" value={String(products.filter(p => p.activo).length)} note={productLimit >= 999999 ? 'Sin límite de productos' : `de ${productLimit} disponibles`} icon={Package} /><Metric label="Clientes" value={String(customers.length)} note="Con pedido registrado" icon={Users} /></div>
+      <div className="dashboard-grid"><section className="panel recent-panel"><div className="panel-head"><div><span className="eyebrow">MOVIMIENTO RECIENTE</span><h2>Últimos pedidos</h2></div><Link href="/app/orders" className="text-link">Ver todos <ArrowRight size={14} /></Link></div>{orders.length ? <div className="recent-list">{orders.slice(0, 4).map(o => <button className="recent-row" key={o.id} onClick={() => setSelectedOrder(o)} data-testid={`row-order-${o.id}`}><span className="order-number">#{String(o.numero).padStart(3, '0')}</span><span className="recent-customer"><b>{data.customers.find(c => c.id === o.customer_id)?.nombre}</b><small>{o.items.map(i => `${i.cantidad} × ${i.nombre}`).join(', ')}</small></span><span className="recent-total">{money(o.total)}</span><Status value={o.estado} /></button>)}</div> : <Empty title="Aún no llegan pedidos" text="Cuando tus clientes compren, verás sus pedidos aquí." />}</section><section className="panel quick-panel"><div className="panel-head"><div><span className="eyebrow">SIGUIENTE PASO</span><h2>Haz crecer tu tienda</h2></div><Zap size={17} /></div><div className="setup-progress"><span>Tu tienda está lista para crecer</span><b>{products.length > 0 && settings.publicado ? '100%' : '60%'}</b><div><i style={{ width: products.length > 0 && settings.publicado ? '100%' : '60%' }} /></div></div><Link href="/app/products" className="quick-link"><span className="quick-icon"><Package size={17} /></span><span><b>Completa tu catálogo</b><small>Agrega productos y precios</small></span><ChevronRight size={16} /></Link><Link href="/app/editor" className="quick-link"><span className="quick-icon coral"><Pencil size={17} /></span><span><b>Personaliza tu vitrina</b><small>Colores, portada y contacto</small></span><ChevronRight size={16} /></Link><Link href="/app/subscription" className="quick-link"><span className="quick-icon sand"><CreditCard size={17} /></span><span><b>Tu plan: {plan?.nombre || 'Semilla'}</b><small>Conoce lo que incluye</small></span><ChevronRight size={16} /></Link></section></div>
+      <div className="bottom-note"><span>Tu tienda pública</span><Link href={`/${business.slug}`}>menuya.co/{business.slug} <ExternalLink size={13} /></Link><span className="note-separator" /><span>Los datos de esta demo se guardan solo en este navegador.</span></div>
+      {selectedOrder && <OrderModal order={selectedOrder} data={data} close={() => setSelectedOrder(null)} update={update} />}
+    </>;
+  }
+  if (path === '/app/catalog') return <><PageTitle eyebrow="TU VITRINA DIGITAL" title="Catálogo" description="Así se ve tu tienda para tus clientes." action={<Link href={`/${business.slug}`} target="_blank" className="btn btn-outline"><ExternalLink size={15} /> Abrir tienda</Link>} /><div className="catalog-banner"><div className="catalog-monogram">{business.nombre.charAt(0)}</div><div><span className="eyebrow">VISTA PÚBLICA</span><h2>{business.nombre}</h2><p>{settings.tagline} · menuya.co/{business.slug}</p></div><Status value={settings.publicado && business.estado === 'activo' ? 'activo' : 'pendiente'} /></div><div className="section-heading"><h2>Categorías visibles</h2><Link href="/app/categories" className="text-link">Editar categorías <ArrowRight size={14} /></Link></div><div className="category-chips">{cats.filter(c => c.activo).map(c => <span key={c.id}>{c.nombre} <small>{products.filter(p => p.category_id === c.id && p.activo).length}</small></span>)}</div><div className="section-heading"><h2>Productos publicados <small>{products.filter(p => p.activo).length}</small></h2><Link href="/app/products" className="btn btn-soft"><Pencil size={15} /> Gestionar productos</Link></div><ProductGrid products={products.filter(p => p.activo)} cats={cats} /></>;
+  if (path === '/app/products') return <>
+    <PageTitle eyebrow="LO QUE OFRECES" title="Productos" description={`${products.length} productos · ${products.filter(p => p.activo).length} visibles en tu tienda`} action={<HeaderAction text="Nuevo producto" onClick={() => createProduct()} />} />
+    <div className="toolbar">
+      <label className="search-field"><Search size={17} /><input placeholder="Buscar producto..." value={search} onChange={e => setSearch(e.target.value)} data-testid="input-search-products" /></label>
+      <select value={filter} onChange={e => setFilter(e.target.value)} data-testid="select-product-filter"><option value="todos">Todos los estados</option><option value="activos">Disponibles</option><option value="inactivos">No disponibles</option></select>
+      <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} data-testid="select-product-category-filter"><option value="todos">Todas las categorías</option>{cats.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select>
+      <span className="toolbar-count">{filteredProducts.length} resultados</span>
+    </div>
+    {filteredProducts.length ? <DataTable headers={['Producto', 'Categoría', 'Precio', 'Estado', 'Acciones']}>{filteredProducts.map(p => <tr key={p.id} data-testid={`row-product-${p.id}`}><td><div className="table-product"><span className="product-thumb">{p.nombre.slice(0, 1)}</span><span><b>{p.nombre}</b><small>{p.destacado ? 'Destacado' : p.descripcion.slice(0, 40)}</small></span></div></td><td>{cats.find(c => c.id === p.category_id)?.nombre || 'Sin categoría'}</td><td><b>{money(p.precio)}</b>{p.precio_anterior && <small className="old-price">{money(p.precio_anterior)}</small>}</td><td><Status value={p.activo && p.disponible ? 'activo' : 'suspendido'} /></td><td><div className="table-actions"><button title="Editar" onClick={() => createProduct(p)} data-testid={`button-edit-product-${p.id}`}><Pencil size={15} /></button><button title={p.activo ? 'Desactivar' : 'Activar'} onClick={() => update(d => ({ ...d, products: d.products.map(x => x.id === p.id ? { ...x, activo: !x.activo } : x) }), 'Estado del producto actualizado', p.nombre)}><Eye size={15} /></button><button title="Duplicar" onClick={() => update(d => ({ ...d, products: [...d.products, { ...p, id: repository.id(), nombre: `${p.nombre} (copia)` }] }), 'Producto duplicado', p.nombre)}><MoreHorizontal size={15} /></button><button title="Eliminar" onClick={() => { if (confirm(`¿Eliminar ${p.nombre}?`)) update(d => ({ ...d, products: d.products.filter(x => x.id !== p.id) }), 'Producto eliminado', p.nombre); }}><Trash2 size={15} /></button></div></td></tr>)}</DataTable> : <Empty title="No hay productos con ese filtro" text="Prueba otra búsqueda o crea tu primer producto." action={<HeaderAction text="Crear producto" onClick={() => createProduct()} />} />}
+    <p className="plan-limit"><Package size={15} /> Plan {plan?.nombre}: {products.length} de {productLimitLabel(productLimit)} productos utilizados.</p>
+    {modal && <FormModal {...modal} close={() => setModal(null)} submit={modal.save} />}
+  </>;
+  if (path === '/app/categories') return <><PageTitle eyebrow="ORDENA TU VITRINA" title="Categorías" description="Agrupa tus productos para que encontrar lo bueno sea fácil." action={<HeaderAction text="Nueva categoría" onClick={() => addCategory()} />} /><div className="category-manager">{cats.map((c, index) => <div className="category-row" key={c.id} data-testid={`row-category-${c.id}`}><span className="category-order">{String(c.orden).padStart(2, '0')}</span><div className="category-info"><b>{c.nombre}</b><small>{products.filter(p => p.category_id === c.id).length} productos</small></div><Status value={c.activo ? 'activo' : 'suspendido'} /><div className="table-actions"><button title="Subir" disabled={index === 0} onClick={() => update(d => ({ ...d, categories: d.categories.map(x => x.id === c.id ? { ...x, orden: x.orden - 1 } : x) }), 'Orden actualizado', c.nombre)}>↑</button><button title="Bajar" disabled={index === cats.length - 1} onClick={() => update(d => ({ ...d, categories: d.categories.map(x => x.id === c.id ? { ...x, orden: x.orden + 1 } : x) }), 'Orden actualizado', c.nombre)}>↓</button><button title="Editar" onClick={() => addCategory(c)}><Pencil size={15} /></button><button title="Eliminar" onClick={() => { if (confirm(`¿Eliminar la categoría ${c.nombre}?`)) update(d => ({ ...d, categories: d.categories.filter(x => x.id !== c.id) }), 'Categoría eliminada', c.nombre); }}><Trash2 size={15} /></button></div></div>)}{!cats.length && <Empty title="Empieza por una categoría" text="Organiza tus productos por tipo, colección o momento." />}</div>{modal && <FormModal {...modal} close={() => setModal(null)} submit={modal.save} />}</>;
+  if (path === '/app/orders') return <>
+    <PageTitle eyebrow="CADA PEDIDO EN SU LUGAR" title="Pedidos" description="Sigue cada compra desde que llega hasta que se entrega." />
+    <div className="toolbar">
+      <label className="search-field"><Search size={17} /><input placeholder="Buscar por cliente o número..." value={search} onChange={e => setSearch(e.target.value)} data-testid="input-search-orders" /></label>
+      <select value={filter} onChange={e => setFilter(e.target.value)} data-testid="select-order-filter">{['todos', 'pendiente', 'confirmado', 'preparando', 'listo', 'en_camino', 'entregado', 'cancelado'].map(s => <option value={s} key={s}>{s === 'todos' ? 'Todos los estados' : statusLabel[s]}</option>)}</select>
+      <label className="date-filter">Desde <input type="date" value={orderFrom} onChange={e => setOrderFrom(e.target.value)} data-testid="input-orders-from" /></label>
+      <label className="date-filter">Hasta <input type="date" value={orderTo} onChange={e => setOrderTo(e.target.value)} data-testid="input-orders-to" /></label>
+      <span className="toolbar-count">{filteredOrders.length} pedidos</span>
+    </div>
+    {filteredOrders.length ? <DataTable headers={['Pedido', 'Cliente', 'Fecha', 'Entrega', 'Total', 'Estado', '']}>{filteredOrders.map(o => <tr key={o.id}><td><b>#{String(o.numero).padStart(3, '0')}</b></td><td><div className="simple-cell"><b>{data.customers.find(c => c.id === o.customer_id)?.nombre || 'Cliente'}</b><small>{o.items.length} producto(s)</small></div></td><td>{shortDate(o.created_at)}</td><td>{o.entrega === 'domicilio' ? 'Domicilio' : 'Recoger'}</td><td><b>{money(o.total)}</b></td><td><Status value={o.estado} /></td><td><button className="table-detail" onClick={() => setSelectedOrder(o)} data-testid={`button-order-detail-${o.id}`}>Ver <ChevronRight size={14} /></button></td></tr>)}</DataTable> : <Empty title="Todavía no hay pedidos" text="Prueba otro rango de fechas o comparte el enlace de tu tienda." action={<Link href={`/${business.slug}`} className="btn btn-outline">Ver tienda <ArrowRight size={15} /></Link>} />}
+    {selectedOrder && <OrderModal order={selectedOrder} data={data} close={() => setSelectedOrder(null)} update={update} />}
+  </>;
+  if (path === '/app/customers') return <>
+    <PageTitle eyebrow="GENTE QUE VUELVE" title="Clientes" description="Un vistazo a quienes ya eligieron tu negocio." />
+    <div className="metrics-grid compact-metrics"><Metric label="Clientes registrados" value={String(customers.length)} note="Con compra en la tienda" icon={Users} /><Metric label="Compras acumuladas" value={money(customers.reduce((a, c) => a + c.total_compras, 0))} note="En esta demo local" icon={TrendingUp} /></div>
+    {customers.length ? <DataTable headers={['Cliente', 'Teléfono', 'Pedidos', 'Compras', 'Último pedido', 'Historial']}>{customers.map(c => <tr key={c.id} data-testid={`row-customer-${c.id}`}><td><div className="table-product"><span className="customer-avatar">{c.nombre.split(' ').map(x => x[0]).slice(0, 2).join('')}</span><b>{c.nombre}</b></div></td><td>{c.telefono}</td><td>{c.total_pedidos}</td><td><b>{money(c.total_compras)}</b></td><td>{shortDate(c.ultimo_pedido)}</td><td><button className="table-detail" onClick={() => setSelectedCustomer(c)} data-testid={`button-customer-history-${c.id}`}>Ver pedidos <ChevronRight size={14} /></button></td></tr>)}</DataTable> : <Empty title="Tu comunidad empieza aquí" text="Cuando llegue el primer pedido, verás el historial de tus clientes." />}
+    {selectedCustomer && <CustomerHistoryModal customer={selectedCustomer} orders={orders.filter(o => o.customer_id === selectedCustomer.id)} close={() => setSelectedCustomer(null)} onSelectOrder={order => { setSelectedCustomer(null); setSelectedOrder(order); }} />}
+    {selectedOrder && <OrderModal order={selectedOrder} data={data} close={() => setSelectedOrder(null)} update={update} />}
+  </>;
+  if (path === '/app/editor') return <><PageTitle eyebrow="LA PRIMERA IMPRESIÓN ES TUYA" title="Editor de tienda" description="Ajusta los detalles de tu vitrina y publícala a tu manera." action={<Link href={`/${business.slug}`} target="_blank" className="btn btn-outline"><Eye size={15} /> Vista previa</Link>} /><div className="editor-layout"><section className="panel editor-form"><div className="panel-head"><div><span className="eyebrow">IDENTIDAD DE TU TIENDA</span><h2>Hazla reconocible</h2></div><Pencil size={17} /></div><div className="form-stack"><label className="field"><span>Nombre del negocio</span><input defaultValue={business.nombre} onBlur={e => update(d => ({ ...d, businesses: d.businesses.map(b => b.id === business.id ? { ...b, nombre: e.target.value } : b) }), 'Nombre de tienda guardado', business.nombre)} data-testid="input-store-name" /></label><label className="field"><span>Frase de presentación</span><input defaultValue={settings.tagline} onBlur={e => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, tagline: e.target.value } : s) }), 'Presentación guardada', business.nombre)} data-testid="input-store-tagline" /></label><label className="field"><span>Color principal</span><div className="color-field"><input type="color" defaultValue={settings.color} onChange={e => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, color: e.target.value } : s) }), 'Color actualizado', business.nombre)} data-testid="input-store-color" /><span>{settings.color}</span><div className="color-swatch" style={{ backgroundColor: settings.color }} /></div></label><label className="field"><span>Fuente</span><select defaultValue={settings.fuente} onChange={e => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, fuente: e.target.value } : s) }), 'Tipografía actualizada', business.nombre)}><option>Manrope</option><option>DM Sans</option><option>Georgia</option></select></label><label className="field"><span>Imagen de portada (URL opcional)</span><input defaultValue={settings.portada} placeholder="https://..." onBlur={e => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, portada: e.target.value } : s) }), 'Portada actualizada', business.nombre)} /></label><div className="publish-row"><div><b>Publicar mi tienda</b><small>{settings.publicado ? 'Tu tienda está visible para todos.' : 'Tu tienda está oculta.'}</small></div><button className={`toggle ${settings.publicado ? 'toggle-on' : ''}`} onClick={() => { update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, publicado: !s.publicado } : s) }), settings.publicado ? 'Tienda despublicada' : 'Tienda publicada', business.nombre); }} aria-label="Cambiar publicación" data-testid="toggle-store-published"><i /></button></div></div></section><section className="store-preview-panel"><div className="preview-browser"><div className="browser-bar"><i /><i /><i /><span>menuya.co/{business.slug}</span></div><div className="live-preview" style={{ '--store-color': settings.color } as React.CSSProperties}><div className="live-cover"><span>HECHO PARA TI</span><b>{business.nombre}</b></div><div className="live-brand"><span>{business.nombre.charAt(0)}</span><div><b>{business.nombre}</b><small>{settings.tagline}</small></div></div><div className="live-search">⌕ &nbsp; Busca algo para hoy</div><div className="live-category">{cats.filter(c => c.activo).slice(0, 3).map(c => <span key={c.id}>{c.nombre}</span>)}</div><div className="live-products">{products.slice(0, 2).map(p => <div key={p.id}><span>{p.nombre.charAt(0)}</span><b>{p.nombre}</b><small>{money(p.precio)}</small></div>)}</div></div></div><div className="preview-caption"><span className="live-indicator" /> Vista previa en vivo <span>Los cambios se guardan automáticamente</span></div></section></div></>;
+  if (path === '/app/analytics') {
+    const completed = orders.filter(o => o.estado !== 'cancelado');
+    const total = completed.reduce((a, o) => a + o.total, 0);
+    const counts = [0, 0, 0, 0, 0, 0, 0].map((_, i) => orders.filter(o => new Date(o.created_at).getDay() === i).length);
+    const max = Math.max(1, ...counts);
+    const consultationCounts = data.catalog_events.filter(event => event.business_id === business.id && event.tipo === 'consulta' && event.product_id).reduce<Record<string, number>>((acc, event) => { acc[event.product_id!] = (acc[event.product_id!] || 0) + 1; return acc; }, {});
+    const mostConsulted = Object.entries(consultationCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const visits = data.catalog_events.filter(event => event.business_id === business.id && event.tipo === 'visita').length;
+    const consultations = data.catalog_events.filter(event => event.business_id === business.id && event.tipo === 'consulta').length;
+    return <>
+      <PageTitle eyebrow="NÚMEROS QUE CUENTAN" title="Analítica" description="Una lectura sencilla del movimiento de tu negocio." />
+      <div className="metrics-grid"><Metric label="Ventas totales" value={money(total)} note="Pedidos no cancelados" icon={TrendingUp} trend="+14%" /><Metric label="Pedidos" value={String(orders.length)} note="En todos los estados" icon={ShoppingCart} /><Metric label="Promedio por pedido" value={money(completed.length ? Math.round(total / completed.length) : 0)} note="Ticket promedio" icon={CreditCard} /><Metric label="Productos activos" value={String(products.filter(p => p.activo && p.disponible).length)} note="Listos para vender" icon={Package} /></div>
+      <div className="analytics-grid"><section className="panel chart-panel"><div className="panel-head"><div><span className="eyebrow">ÚLTIMOS 7 DÍAS</span><h2>Pedidos por día</h2></div><span className="chart-badge"><ArrowDownRight size={14} /> Datos de demo</span></div><div className="bar-chart">{counts.map((v, i) => <div className="bar-column" key={i}><span>{v}</span><i style={{ height: `${Math.max(8, v / max * 100)}%` }} /><small>{['D', 'L', 'M', 'M', 'J', 'V', 'S'][i]}</small></div>)}</div></section><section className="panel best-panel"><div className="panel-head"><div><span className="eyebrow">LOS QUE MÁS SE MUEVEN</span><h2>Productos más vendidos</h2></div></div>{products.slice(0, 4).map((p, i) => <div className="rank-row" key={p.id}><span>0{i + 1}</span><b>{p.nombre}</b><small>{orders.flatMap(o => o.items).filter(it => it.product_id === p.id).reduce((a, it) => a + it.cantidad, 0)} vendidos</small></div>)}</section></div>
+      <div className="analytics-grid analytics-bottom"><section className="panel"><div className="panel-head"><div><span className="eyebrow">TRÁFICO DE TU TIENDA</span><h2>Visitas y consultas</h2></div><Eye size={17} /></div><div className="traffic-summary"><div><b>{visits}</b><span>Visitas al catálogo</span></div><div><b>{consultations}</b><span>Consultas de producto</span></div></div><p className="fine-print">Conteos locales persistentes en este navegador; cada carga de catálogo y apertura de producto genera un registro.</p></section><section className="panel"><div className="panel-head"><div><span className="eyebrow">INTERÉS DE TUS CLIENTES</span><h2>Más consultados</h2></div></div>{mostConsulted.length ? mostConsulted.map(([id, count], i) => <div className="rank-row" key={id}><span>0{i + 1}</span><b>{products.find(p => p.id === id)?.nombre || 'Producto'}</b><small>{count} consultas</small></div>) : <p className="subtle">Aún no hay consultas de producto registradas.</p>}</section></div>
+    </>;
+  }
+  if (path === '/app/settings') return <><PageTitle eyebrow="DATOS DEL NEGOCIO" title="Ajustes" description="Mantén al día la información que tus clientes necesitan." /><div className="settings-grid"><section className="panel setting-section"><span className="eyebrow">INFORMACIÓN PÚBLICA</span><h2>Que te encuentren</h2><div className="form-stack"><SettingInput label="Nombre del negocio" value={business.nombre} id="business-name" onSave={v => update(d => ({ ...d, businesses: d.businesses.map(b => b.id === business.id ? { ...b, nombre: v } : b) }), 'Datos guardados', 'Negocio')} /><SettingInput label="Teléfono" value={business.telefono} id="business-phone" onSave={v => update(d => ({ ...d, businesses: d.businesses.map(b => b.id === business.id ? { ...b, telefono: v } : b) }), 'Teléfono actualizado', 'Negocio')} /><SettingInput label="Correo de contacto" value={settings.contacto} id="contact-email" onSave={v => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, contacto: v } : s) }), 'Contacto actualizado', 'Negocio')} /><SettingInput label="Redes sociales" value={settings.redes} id="business-social" onSave={v => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, redes: v } : s) }), 'Redes actualizadas', 'Negocio')} /></div></section><section className="panel setting-section"><span className="eyebrow">CÓMO OPERAS</span><h2>Pagos y entregas</h2><div className="form-stack"><SettingInput label="Métodos de pago" value={settings.pagos} id="payment-methods" onSave={v => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, pagos: v } : s) }), 'Métodos de pago guardados', 'Negocio')} /><SettingInput label="Opciones de entrega" value={settings.entrega} id="delivery-methods" onSave={v => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, entrega: v } : s) }), 'Opciones de entrega guardadas', 'Negocio')} /><div className="settings-info"><CircleHelp size={17} /><p>MENUYA organiza tus pedidos. El cobro y la coordinación de entrega siguen directamente contigo y tu cliente.</p></div></div></section></div><div className="notice notice-info"><ShieldCheck size={17} /> Datos locales de demostración: no compartas información sensible ni uses datos reales de clientes.</div></>;
+  if (path === '/app/subscription') return <><PageTitle eyebrow="TU TIENDA, A TU RITMO" title="Plan y suscripción" description="Empieza con lo esencial. Cambia cuando tu negocio lo pida." /><div className="current-plan"><div><span className="eyebrow">PLAN ACTUAL</span><h2>{plan?.nombre || 'Gratis'}<span>{money(plan?.precio || 0)} <small>/ mes</small></span></h2><p>Suscripción {statusLabel[subscription?.estado || 'activa']?.toLowerCase()} · Renueva el {shortDate(subscription?.vencimiento || new Date().toISOString())}</p></div><Status value={subscription?.estado || 'activa'} /></div><div className="plans-grid">{data.plans.filter(p => p.activo).map(p => <article className={`plan-card ${p.id === plan?.id ? 'plan-selected' : ''}`} key={p.id}><span className="eyebrow">{p.id === 'pro' ? 'PARA CRECER' : p.id === 'starter' ? 'EL FAVORITO' : 'PARA EMPEZAR'}</span><h3>{p.nombre}</h3><p className="plan-price">{money(p.precio)}<small> / mes</small></p><p className="plan-products">{p.max_productos >= 999999 ? 'Productos ilimitados' : `Hasta ${p.max_productos} productos`}</p><ul>{p.funciones.map(f => <li key={f}><Check size={15} /> {f}</li>)}</ul><Button kind={p.id === plan?.id ? 'soft' : 'outline'} disabled={p.id === plan?.id} onClick={() => update(d => ({ ...d, subscriptions: d.subscriptions.map(s => s.business_id === business.id ? { ...s, plan_id: p.id } : s) }), `Plan ${p.nombre} seleccionado`, business.nombre)} testId={`button-plan-${p.id}`}>{p.id === plan?.id ? 'Tu plan actual' : 'Elegir este plan'}</Button></article>)}</div><p className="fine-print">Demo local: la selección de plan no procesa pagos ni crea una suscripción real.</p></>;
+  return <Empty title="Página en construcción" text="Este espacio estará disponible pronto." />;
+}
+
+function SettingInput({ label, value, id, onSave }: { label: string; value: string; id: string; onSave: (value: string) => void }) {
+  return <label className="field"><span>{label}</span><input defaultValue={value} onBlur={e => { if (e.target.value !== value) onSave(e.target.value); }} data-testid={`input-${id}`} /></label>;
+}
+function ProductGrid({ products, cats }: { products: Product[]; cats: Category[] }) {
+  return <div className="managed-product-grid">{products.map((p, i) => <article key={p.id} className="managed-product"><div className={`managed-art managed-art-${i % 5}`}><span>{cats.find(c => c.id === p.category_id)?.nombre}</span><b>{p.nombre.charAt(0)}</b></div><div className="managed-product-info"><h3>{p.nombre}</h3><p>{p.descripcion}</p><b>{money(p.precio)}</b></div></article>)}</div>;
+}
+function OrderModal({ order, data, close, update }: { order: Order; data: DemoData; close: () => void; update: (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => void }) {
+  const customer = data.customers.find(c => c.id === order.customer_id);
+  const statuses: OrderStatus[] = ['pendiente', 'confirmado', 'preparando', 'listo', 'en_camino', 'entregado', 'cancelado'];
+  return <Modal title={`Pedido #${String(order.numero).padStart(3, '0')}`} close={close}><div className="order-detail"><div className="detail-customer"><span className="customer-avatar">{customer?.nombre.slice(0, 1)}</span><span><b>{customer?.nombre || 'Cliente'}</b><small>{customer?.telefono}</small></span><Status value={order.estado} /></div><div className="detail-items">{order.items.map((item, i) => <div key={`${item.product_id}-${i}`}><span>{item.cantidad} × {item.nombre}{(item.variante || item.complementos?.length) && <small className="item-options">{[item.variante, ...(item.complementos || []).map(choice => `+ ${choice.nombre}`)].filter(Boolean).join(' · ')}</small>}</span><b>{money(item.precio * item.cantidad)}</b></div>)}</div><div className="detail-total"><span>Total del pedido</span><b>{money(order.total)}</b></div><div className="detail-meta"><span>Entrega<b>{order.entrega === 'domicilio' ? 'Domicilio' : 'Recoger en tienda'}</b></span>{order.direccion && <span>Dirección<b>{order.direccion}</b></span>}<span>Pago<b>{order.metodo_pago}</b></span><span>Fecha<b>{shortDate(order.created_at)}</b></span></div>{order.observaciones && <div className="order-note"><small>OBSERVACIONES</small><p>{order.observaciones}</p></div>}<label className="field"><span>Estado del pedido</span><select value={order.estado} onChange={e => update(d => ({ ...d, orders: d.orders.map(o => o.id === order.id ? { ...o, estado: e.target.value as OrderStatus } : o) }), `Pedido actualizado: ${statusLabel[e.target.value]}`, `Pedido #${order.numero}`)} data-testid="select-order-status">{statuses.map(s => <option key={s} value={s}>{statusLabel[s]}</option>)}</select></label><div className="modal-actions"><Button kind="ghost" onClick={close}>Cerrar</Button><Button onClick={close}>Listo <Check size={15} /></Button></div></div></Modal>;
+}
+
+function CustomerHistoryModal({ customer, orders, close, onSelectOrder }: { customer: Customer; orders: Order[]; close: () => void; onSelectOrder: (order: Order) => void }) {
+  return <Modal title={`Pedidos de ${customer.nombre}`} close={close}><div className="customer-history"><div className="detail-customer"><span className="customer-avatar">{customer.nombre.slice(0, 1)}</span><span><b>{customer.telefono}</b><small>{customer.total_pedidos} pedidos · {money(customer.total_compras)} acumulados</small></span></div>{orders.length ? <div className="customer-order-list">{orders.sort((a, b) => b.created_at.localeCompare(a.created_at)).map(order => <button key={order.id} onClick={() => onSelectOrder(order)} data-testid={`button-history-order-${order.id}`}><span><b>Pedido #{String(order.numero).padStart(3, '0')}</b><small>{shortDate(order.created_at)} · {order.items.length} producto(s)</small></span><strong>{money(order.total)}</strong><Status value={order.estado} /><ChevronRight size={15} /></button>)}</div> : <Empty title="Sin pedidos registrados" text="Aún no hay pedidos en el historial de este cliente." />}<div className="modal-actions"><Button kind="ghost" onClick={close}>Cerrar historial</Button></div></div></Modal>;
+}
+
+function AdminPage({ path, data, update }: { path: string; data: DemoData; update: (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => void }) {
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState('todos');
+  const [modal, setModal] = useState<{ title: string; fields: FormField[]; save: (v: Record<string, string | boolean>) => void } | null>(null);
+  const open = (title: string, fields: FormField[], save: (v: Record<string, string | boolean>) => void) => setModal({ title, fields, save });
+  const changeBusiness = (b: Business, estado: Business['estado']) => update(d => ({ ...d, businesses: d.businesses.map(x => x.id === b.id ? { ...x, estado } : x), subscriptions: d.subscriptions.map(s => s.business_id === b.id ? { ...s, estado: estado === 'activo' ? 'activa' : estado } : s), settings: d.settings.map(s => s.business_id === b.id ? { ...s, publicado: estado === 'activo' } : s) }), `Comercio ${statusLabel[estado].toLowerCase()}`, b.nombre);
+  const createBusiness = () => open('Crear comercio', [
+    { name: 'propietario', label: 'Nombre del propietario', required: true },
+    { name: 'correo', label: 'Correo del propietario', type: 'email', required: true },
+    { name: 'negocio', label: 'Nombre del negocio', required: true },
+    { name: 'sector', label: 'Sector', options: ['Restaurante', 'Ropa', 'Barbería', 'Tecnología', 'Panadería', 'Otro'], required: true },
+    { name: 'telefono', label: 'Teléfono', required: true },
+  ], values => {
+    const ownerName = String(values.propietario).trim();
+    const email = String(values.correo).trim().toLowerCase();
+    const businessName = String(values.negocio).trim();
+    const phone = String(values.telefono).trim();
+    if (data.users.some(user => user.email.toLowerCase() === email)) {
+      setModal({ title: 'Correo ya registrado', fields: [{ name: 'correo', label: 'Este correo ya pertenece a una cuenta', value: email }], save: () => setModal(null) });
+      return;
+    }
+    const businessId = repository.id();
+    const ownerId = repository.id();
+    const slugBase = businessName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const slug = `${slugBase || 'tienda'}-${businessId.slice(-4)}`;
+    const state: Business['estado'] = data.platform.approval === 'automatica' ? 'activo' : 'pendiente';
+    const category: Category = { id: repository.id(), business_id: businessId, nombre: 'General', orden: 1, activo: true };
+    const planId = data.plans.find(plan => plan.id === data.platform.default_plan)?.id || data.plans[0]?.id || 'gratis';
+    const created: Business = { id: businessId, owner_id: ownerId, nombre: businessName, slug, tipo: String(values.sector).toLowerCase(), telefono: phone, estado: state, created_at: repository.date(0) };
+    update(d => ({
+      ...d,
+      users: [...d.users, { id: ownerId, nombre: ownerName, email, password: 'demo2026', role: 'owner', business_ids: [businessId] }],
+      businesses: [...d.businesses, created],
+      categories: [...d.categories, category],
+      settings: [...d.settings, { business_id: businessId, portada: '', logo: '', color: '#e77a60', fuente: 'Manrope', contacto: phone, redes: '', pagos: 'Efectivo, Nequi', entrega: 'Domicilio y recoger en tienda', publicado: state === 'activo', tagline: 'Un negocio local, hecho con cariño.' }],
+      subscriptions: [...d.subscriptions, { id: repository.id(), business_id: businessId, plan_id: planId, estado: state === 'activo' ? 'activa' : 'pendiente', inicio: repository.date(0), vencimiento: repository.date(-30) }],
+    }), `Comercio creado · acceso demo ${email} / demo2026`, businessName);
+    setModal(null);
+  });
+  const createPlan = (initial?: Plan) => open(initial ? 'Editar plan' : 'Crear plan', [
+    { name: 'nombre', label: 'Nombre del plan', value: initial?.nombre, required: true }, { name: 'precio', label: 'Precio mensual (COP)', type: 'number', value: initial?.precio || 0, required: true },
+    { name: 'max_productos', label: 'Máximo de productos (999999 = ilimitado)', type: 'number', value: initial?.max_productos || 15, required: true },
+    { name: 'funciones', label: 'Funciones (separadas por coma)', value: initial?.funciones.join(', ') }, { name: 'activo', label: 'Plan activo', type: 'checkbox', value: initial?.activo ?? true },
+  ], v => {
+    const item: Plan = { id: initial?.id || repository.id(), nombre: String(v.nombre), precio: Number(v.precio), periodicidad: 'mes', max_productos: Number(v.max_productos), funciones: String(v.funciones || '').split(',').map(x => x.trim()).filter(Boolean), activo: Boolean(v.activo) };
+    update(d => ({ ...d, plans: initial ? d.plans.map(p => p.id === initial.id ? item : p) : [...d.plans, item] }), initial ? 'Plan actualizado' : 'Plan creado', item.nombre); setModal(null);
+  });
+  const deletePlan = (plan: Plan) => {
+    const replacement = data.plans.find(item => item.id !== plan.id);
+    if (!replacement) return;
+    const affected = data.subscriptions.filter(subscription => subscription.plan_id === plan.id).length;
+    const consequence = affected ? ` ${affected} suscripción(es) se reasignarán a ${replacement.nombre}.` : '';
+    if (!confirm(`¿Eliminar el plan ${plan.nombre}?${consequence}`)) return;
+    update(d => ({
+      ...d,
+      plans: d.plans.filter(item => item.id !== plan.id),
+      subscriptions: d.subscriptions.map(subscription => subscription.plan_id === plan.id ? { ...subscription, plan_id: replacement.id } : subscription),
+      platform: { ...d.platform, default_plan: d.platform.default_plan === plan.id ? replacement.id : d.platform.default_plan },
+    }), 'Plan eliminado', plan.nombre);
+  };
+  const bizList = data.businesses.filter(b => `${b.nombre} ${b.tipo} ${data.users.find(u => u.id === b.owner_id)?.nombre}`.toLowerCase().includes(search.toLowerCase()) && (filter === 'todos' || b.estado === filter));
+  if (path === '/admin' || path === '/admin/') {
+    const revenue = data.subscriptions.filter(s => s.estado === 'activa').reduce((sum, s) => sum + (data.plans.find(p => p.id === s.plan_id)?.precio || 0), 0);
+    const pending = data.businesses.filter(b => b.estado === 'pendiente');
+    return <><PageTitle eyebrow="ATOM LABS · PANEL DE PLATAFORMA" title="La red MENUYA" description="Un panorama de los comercios y la actividad de la plataforma." action={<Button kind="outline" onClick={() => { if (confirm('¿Restablecer por completo la demo? Se borrarán los cambios locales.')) location.reload(); }} testId="button-reset-demo"><Activity size={15} /> Restablecer demo</Button>} /><div className="metrics-grid"><Metric label="Comercios registrados" value={String(data.businesses.length)} note={`${data.businesses.filter(b => b.estado === 'activo').length} activos`} icon={Store} trend="+2 este mes" /><Metric label="Solicitudes por revisar" value={String(pending.length)} note="Requieren una decisión" icon={ClipboardList} /><Metric label="Usuarios" value={String(data.users.length)} note="Administradores y propietarios" icon={Users} /><Metric label="Ingreso mensual estimado" value={money(revenue)} note="Planes activos · sin cobro real" icon={CreditCard} /></div><div className="admin-overview-grid"><section className="panel"><div className="panel-head"><div><span className="eyebrow">REQUIEREN TU ATENCIÓN</span><h2>Solicitudes recientes</h2></div><Link href="/admin/requests" className="text-link">Ver solicitudes <ArrowRight size={14} /></Link></div>{pending.length ? <div className="recent-list">{pending.map(b => <div className="business-request-row" key={b.id}><span className="biz-avatar">{b.nombre.slice(0, 1)}</span><span><b>{b.nombre}</b><small>{b.tipo} · {data.users.find(u => u.id === b.owner_id)?.nombre}</small></span><span className="request-date">{shortDate(b.created_at)}</span><Button kind="soft" onClick={() => changeBusiness(b, 'activo')}>Revisar <ArrowRight size={14} /></Button></div>)}</div> : <Empty title="Todo al día" text="No hay solicitudes pendientes por revisar." />}</section><section className="panel platform-panel"><div className="panel-head"><div><span className="eyebrow">ACTIVIDAD</span><h2>Últimas acciones</h2></div><Link href="/admin/audit" className="text-link">Auditoría <ArrowRight size={14} /></Link></div>{data.audit.slice(0, 5).map(a => <div className="audit-row" key={a.id}><span className="audit-dot" /><span><b>{a.accion}</b><small>{a.actor} · {a.entidad}</small></span><time>{shortDate(a.fecha)}</time></div>)}</section></div><div className="platform-note"><ShieldCheck size={16} /><span>Modo de demostración</span><p>Los datos solo existen en este navegador. El acceso no es seguro ni multiusuario de producción.</p><Link href="/admin/settings">Configurar plataforma <ArrowRight size={14} /></Link></div></>;
+  }
+  if (path === '/admin/businesses' || path === '/admin/requests') {
+    const isRequests = path.endsWith('requests');
+    const displayedBusinesses = bizList.filter(b => !isRequests || b.estado === 'pendiente');
+    return <>
+      <PageTitle eyebrow={isRequests ? 'REVISIÓN Y APROBACIÓN' : 'DIRECTORIO DE COMERCIOS'} title={isRequests ? 'Solicitudes de registro' : 'Comercios'} description={isRequests ? 'Aprueba, rechaza o pide revisar cada nuevo registro.' : `${data.businesses.length} negocios en la red MENUYA.`} action={!isRequests ? <Button onClick={createBusiness} testId="button-create-business"><Plus size={16} /> Crear comercio</Button> : undefined} />
+      <div className="toolbar"><label className="search-field"><Search size={17} /><input placeholder="Buscar negocio o propietario..." value={search} onChange={e => setSearch(e.target.value)} data-testid="input-search-businesses" /></label><select value={filter} onChange={e => setFilter(e.target.value)} data-testid="select-business-filter"><option value="todos">Todos los estados</option>{['pendiente', 'activo', 'rechazado', 'suspendido'].map(s => <option value={s} key={s}>{statusLabel[s]}</option>)}</select><span className="toolbar-count">{displayedBusinesses.length} comercios</span></div>
+      {displayedBusinesses.length ? <DataTable headers={['Negocio', 'Propietario', 'Sector', 'Registro', 'Estado', 'Acciones']}>{displayedBusinesses.map(b => <tr key={b.id} data-testid={`row-business-${b.id}`}><td><div className="table-product"><span className="biz-avatar">{b.nombre.charAt(0)}</span><span><b>{b.nombre}</b><small>menuya.co/{b.slug}</small></span></div></td><td>{data.users.find(u => u.id === b.owner_id)?.nombre || '—'}</td><td className="capitalize">{b.tipo}</td><td>{shortDate(b.created_at)}</td><td><Status value={b.estado} /></td><td><div className="table-actions">{b.estado !== 'activo' && <button className="approve-action" title="Aprobar / activar" onClick={() => changeBusiness(b, 'activo')} data-testid={`button-approve-${b.id}`}><Check size={16} /></button>}{b.estado === 'activo' ? <button title="Suspender" onClick={() => changeBusiness(b, 'suspendido')}><X size={15} /></button> : b.estado !== 'rechazado' && <button title="Rechazar" onClick={() => changeBusiness(b, 'rechazado')}><Trash2 size={15} /></button>}{b.estado === 'suspendido' && <button title="Activar" onClick={() => changeBusiness(b, 'activo')}><Zap size={15} /></button>}</div></td></tr>)}</DataTable> : <Empty title="No encontramos comercios" text="Prueba con otro estado o término de búsqueda." />}
+      {modal && <FormModal {...modal} close={() => setModal(null)} submit={modal.save} submitText="Crear comercio" />}
+    </>;
+  }
+  if (path === '/admin/users') return <><PageTitle eyebrow="PERSONAS DETRÁS DE CADA TIENDA" title="Usuarios" description="Administradores y propietarios registrados en la plataforma." /><div className="toolbar"><label className="search-field"><Search size={17} /><input placeholder="Buscar por nombre o correo..." value={search} onChange={e => setSearch(e.target.value)} /></label><span className="toolbar-count">{data.users.filter(u => `${u.nombre} ${u.email}`.toLowerCase().includes(search.toLowerCase())).length} usuarios</span></div><DataTable headers={['Usuario', 'Correo', 'Rol', 'Comercio asociado', 'Estado']}>{data.users.filter(u => `${u.nombre} ${u.email}`.toLowerCase().includes(search.toLowerCase())).map(u => { const b = data.businesses.find(x => x.owner_id === u.id); return <tr key={u.id}><td><div className="table-product"><span className="customer-avatar">{u.nombre.split(' ').map(x => x[0]).slice(0, 2).join('')}</span><b>{u.nombre}</b></div></td><td>{u.email}</td><td><span className="role-tag">{u.role === 'admin' ? 'Administrador' : 'Propietario'}</span></td><td>{b?.nombre || 'Plataforma'}</td><td>{b ? <Status value={b.estado} /> : <Status value="activo" />}</td></tr>; })}</DataTable></>;
+  if (path === '/admin/plans') return <><PageTitle eyebrow="OFERTA COMERCIAL" title="Planes" description="Define lo que incluye cada nivel de MENUYA." action={<Button onClick={() => createPlan()}><Plus size={16} /> Crear plan</Button>} /><div className="admin-plans-grid">{data.plans.map(p => <article key={p.id} className={`admin-plan ${!p.activo ? 'plan-paused' : ''}`}><div className="admin-plan-head"><span className="eyebrow">{p.activo ? 'DISPONIBLE' : 'PAUSADO'}</span><button className="icon-btn" onClick={() => createPlan(p)} aria-label={`Editar plan ${p.nombre}`}><Pencil size={16} /></button></div><h2>{p.nombre}</h2><b className="admin-plan-price">{money(p.precio)}<small> / mes</small></b><p>{p.max_productos >= 999999 ? 'Productos ilimitados' : `Hasta ${p.max_productos} productos`}</p><ul>{p.funciones.map(f => <li key={f}><Check size={14} /> {f}</li>)}</ul><div className="admin-plan-footer"><span>{data.subscriptions.filter(s => s.plan_id === p.id).length} suscripciones</span><button className="text-link" onClick={() => update(d => ({ ...d, plans: d.plans.map(x => x.id === p.id ? { ...x, activo: !x.activo } : x) }), p.activo ? 'Plan pausado' : 'Plan activado', p.nombre)}>{p.activo ? 'Pausar plan' : 'Activar plan'}</button><button className="text-link" disabled={data.plans.length <= 1} onClick={() => deletePlan(p)}>Eliminar</button></div></article>)}</div>{modal && <FormModal {...modal} close={() => setModal(null)} submit={modal.save} />}</>;
+  if (path === '/admin/subscriptions') return <>
+    <PageTitle eyebrow="SEGUIMIENTO DE PLANES" title="Suscripciones" description="Actualiza el plan y el estado asociado a cada comercio." />
+    <DataTable headers={['Comercio', 'Plan asignado', 'Inicio', 'Vencimiento', 'Estado', 'Cambiar estado']}>
+      {data.subscriptions.map(subscription => {
+        const business = data.businesses.find(item => item.id === subscription.business_id);
+        const currentPlan = data.plans.find(item => item.id === subscription.plan_id);
+        return <tr key={subscription.id} data-testid={`row-subscription-${subscription.id}`}>
+          <td><b>{business?.nombre || 'Comercio'}</b></td>
+          <td><select className="inline-select" value={subscription.plan_id} onChange={e => update(d => ({ ...d, subscriptions: d.subscriptions.map(item => item.id === subscription.id ? { ...item, plan_id: e.target.value } : item) }), `Plan cambiado a ${data.plans.find(item => item.id === e.target.value)?.nombre || 'nuevo plan'}`, business?.nombre || 'Comercio')} data-testid={`select-subscription-plan-${subscription.id}`}>{data.plans.map(plan => <option key={plan.id} value={plan.id}>{plan.nombre} · {money(plan.precio)}</option>)}</select><small className="old-price">Actual: {currentPlan?.nombre || 'Sin plan'}</small></td>
+          <td>{shortDate(subscription.inicio)}</td><td>{shortDate(subscription.vencimiento)}</td><td><Status value={subscription.estado} /></td>
+          <td><select className="inline-select" value={subscription.estado} onChange={e => update(d => ({ ...d, subscriptions: d.subscriptions.map(item => item.id === subscription.id ? { ...item, estado: e.target.value } : item) }), 'Estado de suscripción actualizado', business?.nombre || 'Comercio')} data-testid={`select-subscription-status-${subscription.id}`}><option value="activa">Activa</option><option value="pendiente">Pendiente</option><option value="vencida">Vencida</option><option value="cancelada">Cancelada</option></select></td>
+        </tr>;
+      })}
+    </DataTable>
+  </>;
+  if (path === '/admin/settings') return <><PageTitle eyebrow="IDENTIDAD Y REGLAS DE LA PLATAFORMA" title="Ajustes de MENUYA" description="Configura el comportamiento de los nuevos registros." /><div className="settings-grid"><section className="panel setting-section"><span className="eyebrow">PLATAFORMA</span><h2>Un nombre que se recuerda</h2><div className="form-stack"><SettingInput label="Nombre de la plataforma" value={data.platform.name} id="platform-name" onSave={v => update(d => ({ ...d, platform: { ...d.platform, name: v } }), 'Nombre de plataforma actualizado', 'Ajustes')} /><label className="field"><span>Aprobación de comercios</span><select value={data.platform.approval} onChange={e => update(d => ({ ...d, platform: { ...d.platform, approval: e.target.value as 'automatica' | 'manual' } }), 'Modo de aprobación actualizado', 'Ajustes')} data-testid="select-approval-mode"><option value="automatica">Automática</option><option value="manual">Manual</option></select></label><label className="field"><span>Plan por defecto al registrarse</span><select value={data.platform.default_plan} onChange={e => update(d => ({ ...d, platform: { ...d.platform, default_plan: e.target.value } }), 'Plan predeterminado actualizado', 'Ajustes')}>{data.plans.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}</select></label></div></section><section className="panel setting-section"><span className="eyebrow">RESTABLECER</span><h2>Volver al inicio</h2><p className="subtle">Restaura los cinco comercios de ejemplo y elimina los cambios hechos en esta sesión local.</p><Button kind="outline" onClick={() => { if (confirm('¿Restablecer la demo? Esta acción elimina todos los cambios locales.')) { localStorage.removeItem('menuya-demo-v1'); localStorage.removeItem('menuya-session'); location.reload(); } }} testId="button-reset-demo-settings"><Activity size={15} /> Restablecer demo</Button><div className="settings-info"><ShieldCheck size={17} /><p>La sesión de administrador usa credenciales públicas de demostración: admin@menuya.com / MenuyaDemo2026!</p></div></section></div></>;
+  if (path === '/admin/audit') return <><PageTitle eyebrow="TRAZABILIDAD LOCAL" title="Auditoría" description="Registro de acciones realizadas en esta demo." /><DataTable headers={['Fecha', 'Actor', 'Acción', 'Entidad']}>{data.audit.map(a => <tr key={a.id}><td>{new Date(a.fecha).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })}</td><td>{a.actor}</td><td><b>{a.accion}</b></td><td>{a.entidad}</td></tr>)}</DataTable><p className="fine-print">El registro se guarda localmente y no constituye una bitácora de seguridad de producción.</p></>;
+  return <Empty title="No encontramos esa sección" text="Usa la navegación para volver a MENUYA." />;
+}
+
+function PublicStore({ data, slug, update }: { data: DemoData; slug: string; update: (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => void }) {
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('todos');
+  const [cart, setCart] = useState<Record<string, number>>({});
+  const [cartChoices, setCartChoices] = useState<Record<string, { variante?: ProductChoice; complementos: ProductChoice[] }>>({});
+  const [configuring, setConfiguring] = useState<Product | null>(null);
+  const [variantId, setVariantId] = useState('');
+  const [addonIds, setAddonIds] = useState<string[]>([]);
+  const [checkout, setCheckout] = useState(false);
+  const [delivery, setDelivery] = useState<'domicilio' | 'recoger'>('domicilio');
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+  const business = data.businesses.find(b => b.slug === slug);
+  useEffect(() => {
+    const store = data.businesses.find(item => item.slug === slug);
+    if (!store) return;
+    const event: CatalogEvent = { id: repository.id(), business_id: store.id, tipo: 'visita', created_at: repository.date(0) };
+    update(current => ({ ...current, catalog_events: [...(current.catalog_events || []), event] }));
+  }, [slug]);
+  if (!business) return <NotFound />;
+  const settings = data.settings.find(s => s.business_id === business.id);
+  const cats = data.categories.filter(c => c.business_id === business.id && c.activo).sort((a, b) => a.orden - b.orden);
+  const products = data.products.filter(p => p.business_id === business.id && p.activo && p.disponible && (category === 'todos' || p.category_id === category) && `${p.nombre} ${p.descripcion}`.toLowerCase().includes(search.toLowerCase()));
+  const cartItems = Object.entries(cart).map(([id, cantidad]) => ({ p: data.products.find(p => p.id === id)!, cantidad, variante: cartChoices[id]?.variante, complementos: cartChoices[id]?.complementos || [] })).filter(x => x.p);
+  const itemUnitPrice = (item: (typeof cartItems)[number]) => item.p.precio + (item.variante?.precio_extra || 0) + item.complementos.reduce((sum, choice) => sum + choice.precio_extra, 0);
+  const subtotal = cartItems.reduce((a, x) => a + itemUnitPrice(x) * x.cantidad, 0);
+  const openProduct = (product: Product) => {
+    const event: CatalogEvent = { id: repository.id(), business_id: business.id, product_id: product.id, tipo: 'consulta', created_at: repository.date(0) };
+    update(current => ({ ...current, catalog_events: [...(current.catalog_events || []), event] }));
+    setConfiguring(product);
+    setVariantId(product.variantes?.[0]?.id || '');
+    setAddonIds([]);
+  };
+  const addItem = (product: Product) => {
+    if (checkout) {
+      setCart(current => ({ ...current, [product.id]: (current[product.id] || 0) + 1 }));
+      return;
+    }
+    openProduct(product);
+  };
+  const confirmConfiguredItem = (product: Product) => {
+    const variant = product.variantes?.find(choice => choice.id === variantId);
+    const complementos = (product.complementos || []).filter(choice => addonIds.includes(choice.id));
+    setCart(current => ({ ...current, [product.id]: (current[product.id] || 0) + 1 }));
+    setCartChoices(current => ({ ...current, [product.id]: { variante: variant, complementos } }));
+    setConfiguring(null);
+  };
+  const setQty = (id: string, amount: number) => setCart(c => { const next = { ...c }; if (amount <= 0) delete next[id]; else next[id] = amount; return next; });
+  const submitOrder = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); setError('');
+    const form = new FormData(e.currentTarget);
+    const nombre = String(form.get('nombre') || '').trim(), telefono = String(form.get('telefono') || '').trim();
+    const entrega = String(form.get('entrega') || 'domicilio') as 'domicilio' | 'recoger';
+    const direccion = String(form.get('direccion') || '').trim();
+    if (!nombre || !telefono || (entrega === 'domicilio' && !direccion)) { setError('Completa tu nombre, teléfono y dirección para el domicilio.'); return; }
+    const customer = data.customers.find(c => c.business_id === business.id && c.telefono === telefono);
+    const customerId = customer?.id || repository.id();
+    const numero = Math.max(0, ...data.orders.filter(o => o.business_id === business.id).map(o => o.numero)) + 1;
+    const order: Order = { id: repository.id(), business_id: business.id, numero, customer_id: customerId, items: cartItems.map(x => ({ product_id: x.p.id, nombre: x.p.nombre, precio: itemUnitPrice(x), cantidad: x.cantidad, variante: x.variante?.nombre, complementos: x.complementos.map(choice => ({ nombre: choice.nombre, precio_extra: choice.precio_extra })) })), total: subtotal, estado: 'pendiente', entrega, direccion: entrega === 'domicilio' ? direccion : undefined, observaciones: String(form.get('observaciones') || ''), metodo_pago: String(form.get('metodo_pago') || 'Efectivo'), created_at: repository.date(0) };
+    update(d => ({ ...d, customers: customer ? d.customers.map(c => c.id === customer.id ? { ...c, total_pedidos: c.total_pedidos + 1, total_compras: c.total_compras + subtotal, ultimo_pedido: order.created_at } : c) : [...d.customers, { id: customerId, business_id: business.id, nombre, telefono, total_pedidos: 1, total_compras: subtotal, ultimo_pedido: order.created_at }], orders: [...d.orders, order] }), `Pedido #${String(numero).padStart(3, '0')} recibido`, business.nombre);
+    setCart({}); setCartChoices({}); setCheckout(false); setSuccess(true);
+  };
+  if (business.estado !== 'activo' || !settings?.publicado) return <div className="store-unavailable"><Brand /><div><span className="eyebrow">VITRINA NO DISPONIBLE</span><h1>Esta tienda está en pausa.</h1><p>Vuelve a visitarla más adelante.</p><Link href="/" className="btn btn-outline">Conocer MENUYA</Link></div><small>Una herramienta de Atom Labs</small></div>;
+  return <div className="public-store" style={{ '--store-color': settings.color } as React.CSSProperties}><header className="public-header"><Brand /><span className="public-powered">UNA TIENDA DE <b>MENUYA</b></span></header><section className="public-hero"><div className="public-cover" style={settings.portada ? { backgroundImage: `linear-gradient(90deg,rgba(22,49,43,.56),rgba(22,49,43,.05)),url("${settings.portada}")` } : undefined}><span className="cover-kicker">CATÁLOGO DIGITAL</span><span className="cover-shop-name">{business.nombre}</span></div><div className="public-store-intro"><div className="public-logo">{settings.logo || business.nombre.charAt(0)}</div><div><h1>{business.nombre}</h1><p>{settings.tagline || 'Una tienda local que te atiende de cerca.'}</p></div><span className="open-label"><i /> Abierto</span></div><div className="public-contact"><span>{business.tipo}</span><span>·</span><span>{settings.contacto || business.telefono}</span><span>·</span><span>{settings.entrega}</span></div></section><main className="public-main"><div className="public-toolbar"><label className="search-field"><Search size={17} /><input placeholder="Busca algo que te guste..." value={search} onChange={e => setSearch(e.target.value)} data-testid="input-store-search" /></label>{cartItems.length > 0 && <button className="cart-button" onClick={() => setCheckout(true)} data-testid="button-open-cart"><ShoppingCart size={17} /><span>{Object.values(cart).reduce((a, n) => a + n, 0)}</span>{money(subtotal)}</button>}</div><div className="public-categories"><button className={category === 'todos' ? 'category-active' : ''} onClick={() => setCategory('todos')}>Todo el catálogo</button>{cats.map(c => <button key={c.id} className={category === c.id ? 'category-active' : ''} onClick={() => setCategory(c.id)}>{c.nombre}</button>)}</div><div className="public-section-title"><span className="eyebrow">{category === 'todos' ? 'HECHO PARA TI' : cats.find(c => c.id === category)?.nombre}</span><h2>{search ? 'Resultados' : category === 'todos' ? 'Lo que se te antoje.' : 'Escoge tu favorito.'}</h2></div>{products.length ? <div className="public-products">{products.map((p, i) => <article className="public-product" key={p.id} data-testid={`card-store-product-${p.id}`}><div className={`public-product-art public-art-${i % 5}`}><span>{p.destacado ? 'FAVORITO' : cats.find(c => c.id === p.category_id)?.nombre}</span><b>{p.nombre.slice(0, 1)}</b><button onClick={() => addItem(p)} aria-label={`Agregar ${p.nombre}`} data-testid={`button-add-${p.id}`}><Plus size={19} /></button></div><div className="public-product-info"><div><h3>{p.nombre}</h3><p>{p.descripcion}</p><b>{money(p.precio)}</b>{p.precio_anterior && <del>{money(p.precio_anterior)}</del>}</div>{cart[p.id] ? <div className="quantity-control"><button onClick={() => setQty(p.id, cart[p.id] - 1)} aria-label="Quitar uno">−</button><b>{cart[p.id]}</b><button onClick={() => addItem(p)} aria-label="Agregar uno más">+</button></div> : <button className="add-mobile" onClick={() => addItem(p)}>Agregar <Plus size={14} /></button>}</div></article>)}</div> : <Empty title="No encontramos eso" text="Prueba con otra palabra o categoría." />}
+    </main><footer className="public-footer"><span>{settings.redes}</span><span>Pedidos directos, cerca de ti.</span><Brand /></footer>
+    {success && <div className="modal-backdrop"><section className="success-modal"><div className="success-icon"><Check size={24} /></div><span className="eyebrow">PEDIDO ENVIADO</span><h2>¡Ya lo tenemos!</h2><p>Tu pedido <b>#{String(Math.max(0, ...data.orders.filter(o => o.business_id === business.id).map(o => o.numero))).padStart(3, '0')}</b> se envió a {business.nombre}. Se pondrán en contacto contigo para confirmar.</p><Button onClick={() => setSuccess(false)}>Seguir mirando <ArrowRight size={15} /></Button></section></div>}
+    {configuring && <Modal title={`Personaliza ${configuring.nombre}`} close={() => setConfiguring(null)}>
+      <div className="product-config">
+        <p className="subtle">{configuring.descripcion}</p>
+        {!!configuring.variantes?.length && <label className="field"><span>Elige una variante</span><select value={variantId} onChange={e => setVariantId(e.target.value)} data-testid="select-product-variant">{configuring.variantes.map(choice => <option key={choice.id} value={choice.id}>{choice.nombre}{choice.precio_extra ? ` · +${money(choice.precio_extra)}` : ''}</option>)}</select></label>}
+        {!!configuring.complementos?.length && <fieldset className="choice-list"><legend>Complementos</legend>{configuring.complementos.map(choice => <label key={choice.id}><input type="checkbox" checked={addonIds.includes(choice.id)} onChange={e => setAddonIds(current => e.target.checked ? [...current, choice.id] : current.filter(id => id !== choice.id))} data-testid={`checkbox-addon-${choice.id}`} /><span>{choice.nombre}</span><b>{choice.precio_extra ? `+${money(choice.precio_extra)}` : 'Incluido'}</b></label>)}</fieldset>}
+        {!configuring.variantes?.length && !configuring.complementos?.length && <div className="notice notice-info">Este producto no tiene opciones adicionales.</div>}
+        <div className="checkout-total"><span>Precio unitario</span><b>{money(configuring.precio + (configuring.variantes?.find(choice => choice.id === variantId)?.precio_extra || 0) + (configuring.complementos || []).filter(choice => addonIds.includes(choice.id)).reduce((sum, choice) => sum + choice.precio_extra, 0))}</b></div>
+        <div className="modal-actions"><Button kind="ghost" onClick={() => setConfiguring(null)}>Cancelar</Button><Button onClick={() => confirmConfiguredItem(configuring)} data-testid="button-add-configured-product">Agregar al carrito <Plus size={15} /></Button></div>
+      </div>
+    </Modal>}
+    {checkout && <Modal title="Tu pedido" close={() => setCheckout(false)}><form className="checkout-form" onSubmit={submitOrder}>
+      <div className="checkout-items">{cartItems.map(x => <div key={x.p.id}><span><b>{x.cantidad} × {x.p.nombre}</b><small>{[x.variante?.nombre, ...x.complementos.map(choice => `+ ${choice.nombre}`)].filter(Boolean).join(' · ') || 'Sin opciones'} · {money(itemUnitPrice(x))} c/u</small></span><div className="quantity-control"><button type="button" onClick={() => setQty(x.p.id, x.cantidad - 1)}>−</button><b>{x.cantidad}</b><button type="button" onClick={() => addItem(x.p)}>+</button></div><strong>{money(itemUnitPrice(x) * x.cantidad)}</strong></div>)}</div>
+      <div className="checkout-total"><span>Total</span><b>{money(subtotal)}</b></div>{error && <div className="notice notice-error">{error}</div>}
+      <div className="form-grid">
+        <label className="field"><span>Tu nombre *</span><input required name="nombre" autoComplete="name" data-testid="input-checkout-name" /></label>
+        <label className="field"><span>Teléfono *</span><input required name="telefono" type="tel" autoComplete="tel" data-testid="input-checkout-phone" /></label>
+        <label className="field"><span>¿Cómo lo recibes?</span><select name="entrega" value={delivery} onChange={e => setDelivery(e.target.value as 'domicilio' | 'recoger')} data-testid="select-checkout-delivery"><option value="domicilio">Domicilio</option><option value="recoger">Recoger en tienda</option></select></label>
+        <label className="field"><span>Dirección{delivery === 'domicilio' ? ' *' : ' (opcional)'}</span><input required={delivery === 'domicilio'} name="direccion" placeholder={delivery === 'domicilio' ? 'Calle, carrera, barrio...' : 'No se requiere para recoger'} data-testid="input-checkout-address" /></label>
+        <label className="field"><span>Método de pago</span><select name="metodo_pago" data-testid="select-checkout-payment">{settings.pagos.split(',').map(x => <option key={x}>{x.trim()}</option>)}</select></label>
+        <label className="field"><span>Observaciones</span><textarea name="observaciones" placeholder="¿Alguna indicación para tu pedido?" data-testid="input-checkout-notes" /></label>
+      </div>
+      <p className="fine-print">No necesitas crear una cuenta. {business.nombre} confirmará contigo los detalles de pago y entrega.</p>
+      <div className="modal-actions"><Button kind="ghost" onClick={() => setCheckout(false)}>Seguir mirando</Button><Button type="submit" testId="button-submit-order">Confirmar pedido · {money(subtotal)} <ArrowRight size={15} /></Button></div>
+    </form></Modal>}
+  </div>;
+}
+
+function Router() {
+  const [data, setData] = useState<DemoData>(() => repository.load());
+  const [session, setSession] = useState<Session>(() => { try { return JSON.parse(localStorage.getItem('menuya-session') || 'null') as Session; } catch { return null; } });
+  const [businessId, setBusinessId] = useState(() => localStorage.getItem('menuya-business') || '');
+  const [toast, setToast] = useState('');
+  const [location, setLocation] = useLocation();
+  useEffect(() => { const change = () => setBusinessId(localStorage.getItem('menuya-business') || ''); window.addEventListener('menuya-business-change', change); return () => window.removeEventListener('menuya-business-change', change); }, []);
+  useEffect(() => { repository.save(data); }, [data]);
+  useEffect(() => { if (!toast) return undefined; const timer = window.setTimeout(() => setToast(''), 3200); return () => window.clearTimeout(timer); }, [toast]);
+  const update = (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => {
+    setData(current => {
+      let next = fn(current);
+      if (action) {
+        const actor = next.users.find(u => u.id === session?.userId)?.nombre || 'Visitante';
+        const audit: AuditLog = { id: repository.id(), actor, accion: action, entidad: entity || 'Demo', fecha: repository.date(0) };
+        next = { ...next, audit: [audit, ...next.audit].slice(0, 300) };
+        setToast(action);
+      }
+      return next;
+    });
+  };
+  const login = (email: string, password: string): string | null => {
+    const user = data.users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
+    if (!user) return 'El correo o la contraseña no coinciden.';
+    if (user.role !== 'admin') {
+      const biz = data.businesses.find(b => user.business_ids.includes(b.id));
+      if (!biz || biz.estado !== 'activo') return biz?.estado === 'pendiente' ? 'Tu solicitud está pendiente de aprobación. Vuelve pronto.' : 'Este comercio no tiene acceso activo.';
+      localStorage.setItem('menuya-business', biz.id); setBusinessId(biz.id);
+    }
+    const nextSession = { userId: user.id, role: user.role }; setSession(nextSession); localStorage.setItem('menuya-session', JSON.stringify(nextSession)); return null;
+  };
+  const register = (v: Record<string, string>): string | null => {
+    if (data.users.some(u => u.email.toLowerCase() === v.email.toLowerCase())) return 'Ya existe una cuenta con ese correo.';
+    const id = repository.id(), business: Business = { id, owner_id: id, nombre: v.negocio.trim(), slug: v.negocio.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + id.slice(-3), tipo: v.sector.toLowerCase(), telefono: v.telefono, estado: data.platform.approval === 'automatica' ? 'activo' : 'pendiente', created_at: repository.date(0) };
+    const user = { id, nombre: v.nombre.trim(), email: v.email, password: v.password, role: 'owner' as const, business_ids: [id] };
+    const category: Category = { id: repository.id(), business_id: id, nombre: 'Favoritos', orden: 1, activo: true };
+    const planId = data.platform.default_plan;
+    setData(d => ({ ...d, users: [...d.users, user], businesses: [...d.businesses, business], categories: [...d.categories, category], settings: [...d.settings, { business_id: id, portada: '', logo: '', color: '#e7785d', fuente: 'Manrope', contacto: v.telefono, redes: '', pagos: 'Efectivo, Nequi', entrega: 'Domicilio y recoger en tienda', publicado: business.estado === 'activo', tagline: 'Un negocio local, hecho con cariño.' }], subscriptions: [...d.subscriptions, { id: repository.id(), business_id: id, plan_id: planId, estado: business.estado === 'activo' ? 'activa' : 'pendiente', inicio: repository.date(0), vencimiento: repository.date(-30) }], audit: [{ id: repository.id(), actor: v.nombre, accion: 'Registro de comercio', entidad: business.nombre, fecha: repository.date(0) }, ...d.audit] }));
+    return null;
+  };
+  const logout = () => { setSession(null); localStorage.removeItem('menuya-session'); setLocation('/login'); };
+  const user = data.users.find(u => u.id === session?.userId);
+  const ownerBusiness = data.businesses.find(b => b.id === (businessId || user?.business_ids[0])) || data.businesses.find(b => b.owner_id === user?.id);
+  const merchantRoute = (path: string) => session?.role === 'admin' ? <AdminPage path={path} data={data} update={update} /> : session && ownerBusiness ? <AppShell data={data} session={session} update={update} logout={logout} business={ownerBusiness} activePath={path}><MerchantPage path={path} data={data} business={ownerBusiness} update={update} /></AppShell> : <RedirectToLogin setLocation={setLocation} />;
+  const adminRoute = (path: string) => session?.role === 'admin' ? <AppShell data={data} session={session} update={update} logout={logout} activePath={path}><AdminPage path={path} data={data} update={update} /></AppShell> : <RedirectToLogin setLocation={setLocation} />;
+  return <RoutedErrorBoundary><Switch>
+    <Route path="/"><Landing data={data} /></Route>
+    <Route path="/login"><AuthPage mode="login" data={data} onLogin={login} onRegister={register} /></Route>
+    <Route path="/register"><AuthPage mode="register" data={data} onLogin={login} onRegister={register} /></Route>
+    <Route path="/forgot-password"><AuthPage mode="forgot" data={data} onLogin={login} onRegister={register} /></Route>
+    <Route path="/admin">{adminRoute('/admin')}</Route>
+    {adminLinks.slice(1).map(([path]) => <Route key={path} path={path}>{adminRoute(path)}</Route>)}
+    <Route path="/app">{merchantRoute('/app')}</Route>
+    {shopLinks.slice(1).map(([path]) => <Route key={path} path={path}>{merchantRoute(path)}</Route>)}
+    <Route path="/:slug"><PublicRoute data={data} update={update} /></Route>
+    <Route component={NotFound} />
+  </Switch>{toast && <div className="toast-message" role="status" data-testid="status-toast"><CheckCircle2 size={17} />{toast}</div>}</RoutedErrorBoundary>;
+}
+function RedirectToLogin({ setLocation }: { setLocation: (path: string) => void }) {
+  useEffect(() => { setLocation('/login'); }, [setLocation]);
+  return <div className="auth-loading"><span className="loader-line" />Redirigiendo a tu acceso...</div>;
+}
+function PublicRoute({ data, update }: { data: DemoData; update: (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => void }) {
+  const params = useParams<{ slug: string }>();
+  return <PublicStore data={data} slug={params.slug || ''} update={update} />;
+}
+function App() {
+  return <QueryClientProvider client={queryClient}><TooltipProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter><Toaster /></TooltipProvider></QueryClientProvider>;
+}
+export default App;

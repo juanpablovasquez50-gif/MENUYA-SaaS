@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "MENUYA"
+description = "Plataforma SaaS de catálogos digitales para comercios colombianos: administración de tiendas y productos, personalización visual, catálogo público y pedidos con persistencia local de demostración."
+version = "1.0.0"
+id = "artifacts/menuya"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25998
+
+[services.development]
+run = "pnpm --filter @workspace/menuya run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/menuya", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/menuya/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25998"
+BASE_PATH = "/"

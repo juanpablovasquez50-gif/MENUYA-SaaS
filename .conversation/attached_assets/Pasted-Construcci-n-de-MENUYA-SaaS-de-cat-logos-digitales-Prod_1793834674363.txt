@@ -1,0 +1,695 @@
+Construcción de MENUYA — SaaS de catálogos digitales
+
+Producto de Atom Labs
+
+Actúa como un equipo senior de desarrollo de software compuesto por arquitectos de software, desarrolladores frontend y backend, diseñadores UX/UI y especialistas en productos SaaS.
+
+Quiero que construyas una aplicación web funcional llamada MENUYA, propiedad de Atom Labs.
+
+No quiero solamente una landing page ni un prototipo visual. Quiero una primera versión funcional de un SaaS que permita a los negocios crear, administrar y publicar sus propios catálogos digitales y recibir pedidos directamente desde ellos.
+
+IMPORTANTE: comienza inspeccionando el proyecto existente. Si ya hay código funcional, consérvalo y trabaja sobre él. No destruyas ni reconstruyas innecesariamente componentes que ya estén bien implementados.
+
+No te limites a explicar cómo lo harías. Ejecuta la implementación directamente.
+
+⸻
+
+1. Visión del producto
+
+MENUYA será una plataforma SaaS de catálogos digitales para comercios.
+
+El sistema debe permitir que cualquier negocio cree su espacio, personalice su catálogo, agregue productos, configure sus métodos de pago y reciba pedidos.
+
+El producto estará dirigido inicialmente al mercado colombiano, pero su arquitectura debe permitir crecer a otros países.
+
+No debe estar limitado a restaurantes. Debe funcionar para:
+
+* Restaurantes.
+* Comidas rápidas.
+* Cafeterías.
+* Panaderías.
+* Tiendas de ropa.
+* Zapaterías.
+* Ferreterías.
+* Tiendas de tecnología.
+* Barberías.
+* Salones de belleza.
+* Comercios generales.
+
+La plataforma debe tener una arquitectura escalable y modular.
+
+2. Identidad visual y experiencia de usuario
+
+Este punto es prioritario.
+
+Quiero que MENUYA tenga una identidad visual propia, moderna, premium y reconocible.
+
+NO quiero una interfaz genérica de SaaS generada con plantillas de inteligencia artificial.
+
+Evita los dashboards convencionales que parecen copias de cualquier plantilla administrativa.
+
+Diseña una experiencia con:
+
+* Personalidad visual.
+* Jerarquía tipográfica bien trabajada.
+* Espacios y proporciones equilibradas.
+* Componentes con identidad propia.
+* Microinteracciones elegantes.
+* Animaciones sutiles.
+* Transiciones fluidas.
+* Iconografía consistente.
+* Excelente experiencia móvil y escritorio.
+
+La marca MENUYA debe sentirse como un producto tecnológico profesional desarrollado por Atom Labs.
+
+La identidad de MENUYA debe ser independiente de la personalización que cada comercio pueda aplicar a su propio catálogo.
+
+Los catálogos públicos de los negocios deben poder tener estilos diferentes sin perder la calidad de experiencia de la plataforma.
+
+No abuses de gradientes, sombras, tarjetas repetitivas ni elementos decorativos innecesarios.
+
+3. Arquitectura técnica
+
+Utiliza una arquitectura moderna y organizada.
+
+Tecnologías preferidas:
+
+* React.
+* TypeScript.
+* Vite.
+* Tailwind CSS.
+* Lucide Icons.
+* Componentes reutilizables.
+* Arquitectura modular.
+* Manejo centralizado de estados cuando sea necesario.
+
+Por ahora, NO integres Supabase, Firebase ni servicios externos que requieran credenciales.
+
+La aplicación debe poder ejecutarse inmediatamente en Replit.
+
+Utiliza almacenamiento local persistente mediante localStorage o IndexedDB para esta primera versión.
+
+Crea una capa de servicios y repositorios independiente de la interfaz para que posteriormente podamos conectar una base de datos real sin tener que reescribir toda la aplicación.
+
+Organiza el código para facilitar futuras integraciones de:
+
+* Base de datos PostgreSQL.
+* Autenticación real.
+* Almacenamiento de imágenes.
+* Pasarelas de pago.
+* Notificaciones.
+* Correos electrónicos.
+* Dominios personalizados.
+
+IMPORTANTE: esta versión es una demostración funcional local. No presentes el almacenamiento local como una solución de producción multiusuario ni como un sistema seguro de autenticación.
+
+4. Modelo de negocio y estructura SaaS
+
+MENUYA debe funcionar bajo un modelo multiempresa.
+
+Debe existir un SUPER ADMINISTRADOR, que será el administrador central de toda la plataforma.
+
+El Super Admin podrá:
+
+* Crear negocios.
+* Aprobar solicitudes de registro.
+* Suspender negocios.
+* Activar negocios.
+* Consultar usuarios.
+* Administrar planes.
+* Consultar suscripciones.
+* Configurar precios.
+* Consultar estadísticas generales.
+* Revisar actividad de la plataforma.
+* Configurar parámetros generales.
+
+Cada negocio tendrá su propio espacio de administración.
+
+Los datos de cada comercio deben estar separados lógicamente mediante identificadores de negocio, preparando la arquitectura para aislamiento real de datos cuando se conecte el backend definitivo.
+
+5. Sistema de dominios y direcciones
+
+Utiliza un único dominio principal para todos los negocios.
+
+Ejemplo:
+
+* menuya.com/mitienda
+* menuya.com/elsabor
+* menuya.com/ropasofia
+
+No crear subdominios individuales para cada negocio.
+
+No implementar direcciones como mitienda.menuya.com.
+
+Las rutas administrativas estarán dentro del mismo dominio:
+
+* menuya.com/app
+* menuya.com/admin
+
+Los catálogos públicos deben resolverse dinámicamente mediante el slug del negocio.
+
+Las rutas institucionales y administrativas deben tener prioridad sobre la resolución dinámica de slugs para evitar conflictos.
+
+Deja preparada una futura funcionalidad de dominios personalizados como característica de un plan superior.
+
+6. Registro e ingreso
+
+Implementa una pantalla de registro y acceso funcional para la demostración.
+
+El registro debe solicitar:
+
+* Nombre del propietario.
+* Correo electrónico.
+* Contraseña.
+* Nombre del negocio.
+* Tipo de negocio.
+* Número de teléfono.
+
+El sistema debe permitir dos modalidades configurables desde el Super Admin:
+
+1. Registro automático.
+2. Registro con aprobación manual.
+
+Si se requiere aprobación, el negocio debe quedar pendiente hasta que el administrador lo autorice.
+
+Implementa una sesión de demostración y rutas protegidas a nivel de interfaz.
+
+Crea un acceso de demostración para el administrador central:
+
+Correo: admin@menuya.com
+Contraseña: MenuyaDemo2026!
+
+Estas credenciales son exclusivamente para desarrollo y demostración. No deben considerarse credenciales seguras para producción.
+
+7. Panel del Super Admin
+
+Construye un panel central completo.
+
+Debe incluir:
+
+Dashboard
+
+Indicadores:
+
+* Total de negocios registrados.
+* Negocios activos.
+* Negocios pendientes.
+* Negocios suspendidos.
+* Total de usuarios.
+* Pedidos registrados.
+* Suscripciones activas.
+* Ingresos estimados.
+
+Incluye gráficas y estadísticas con datos de demostración claramente identificables.
+
+Gestión de negocios
+
+Permitir:
+
+* Listar negocios.
+* Buscar negocios.
+* Filtrar por estado.
+* Consultar información.
+* Activar.
+* Suspender.
+* Aprobar solicitudes.
+* Rechazar solicitudes.
+
+Gestión de planes
+
+Crear, editar y eliminar planes.
+
+Configurar:
+
+* Nombre.
+* Precio.
+* Periodicidad.
+* Cantidad máxima de productos.
+* Funciones disponibles.
+* Estado del plan.
+
+Gestión de suscripciones
+
+Consultar:
+
+* Negocio.
+* Plan contratado.
+* Fecha de inicio.
+* Fecha de vencimiento.
+* Estado.
+
+Gestión de usuarios
+
+Consultar usuarios registrados y sus negocios asociados.
+
+Configuración general
+
+Permitir configurar:
+
+* Nombre de la plataforma.
+* Registro automático o manual.
+* Plan predeterminado.
+* Parámetros generales.
+
+Auditoría
+
+Crear un registro demostrativo de las principales acciones administrativas.
+
+8. Panel del negocio
+
+Cada comercio debe tener un panel de administración independiente.
+
+El menú principal debe incluir:
+
+* Inicio.
+* Mi catálogo.
+* Productos.
+* Categorías.
+* Pedidos.
+* Clientes.
+* Editor visual.
+* Estadísticas.
+* Configuración.
+* Mi suscripción.
+
+Inicio
+
+Mostrar:
+
+* Pedidos del día.
+* Ventas estimadas.
+* Productos publicados.
+* Productos agotados.
+* Pedidos pendientes.
+* Pedidos recientes.
+* Productos más consultados.
+
+9. Administración de productos
+
+Crear un módulo CRUD completo.
+
+Cada producto debe tener:
+
+* Nombre.
+* Descripción.
+* Precio.
+* Precio anterior opcional.
+* Imagen.
+* Categoría.
+* Estado.
+* Disponibilidad.
+* Producto destacado.
+* Control de inventario opcional.
+
+Permitir:
+
+* Crear productos.
+* Editar productos.
+* Eliminar productos.
+* Duplicar productos.
+* Activar y desactivar productos.
+* Buscar productos.
+* Filtrar por categoría.
+
+Preparar soporte para:
+
+* Variantes.
+* Tallas.
+* Colores.
+* Presentaciones.
+* Complementos.
+* Opciones adicionales.
+
+10. Categorías
+
+Permitir:
+
+* Crear categorías.
+* Editar categorías.
+* Eliminar categorías.
+* Cambiar el orden.
+* Activar y desactivar categorías.
+
+Cada producto debe poder asociarse a una categoría.
+
+11. Editor visual del catálogo
+
+Este será uno de los módulos más importantes de MENUYA.
+
+Quiero un editor visual personalizado que permita diseñar el catálogo sin conocimientos de programación.
+
+Debe incluir:
+
+* Vista previa en tiempo real.
+* Vista móvil.
+* Vista de escritorio.
+* Cambio de logotipo.
+* Imagen de portada.
+* Colores principales.
+* Colores secundarios.
+* Tipografía.
+* Nombre comercial.
+* Descripción del negocio.
+* Información de contacto.
+* Redes sociales.
+* Diseño de tarjetas de productos.
+* Organización de secciones.
+* Mostrar u ocultar elementos.
+* Guardar cambios.
+* Publicar cambios.
+
+El editor debe ser visual y fácil de entender.
+
+No debe permitir insertar código arbitrario ni CSS personalizado en esta primera versión.
+
+Los cambios deben guardarse en una estructura de configuración independiente del catálogo.
+
+12. Catálogo público
+
+Cada negocio tendrá una página pública dinámica.
+
+Ejemplo:
+
+menuya.com/mitienda
+
+El catálogo debe mostrar:
+
+* Logotipo.
+* Portada.
+* Nombre del negocio.
+* Descripción.
+* Información de contacto.
+* Categorías.
+* Productos.
+* Fotografías.
+* Precios.
+* Disponibilidad.
+* Variantes.
+* Complementos.
+* Buscador.
+* Carrito de compras.
+
+Debe ser completamente responsive y ofrecer una experiencia excelente desde celulares.
+
+La página pública debe utilizar la configuración visual guardada por el negocio.
+
+13. Sistema de carrito y pedidos internos
+
+No quiero que el sistema se limite a redirigir al usuario a WhatsApp.
+
+MENUYA debe tener un proceso interno de pedidos.
+
+El cliente podrá:
+
+1. Entrar al catálogo.
+2. Seleccionar productos.
+3. Elegir variantes y complementos.
+4. Agregar productos al carrito.
+5. Modificar cantidades.
+6. Consultar el total.
+7. Continuar al checkout.
+8. Ingresar sus datos.
+9. Confirmar el pedido.
+
+Datos del cliente:
+
+* Nombre.
+* Teléfono.
+* Modalidad de entrega.
+* Dirección cuando corresponda.
+* Observaciones.
+* Método de pago.
+
+Modalidades:
+
+* Domicilio.
+* Recoger en el establecimiento.
+
+Métodos de pago iniciales:
+
+* Efectivo.
+* Transferencia bancaria.
+* Pago al recoger.
+* Otros métodos configurados por el negocio.
+
+No integrar pasarelas de pago todavía.
+
+Al confirmar, el pedido debe quedar registrado y aparecer en el panel del negocio.
+
+El cliente no necesita crear una cuenta para realizar un pedido.
+
+Cada negocio debe tener una numeración de pedidos independiente.
+
+14. Administración de pedidos
+
+Crear un módulo para administrar pedidos.
+
+Estados:
+
+* Pendiente.
+* Confirmado.
+* En preparación.
+* Listo.
+* En camino.
+* Entregado.
+* Cancelado.
+
+Permitir:
+
+* Consultar pedidos.
+* Buscar pedidos.
+* Filtrar por fecha.
+* Filtrar por estado.
+* Ver detalles.
+* Cambiar estado.
+* Consultar productos y cantidades.
+* Consultar información del cliente.
+* Consultar método de pago.
+* Consultar total.
+
+Diseñar una interfaz clara para que el negocio pueda gestionar pedidos rápidamente.
+
+15. Clientes
+
+Crear un módulo que registre los clientes que realizan pedidos.
+
+Mostrar:
+
+* Nombre.
+* Teléfono.
+* Total de pedidos.
+* Último pedido.
+* Valor acumulado de compras.
+
+Permitir consultar el historial de pedidos de cada cliente.
+
+16. Estadísticas
+
+Crear un módulo inicial de analítica con:
+
+* Pedidos por día.
+* Pedidos por semana.
+* Pedidos por mes.
+* Productos más vendidos.
+* Productos más consultados.
+* Valor total de pedidos.
+* Promedio por pedido.
+* Evolución de pedidos.
+
+Los indicadores deben calcularse a partir de los datos disponibles en la aplicación.
+
+17. Planes comerciales
+
+Crear tres planes iniciales configurables desde el Super Admin.
+
+GRATIS
+
+* Hasta 15 productos.
+* Catálogo público.
+* Gestión básica de pedidos.
+* Personalización básica.
+
+STARTER — $29.900 COP/mes
+
+* Hasta 100 productos.
+* Personalización ampliada.
+* Gestión de pedidos.
+* Estadísticas básicas.
+
+PRO — $49.900 COP/mes
+
+* Productos ilimitados.
+* Personalización avanzada.
+* Estadísticas avanzadas.
+* Funciones adicionales.
+
+Estos precios son valores iniciales de demostración. Deben poder modificarse desde el panel administrativo.
+
+El sistema debe validar los límites del plan antes de permitir crear más productos o utilizar funciones restringidas.
+
+No integrar pagos automáticos de suscripciones todavía. El Super Admin podrá asignar y modificar planes manualmente.
+
+18. Configuración del negocio
+
+Cada comercio podrá configurar:
+
+* Nombre.
+* Descripción.
+* Logotipo.
+* Portada.
+* Teléfono.
+* Dirección.
+* Horarios.
+* Redes sociales.
+* Métodos de pago.
+* Modalidad de entrega.
+* Información de contacto.
+* Estado del catálogo.
+
+19. Modelo de datos
+
+Diseña modelos y servicios preparados para las siguientes entidades:
+
+* profiles
+* businesses
+* memberships
+* categories
+* products
+* product_images
+* product_variants
+* product_options
+* store_settings
+* store_designs
+* store_sections
+* customers
+* customer_addresses
+* orders
+* order_items
+* order_status_history
+* plans
+* subscriptions
+* business_hours
+* delivery_zones
+* payment_methods
+* store_visits
+* product_views
+* audit_logs
+
+En esta primera versión pueden almacenarse localmente, pero deben estar organizados como entidades relacionadas.
+
+Cada registro que pertenezca a un negocio debe tener su business_id correspondiente.
+
+20. Rutas principales
+
+Implementa estas rutas:
+
+Públicas:
+
+* /
+* /login
+* /register
+* /forgot-password
+* /:slug
+
+Panel del negocio:
+
+* /app
+* /app/catalog
+* /app/products
+* /app/categories
+* /app/orders
+* /app/customers
+* /app/editor
+* /app/analytics
+* /app/settings
+* /app/subscription
+
+Panel administrativo:
+
+* /admin
+* /admin/businesses
+* /admin/requests
+* /admin/users
+* /admin/plans
+* /admin/subscriptions
+* /admin/settings
+* /admin/audit
+
+Asegúrate de que las rutas administrativas y del panel tengan prioridad sobre la ruta dinámica /:slug.
+
+21. Datos de demostración
+
+Incluye datos de demostración realistas para probar la aplicación.
+
+Crea varios negocios ficticios de diferentes sectores:
+
+* Restaurante.
+* Tienda de ropa.
+* Barbería.
+* Tienda de tecnología.
+* Panadería.
+
+Cada negocio debe tener productos, categorías y algunos pedidos de ejemplo.
+
+Incluye acciones para restablecer los datos de demostración.
+
+22. Requisitos de calidad
+
+La aplicación debe:
+
+* Ser responsive.
+* Tener navegación funcional.
+* Tener formularios funcionales.
+* Validar campos.
+* Mostrar mensajes de éxito y error.
+* Tener estados vacíos bien diseñados.
+* Tener indicadores de carga cuando corresponda.
+* Evitar botones decorativos sin funcionalidad.
+* Mantener persistencia local al recargar.
+* Manejar errores de forma controlada.
+* Evitar duplicación innecesaria de código.
+* Mantener componentes reutilizables.
+* Tener una estructura de carpetas limpia.
+
+No uses enlaces o botones que no hagan nada.
+
+No dejes páginas vacías ni módulos que sean solamente una maqueta.
+
+23. Prioridades de implementación
+
+Desarrolla el proyecto por etapas, pero ejecuta el trabajo sin detenerte a pedirme aprobación entre cada etapa.
+
+Orden:
+
+1. Estructura base y diseño visual de MENUYA.
+2. Landing page.
+3. Registro e ingreso de demostración.
+4. Panel Super Admin.
+5. Panel del negocio.
+6. CRUD de productos y categorías.
+7. Editor visual.
+8. Catálogo público dinámico.
+9. Carrito y checkout.
+10. Gestión de pedidos.
+11. Clientes.
+12. Estadísticas.
+13. Planes y restricciones.
+14. Pruebas generales y corrección de errores.
+
+24. Instrucción final
+
+Construye MENUYA como un producto SaaS real en su experiencia y arquitectura, no como una simple página de presentación.
+
+Prioriza una interfaz original, elegante y profesional.
+
+No copies literalmente el diseño de otras plataformas. Puedes tomar como referencia funcional plataformas de catálogos digitales como OlaClick, pero MENUYA debe tener su propia identidad visual y experiencia.
+
+No integres servicios externos ni solicites credenciales en esta etapa.
+
+No te detengas a hacer preguntas innecesarias.
+
+Primero inspecciona el proyecto, después implementa, ejecuta y corrige los errores.
+
+Al terminar, verifica que las rutas principales funcionen, que los datos persistan localmente y que el recorrido completo de un cliente —desde abrir un catálogo hasta confirmar un pedido— funcione correctamente.
+
+El resultado debe ser una primera versión navegable y funcional de MENUYA, de Atom Labs.
