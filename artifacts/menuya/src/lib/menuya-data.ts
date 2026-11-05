@@ -20,7 +20,7 @@ const uid = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(
 const categorySeed = (biz: string, names: string[]) => names.map((nombre, i) => ({ id: `${biz}-c${i + 1}`, business_id: biz, nombre, orden: i + 1, activo: true }));
 const productSeed = (biz: string, catIds: string[], entries: [string, string, number, number?][]) => entries.map(([nombre, descripcion, precio, cat = 0], i) => ({ id: `${biz}-p${i + 1}`, business_id: biz, category_id: catIds[cat % catIds.length], nombre, descripcion, precio, activo: true, disponible: true, destacado: i === 0, stock: 18 + i * 3 }));
 function seed(): DemoData {
-  const users: User[] = [{ id: 'admin', nombre: 'Equipo Atom Labs', email: 'admin@menuya.com', password: 'MenuyaDemo2026!', role: 'admin', business_ids: [] }];
+  const users: User[] = [{ id: 'admin', nombre: 'Equipo CLICKOK', email: 'admin@menuya.com', password: 'MenuyaDemo2026!', role: 'admin', business_ids: [] }];
   const businessInfo = [
     ['brasa', 'La Brasa de Inés', 'restaurante', 'ines@labrasa.co', 'Inés Rojas', 'Brasa hecha con calma.'],
     ['hilo', 'Hilo Estudio', 'ropa', 'hola@hiloestudio.co', 'Sara Pardo', 'Piezas para todos tus días.'],
@@ -64,7 +64,7 @@ function seed(): DemoData {
     }
   }
   const settings = businesses.map((b, i) => ({ business_id: b.id, portada: '', logo: '', color: ['#e7785d', '#5c7770', '#d1a256', '#566c84', '#d17e61'][i], fuente: 'Manrope', contacto: b.telefono, redes: `@${b.slug}.co`, pagos: 'Efectivo, Nequi, transferencia', entrega: 'Domicilio y recoger en tienda', publicado: b.estado === 'activo', tagline: businessInfo[i][5] }));
-  return { users, businesses, categories, products, customers, orders, plans, subscriptions: businesses.map((b, i) => ({ id: `s-${b.id}`, business_id: b.id, plan_id: plans[i === 0 ? 1 : 0].id, estado: b.estado === 'activo' ? 'activa' : 'pendiente', inicio: day(20), vencimiento: day(-10) })), settings, audit: [{ id: 'a1', actor: 'Equipo Atom Labs', accion: 'Demo inicializada', entidad: 'Plataforma', fecha: day(0) }], catalog_events: [], platform: { name: 'MENUYA', approval: 'automatica', default_plan: 'gratis' } };
+  return { users, businesses, categories, products, customers, orders, plans, subscriptions: businesses.map((b, i) => ({ id: `s-${b.id}`, business_id: b.id, plan_id: plans[i === 0 ? 1 : 0].id, estado: b.estado === 'activo' ? 'activa' : 'pendiente', inicio: day(20), vencimiento: day(-10) })), settings, audit: [{ id: 'a1', actor: 'Equipo CLICKOK', accion: 'Demo inicializada', entidad: 'Plataforma', fecha: day(0) }], catalog_events: [], platform: { name: 'CLICKOK', approval: 'automatica', default_plan: 'gratis' } };
 }
 const STORE_KEY = 'menuya-demo-v1';
 export const repository = {
