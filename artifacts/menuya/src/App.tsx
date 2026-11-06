@@ -576,7 +576,7 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
             brand_color:nextSettings.color,
             font_family:nextSettings.fuente,
             contact_text:nextSettings.contacto || null,
-            social_links:nextSettings.redes || null,
+            social_links:nextSettings.redes ?? '',
             payment_methods:nextSettings.pagos ? nextSettings.pagos.split(',').map(x=>x.trim()).filter(Boolean) : [],
             delivery_info:nextSettings.entrega || null,
             is_published:nextSettings.publicado,
