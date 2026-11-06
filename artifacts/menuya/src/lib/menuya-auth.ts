@@ -9,14 +9,14 @@ export type MenuyaAuthContext = {
     business_id: string;
     role: string;
     status: string;
-    businesses: Array<{
+    businesses: {
       id: string;
       name: string;
       slug: string;
       business_type: string;
       status: string;
       is_published: boolean;
-    }> | null;
+    } | null;
   }>;
   isPlatformAdmin: boolean;
 };
@@ -103,7 +103,7 @@ export async function getAuthContext(): Promise<MenuyaAuthContext | null> {
     session,
     user: session.user,
     profile: profileResult.data,
-    memberships: (membershipResult.data || []) as MenuyaAuthContext['memberships'],
+    memberships: (membershipResult.data || []) as unknown as MenuyaAuthContext['memberships'],
     isPlatformAdmin: Boolean(adminResult.data),
   };
 }
