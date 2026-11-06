@@ -1,43 +1,43 @@
-# MENUYA — autenticación y alta de comercios
+# MENUYA — autenticación, alta y permisos
 
-Esta rama conecta el formulario de acceso con Supabase Auth y prepara el alta de cada comercio como tenant independiente.
+Esta rama conecta el acceso con Supabase Auth y prepara la provisión de cada comercio como tenant independiente. El trabajo se está validando dentro del proyecto MENUYA existente; no se crea otro proyecto ni se despliega a Render desde esta rama.
 
 ## Variables de entorno
 
-Configura en el entorno de desarrollo:
+Configura en el entorno de ejecución:
 
 - `VITE_SUPABASE_URL`: URL del proyecto Supabase de MENUYA.
 - `VITE_SUPABASE_PUBLISHABLE_KEY`: publishable key del proyecto.
 
 No uses la `service_role` key en el navegador ni la incluyas en archivos versionados.
 
-## Migración de registro
+## Migraciones de MENUYA
 
-La función RPC `public.register_business` está definida en:
+Orden lógico de las migraciones de esta rama:
 
-`supabase/migrations/202611060001_register_business.sql`
+1. `202611060001_register_business.sql`: RPC `public.register_business`, con validación, idempotencia, plan gratuito, comercio privado y creación inicial de categoría, vitrina y suscripción. El alta directa por INSERT a `businesses` queda bloqueada; se debe usar la RPC.
+2. `202611060002_enforce_business_role_permissions.sql`: aplica autorización por rol a catálogo, pedidos, caja, sucursales, inventario, clientes, ajustes, suscripciones y auditoría.
+3. `202611060003_private_schema_function_grants.sql`: permite resolver el helper privado desde las políticas RLS y bloquea la ejecución directa de funciones internas de triggers.
 
-La función crea, dentro de una sola transacción:
+La base de datos MENUYA ya existente contiene las tablas, índices, restricciones, políticas iniciales y triggers. La creación de esa base no está todavía representada por una migración inicial completa en este repositorio; por tanto, estas migraciones no bastan por sí solas para reconstruir un proyecto vacío.
 
-1. El comercio en estado `pending` y no publicado.
-2. La membresía del propietario (mediante el trigger existente).
-3. La categoría inicial.
-4. La configuración privada de la vitrina.
-5. La suscripción al plan `free` en estado `pending`.
+## Matriz de permisos actual
 
-La función es idempotente para evitar duplicar el tenant si se reintenta el alta.
+- **owner / admin:** administración del comercio; acceso a suscripción y datos operativos.
+- **manager:** sucursales, catálogo, pedidos, clientes, caja, inventario, ajustes y lectura de auditoría.
+- **catalog:** productos, categorías, opciones y configuración de vitrina.
+- **orders:** pedidos, ítems y clientes.
+- **cashier:** pedidos, ítems, clientes, ventas y sesiones de caja.
 
-## Orden seguro de validación
+Las políticas RLS son la autoridad final. La interfaz debe ocultar o deshabilitar acciones según el rol, pero nunca sustituye las políticas de base de datos.
 
-1. Crear un entorno Supabase de desarrollo separado del proyecto de producción.
-2. Aplicar allí la migración SQL.
-3. Configurar las variables de entorno en un entorno de preview, nunca en producción.
-4. Probar registro con confirmación de correo, login, creación del tenant, recuperación de contraseña y aislamiento entre usuarios.
-5. Ejecutar typecheck y build desde GitHub Actions.
-6. Solo después de aprobar las pruebas, planificar la migración y despliegue de producción.
+## Validación pendiente
 
-**No ejecutar esta migración ni cambiar variables del servicio de producción como parte de esta rama.**
+- Probar registro, confirmación de correo, login y recuperación de contraseña con cuentas autorizadas.
+- Verificar que el propietario sólo vea los comercios a los que pertenece.
+- Probar que un rol sin permiso no pueda escribir en las tablas restringidas.
+- Probar que un usuario de otro comercio no pueda leer ni modificar registros ajenos.
+- Conectar los módulos de productos, pedidos, clientes, inventario, ventas y editor a consultas reales. En esta etapa esos módulos aún no están migrados desde la demo/localStorage.
+- Ejecutar typecheck y build; revisar el PR antes de cualquier merge o despliegue.
 
-## Alcance actual
-
-El acceso y la provisión inicial del tenant usan Supabase. Los módulos de productos, pedidos, clientes, inventario y editor todavía no se han migrado de la demo/localStorage a consultas reales. Por eso, después de autenticar se muestra una pantalla segura de estado y no se cargan datos de demostración en una cuenta real.
+No se debe insertar información ficticia en cuentas reales ni desplegar Render o modificar `main` sin aprobación expresa.
