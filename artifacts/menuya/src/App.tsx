@@ -9,7 +9,7 @@ import NotFound from '@/pages/not-found';
 import { Link, Route, Switch, Router as WouterRouter, useLocation, useParams } from 'wouter';
 import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BarChart3, Bell, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, ClipboardList, Clock3, CreditCard, ExternalLink, Eye, EyeOff, LayoutDashboard, LogOut, Menu, MoreHorizontal, Package, Pencil, Plus, Search, Settings, ShieldCheck, ShoppingBag, ShoppingCart, Store, Tag, Trash2, TrendingUp, Users, X, Zap } from 'lucide-react';
 import { type AuditLog, type Business, type CatalogEvent, type Category, type Customer, type DemoData, type Order, type OrderStatus, type Plan, type Product, type ProductChoice, repository } from '@/lib/menuya-data';
-import { type MenuyaAuthContext, ensureBusinessForCurrentUser, getAuthContext, isSupabaseConfigured, sendPasswordRecovery, signInWithEmail, signOut, signUpWithEmail } from '@/lib/menuya-auth';
+import { type MenuyaAuthContext, ensureBusinessForCurrentUser, getAuthContext, isSupabaseConfigured, sendPasswordRecovery, signInWithEmail, signOut, signUpWithEmail, updatePassword } from '@/lib/menuya-auth';
 
 const queryClient = new QueryClient();
 const money = (value: number) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value);
@@ -48,12 +48,13 @@ function Field({ field, onChange }: { field: FormField; onChange: (name: string,
 function Modal({ title, close, children }: { title: string; close: () => void; children: ReactNode }) {
   return <div className="modal-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) close(); }}><section className="modal" role="dialog" aria-modal="true" aria-label={title}><header className="modal-head"><div><span className="eyebrow">CLICKOK · DEMO</span><h2>{title}</h2></div><button className="icon-btn" onClick={close} aria-label="Cerrar" data-testid="button-close-modal"><X size={18} /></button></header>{children}</section></div>;
 }
-function AuthPage({ mode, data, onLogin, onRegister, onForgot }: {
-  mode: 'login' | 'register' | 'forgot';
+function AuthPage({ mode, data, onLogin, onRegister, onForgot, onReset }: {
+  mode: 'login' | 'register' | 'forgot' | 'reset';
   data: DemoData;
   onLogin: (email: string, password: string) => Promise<string | null>;
   onRegister: (values: Record<string, string>) => Promise<string | null>;
   onForgot: (email: string) => Promise<string | null>;
+  onReset: (password: string) => Promise<string | null>;
 }) {
   const [, setLocation] = useLocation();
   const [error, setError] = useState('');
@@ -67,7 +68,7 @@ function AuthPage({ mode, data, onLogin, onRegister, onForgot }: {
     setError('');
     setDone(false);
     const values = Object.fromEntries(new FormData(e.currentTarget).entries()) as Record<string, string>;
-    if (mode === 'register' && values.password !== values.confirmPassword) {
+    if ((mode === 'register' || mode === 'reset') && values.password !== values.confirmPassword) {
       setError('Las contraseñas no coinciden.');
       return;
     }
@@ -77,9 +78,10 @@ function AuthPage({ mode, data, onLogin, onRegister, onForgot }: {
         ? await onLogin(values.email, values.password)
         : mode === 'register'
           ? await onRegister(values)
-          : await onForgot(values.email);
+          : mode === 'forgot' ? await onForgot(values.email) : await onReset(values.password);
       if (message) setError(message);
       else if (mode === 'login') setLocation('/app');
+      else if (mode === 'reset') { setDone(true); window.setTimeout(() => setLocation('/login'), 900); }
       else setDone(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No fue posible completar la solicitud. Inténtalo de nuevo.');
@@ -88,21 +90,21 @@ function AuthPage({ mode, data, onLogin, onRegister, onForgot }: {
     }
   };
   return <div className="auth-layout"><aside className="auth-story"><Brand inverse /><div className="story-copy"><span className="eyebrow light">UNA TIENDA PROPIA, EN SERIO</span><h1>Tu negocio<br />merece su<br /><em>propia vitrina.</em></h1><p>Un catálogo que se siente tuyo. Pedidos organizados. Todo en un solo lugar.</p><div className="mini-store-preview"><div className="mini-preview-top"><span className="mini-avatar">{sampleBiz?.nombre.charAt(0) || 'M'}</span><span><b>{sampleBiz?.nombre || 'Tu negocio'}</b><small>Catálogo digital · Tu marca</small></span><ArrowRight size={17} /></div><div className="preview-products"><span /><span /><span /></div><div className="preview-caption">Así podría verse tu tienda</div></div></div><div className="auth-foot">Hecho para el comercio de aquí. <span>MENUYA</span></div></aside>
-    <main className="auth-main"><div className="auth-mobile-brand"><Brand /></div><div className="auth-form-wrap"><span className="eyebrow">{mode === 'register' ? 'EMPIEZA EN MINUTOS' : mode === 'forgot' ? 'RECUPERA EL ACCESO' : 'QUÉ BUENO VERTE'}</span><h2>{mode === 'register' ? 'Abre tu tienda digital' : mode === 'forgot' ? '¿Olvidaste tu clave?' : 'Entra a tu espacio'}</h2><p className="subtle">{mode === 'register' ? 'Crea tu cuenta y registra los datos de tu comercio.' : mode === 'forgot' ? 'Te enviaremos las instrucciones para recuperar tu cuenta.' : 'Ingresa con el correo y la contraseña de tu cuenta.'}</p>
+    <main className="auth-main"><div className="auth-mobile-brand"><Brand /></div><div className="auth-form-wrap"><span className="eyebrow">{mode === 'register' ? 'EMPIEZA EN MINUTOS' : mode === 'forgot' || mode === 'reset' ? 'RECUPERA EL ACCESO' : 'QUÉ BUENO VERTE'}</span><h2>{mode === 'register' ? 'Abre tu tienda digital' : mode === 'forgot' ? '¿Olvidaste tu clave?' : mode === 'reset' ? 'Crea una nueva clave' : 'Entra a tu espacio'}</h2><p className="subtle">{mode === 'register' ? 'Crea tu cuenta y registra los datos de tu comercio.' : mode === 'forgot' ? 'Te enviaremos las instrucciones para recuperar tu cuenta.' : mode === 'reset' ? 'Elige una contraseña nueva para tu cuenta.' : 'Ingresa con el correo y la contraseña de tu cuenta.'}</p>
       {error && <div className="notice notice-error" role="alert">{error}</div>}
-      {done && <div className="notice notice-success" role="status">{mode === 'forgot' ? 'Si el correo está registrado, recibirás instrucciones para recuperar el acceso.' : 'Tu cuenta fue creada. Revisa tu correo para confirmar la dirección; después inicia sesión y MENUYA terminará de registrar tu comercio.'}</div>}
+      {done && <div className="notice notice-success" role="status">{mode === 'forgot' ? 'Si el correo está registrado, recibirás instrucciones para recuperar el acceso.' : mode === 'reset' ? 'Tu contraseña fue actualizada. Ya puedes iniciar sesión.' : 'Tu cuenta fue creada. Revisa tu correo para confirmar la dirección; después inicia sesión y MENUYA terminará de registrar tu comercio.'}</div>}
       <form onSubmit={submit} className="form-stack">
         {mode === 'register' && <><Field field={{ name: 'nombre', label: 'Tu nombre', required: true }} onChange={() => {}} /><Field field={{ name: 'negocio', label: 'Nombre del negocio', required: true }} onChange={() => {}} /><div className="field"><span>Sector *</span><select name="sector" required data-testid="select-sector">{['Restaurante', 'Ropa', 'Barbería', 'Tecnología', 'Panadería', 'Servicios', 'Otro'].map(x => <option key={x}>{x}</option>)}</select></div><Field field={{ name: 'telefono', label: 'Teléfono', type: 'tel', required: true }} onChange={() => {}} /></>}
         <Field field={{ name: 'email', label: 'Correo electrónico', type: 'email', required: true }} onChange={() => {}} />
-        {mode !== 'forgot' && <><label className="field"><span>Contraseña *</span><div className="password-wrap"><input name="password" required minLength={8} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} type={showPassword ? 'text' : 'password'} data-testid="input-password" /><button type="button" className="password-eye" onClick={() => setShowPassword(!showPassword)} aria-label="Mostrar u ocultar contraseña">{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div></label>
-          {mode === 'register' && <Field field={{ name: 'confirmPassword', label: 'Confirma tu contraseña', type: 'password', required: true }} onChange={() => {}} />}
+        {mode !== 'forgot' && <><label className="field"><span>{mode === 'reset' ? 'Nueva contraseña *' : 'Contraseña *'}</span><div className="password-wrap"><input name="password" required minLength={8} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} type={showPassword ? 'text' : 'password'} data-testid="input-password" /><button type="button" className="password-eye" onClick={() => setShowPassword(!showPassword)} aria-label="Mostrar u ocultar contraseña">{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div></label>
+          {(mode === 'register' || mode === 'reset') && <Field field={{ name: 'confirmPassword', label: 'Confirma tu contraseña', type: 'password', required: true }} onChange={() => {}} />}
         </>}
         {mode === 'register' && <p className="fine-print">Tu comercio se crea inicialmente privado y pendiente de revisión. No se publicará automáticamente.</p>}
-        <Button type="submit" className="full-btn" disabled={busy} testId="button-auth-submit">{busy ? 'Procesando...' : mode === 'register' ? 'Crear mi cuenta y tienda' : mode === 'forgot' ? 'Enviar instrucciones' : 'Entrar'} <ArrowRight size={16} /></Button>
+        <Button type="submit" className="full-btn" disabled={busy} testId="button-auth-submit">{busy ? 'Procesando...' : mode === 'register' ? 'Crear mi cuenta y tienda' : mode === 'forgot' ? 'Enviar instrucciones' : mode === 'reset' ? 'Actualizar contraseña' : 'Entrar'} <ArrowRight size={16} /></Button>
       </form>
       {mode === 'login' && <Link href="/forgot-password" className="text-link">¿Olvidaste tu contraseña?</Link>}
-      {mode !== 'forgot' && <p className="auth-switch">{mode === 'register' ? '¿Ya tienes cuenta?' : '¿Tienes un comercio?'} <Link href={mode === 'register' ? '/login' : '/register'}>{mode === 'register' ? 'Inicia sesión' : 'Crea tu tienda'}</Link></p>}
-      {mode === 'forgot' && <Link href="/login" className="back-link"><ArrowLeft size={15} /> Volver a iniciar sesión</Link>}
+      {(mode === 'login' || mode === 'register') && <p className="auth-switch">{mode === 'register' ? '¿Ya tienes cuenta?' : '¿Tienes un comercio?'} <Link href={mode === 'register' ? '/login' : '/register'}>{mode === 'register' ? 'Inicia sesión' : 'Crea tu tienda'}</Link></p>}
+      {(mode === 'forgot' || mode === 'reset') && <Link href="/login" className="back-link"><ArrowLeft size={15} /> Volver a iniciar sesión</Link>}
       <p className="security-note"><ShieldCheck size={14} /> Acceso protegido por Supabase Auth.</p>
     </div></main></div>;
 }
@@ -558,6 +560,12 @@ function Router() {
     }
   };
 
+  const reset = async (password: string): Promise<string | null> => {
+    if (!isSupabaseConfigured) return 'La conexión de MENUYA aún no está configurada en este entorno.';
+    try { await updatePassword(password); return null; }
+    catch (error) { return error instanceof Error ? error.message : 'No fue posible actualizar la contraseña.'; }
+  };
+
   const forgot = async (email: string): Promise<string | null> => {
     if (!isSupabaseConfigured) return 'La conexión de MENUYA aún no está configurada en este entorno.';
     try { await sendPasswordRecovery(email); return null; }
@@ -586,7 +594,7 @@ function Router() {
 
   return <RoutedErrorBoundary><Switch>
     <Route path="/"><Landing data={data} /></Route>
-    <Route path="/login"><AuthPage mode="login" data={data} onLogin={login} onRegister={register} onForgot={forgot} /></Route>
+    <Route path="/login"><AuthPage mode="login" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
     <Route path="/register"><AuthPage mode="register" data={data} onLogin={login} onRegister={register} onForgot={forgot} /></Route>
     <Route path="/forgot-password"><AuthPage mode="forgot" data={data} onLogin={login} onRegister={register} onForgot={forgot} /></Route>
     <Route path="/admin">{protectedRoute()}</Route>
