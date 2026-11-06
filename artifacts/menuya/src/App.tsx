@@ -533,12 +533,13 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
   useEffect(() => { void loadRemoteData(); }, [business?.id]);
   const updateRemote = (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => {
     if (!remoteData || !business?.id) return;
-    const next = fn(remoteData);
+    const previous = remoteData;
+    const next = fn(previous);
     setRemoteData(next);
     setSavingError('');
     void (async () => {
       try {
-        const oldCats = new Map(remoteData.categories.map(x=>[x.id,x]));
+        const oldCats = new Map(previous.categories.map(x=>[x.id,x]));
         const newCats = new Map(next.categories.map(x=>[x.id,x]));
         for (const [id, item] of newCats) {
           const payload = {business_id:business.id,name:item.nombre,sort_order:item.orden,is_active:item.activo};
@@ -551,7 +552,7 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
           const result=await supabase.from('categories').delete().eq('id',id).eq('business_id',business.id);
           if(result.error) throw result.error;
         }
-        const oldProducts = new Map(remoteData.products.map(x=>[x.id,x]));
+        const oldProducts = new Map(previous.products.map(x=>[x.id,x]));
         const newProducts = new Map(next.products.map(x=>[x.id,x]));
         for (const [id, item] of newProducts) {
           const payload = {business_id:business.id,category_id:item.category_id || null,name:item.nombre,description:item.descripcion,price:item.precio,previous_price:item.precio_anterior ?? null,image_url:item.imagen ?? null,is_active:item.activo,is_available:item.disponible,is_featured:item.destacado,stock:item.stock ?? 0};
@@ -563,6 +564,36 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
         for (const id of oldProducts.keys()) if (!newProducts.has(id)) {
           const result=await supabase.from('products').delete().eq('id',id).eq('business_id',business.id);
           if(result.error) throw result.error;
+        }
+
+        const oldSettings = previous.settings.find(x=>x.business_id===business.id);
+        const nextSettings = next.settings.find(x=>x.business_id===business.id);
+        if (nextSettings && JSON.stringify(oldSettings) !== JSON.stringify(nextSettings)) {
+          const result = await supabase.from('store_settings').upsert({
+            business_id:business.id,
+            cover_url:nextSettings.portada || null,
+            logo_url:nextSettings.logo || null,
+            brand_color:nextSettings.color,
+            font_family:nextSettings.fuente,
+            contact_text:nextSettings.contacto || null,
+            social_links:nextSettings.redes || null,
+            payment_methods:nextSettings.pagos ? nextSettings.pagos.split(',').map(x=>x.trim()).filter(Boolean) : [],
+            delivery_info:nextSettings.entrega || null,
+            is_published:nextSettings.publicado,
+            tagline:nextSettings.tagline || null,
+          }, {onConflict:'business_id'});
+          if (result.error) throw result.error;
+          const businessUpdate = await supabase.from('businesses')
+            .update({name:next.businesses.find(x=>x.id===business.id)?.nombre || business.name,is_published:nextSettings.publicado})
+            .eq('id',business.id);
+          if (businessUpdate.error) throw businessUpdate.error;
+        } else {
+          const oldBusiness = previous.businesses.find(x=>x.id===business.id);
+          const nextBusiness = next.businesses.find(x=>x.id===business.id);
+          if (oldBusiness && nextBusiness && oldBusiness.nombre !== nextBusiness.nombre) {
+            const result = await supabase.from('businesses').update({name:nextBusiness.nombre}).eq('id',business.id);
+            if (result.error) throw result.error;
+          }
         }
         await loadRemoteData();
       } catch (error) {
