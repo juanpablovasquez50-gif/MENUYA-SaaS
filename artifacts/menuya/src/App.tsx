@@ -496,9 +496,7 @@ function PlatformAdminPage({ context, onLogout }: { context: MenuyaAuthContext; 
   const [notice, setNotice] = useState('');
   const load = async () => {
     setLoading(true); setError('');
-    const { data, error: queryError } = await supabase.from('businesses')
-      .select('id,name,slug,business_type,status,is_published,created_at,email,phone')
-      .order('created_at', { ascending: false });
+    const { data, error: queryError } = await supabase.rpc('platform_list_businesses');
     if (queryError) setError(queryError.message);
     else setRows((data || []) as PlatformBusinessRow[]);
     setLoading(false);
