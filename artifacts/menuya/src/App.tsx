@@ -485,6 +485,47 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
   </div>;
 }
 
+type PlatformBusinessRow = { id: string; name: string; slug: string; business_type: string; status: string; is_published: boolean; created_at: string; email: string | null; phone: string | null };
+
+function PlatformAdminPage({ context, onLogout }: { context: MenuyaAuthContext; onLogout: () => void }) {
+  const [rows, setRows] = useState<PlatformBusinessRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [busyId, setBusyId] = useState('');
+  const [filter, setFilter] = useState('pending');
+  const [notice, setNotice] = useState('');
+  const load = async () => {
+    setLoading(true); setError('');
+    const { data, error: queryError } = await supabase.from('businesses')
+      .select('id,name,slug,business_type,status,is_published,created_at,email,phone')
+      .order('created_at', { ascending: false });
+    if (queryError) setError(queryError.message);
+    else setRows((data || []) as PlatformBusinessRow[]);
+    setLoading(false);
+  };
+  useEffect(() => { void load(); }, []);
+  const decide = async (row: PlatformBusinessRow, status: 'active' | 'rejected' | 'suspended') => {
+    const verb = status === 'active' ? 'aprobar' : status === 'rejected' ? 'rechazar' : 'suspender';
+    if (!window.confirm(`¿Confirmas ${verb} el comercio “${row.name}”?`)) return;
+    setBusyId(row.id); setError(''); setNotice('');
+    const { error: rpcError } = await supabase.rpc('platform_set_business_status', {
+      p_business_id: row.id, p_status: status, p_note: null,
+    });
+    if (rpcError) setError(rpcError.message);
+    else { setNotice(`Comercio ${status === 'active' ? 'aprobado' : status === 'rejected' ? 'rechazado' : 'suspendido'} correctamente.`); await load(); }
+    setBusyId('');
+  };
+  const visible = rows.filter(row => filter === 'all' || row.status === filter);
+  return <div className="admin-shell">
+    <header className="page-head"><div><span className="eyebrow">MENUYA · SUPERADMIN</span><h1>Panel de plataforma</h1><p className="subtle">Gestión central de comercios y solicitudes de acceso.</p></div><div className="page-actions"><Button kind="outline" onClick={() => void load()}><Activity size={15}/> Actualizar</Button><Button kind="ghost" onClick={onLogout}><LogOut size={15}/> Salir</Button></div></header>
+    <div className="metrics-grid"><Metric label="Comercios registrados" value={String(rows.length)} note="Total en la plataforma" icon={Store}/><Metric label="Pendientes" value={String(rows.filter(x=>x.status==='pending').length)} note="Esperan aprobación" icon={ClipboardList}/><Metric label="Activos" value={String(rows.filter(x=>x.status==='active').length)} note="Pueden publicar su vitrina" icon={CheckCircle2}/><Metric label="Suspendidos o rechazados" value={String(rows.filter(x=>['suspended','rejected'].includes(x.status)).length)} note="Acceso restringido" icon={ShieldCheck}/></div>
+    {error && <div className="notice notice-error" role="alert">{error}</div>}{notice && <div className="notice notice-success" role="status">{notice}</div>}
+    <section className="panel"><div className="panel-head"><div><span className="eyebrow">CONTROL DE ACCESO</span><h2>Comercios</h2></div><select aria-label="Filtrar comercios" value={filter} onChange={e=>setFilter(e.target.value)}><option value="pending">Pendientes</option><option value="active">Activos</option><option value="rejected">Rechazados</option><option value="suspended">Suspendidos</option><option value="all">Todos</option></select></div>
+    {loading ? <div className="auth-loading"><span className="loader-line"/>Cargando comercios...</div> : visible.length === 0 ? <Empty title="No hay comercios en esta lista" text="Cuando existan solicitudes o comercios, aparecerán aquí."/> : <div className="table-wrap"><table className="data-table"><thead><tr><th>Comercio</th><th>Sector</th><th>Estado</th><th>Registro</th><th>Acciones</th></tr></thead><tbody>{visible.map(row=><tr key={row.id}><td><b>{row.name}</b><small>{row.email || row.phone || row.slug}</small></td><td>{row.business_type}</td><td><Status value={({pending:'pendiente',active:'activo',rejected:'rechazado',suspended:'suspendido'} as Record<string,string>)[row.status] || row.status}/></td><td>{shortDate(row.created_at)}</td><td><div className="table-actions">{row.status!=='active' && <Button kind="soft" disabled={busyId===row.id} onClick={()=>void decide(row,'active')}><Check size={14}/> Aprobar</Button>}{row.status!=='rejected' && <Button kind="ghost" disabled={busyId===row.id} onClick={()=>void decide(row,'rejected')}>Rechazar</Button>}{row.status!=='suspended' && row.status==='active' && <Button kind="ghost" disabled={busyId===row.id} onClick={()=>void decide(row,'suspended')}>Suspender</Button>}</div></td></tr>)}</tbody></table></div>}</section>
+    <div className="platform-note"><ShieldCheck size={16}/><span>Acceso restringido</span><p>Las decisiones se validan en Supabase contra la tabla platform_admins y quedan registradas en la auditoría de plataforma.</p></div>
+  </div>;
+}
+
 function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; onLogout: () => void }) {
   const membership = context.memberships[0];
   const business = membership?.businesses ?? undefined;
@@ -635,7 +676,7 @@ function Router() {
       return () => { mounted = false; };
     }
     getAuthContext()
-      .then(async context => context ? ensureBusinessForCurrentUser() : null)
+      .then(async context => context ? (context.isPlatformAdmin ? context : ensureBusinessForCurrentUser()) : null)
       .then(context => { if (mounted) setRemoteContext(context); })
       .catch(error => { if (mounted) setAuthInitError(error instanceof Error ? error.message : 'No se pudo recuperar la sesión.'); })
       .finally(() => { if (mounted) setAuthLoading(false); });
@@ -723,7 +764,7 @@ function Router() {
     <Route path="/register"><AuthPage mode="register" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
     <Route path="/forgot-password"><AuthPage mode="forgot" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
     <Route path="/reset-password"><AuthPage mode="reset" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
-    <Route path="/admin">{protectedRoute()}</Route>
+    <Route path="/admin">{authLoading ? <div className="auth-loading"><span className="loader-line" />Comprobando acceso...</div> : remoteContext?.isPlatformAdmin ? <PlatformAdminPage context={remoteContext} onLogout={logout} /> : remoteContext ? <div className="auth-form-wrap"><div className="notice notice-error">Esta cuenta no tiene permisos de Superadmin.</div><Button onClick={logout}>Cerrar sesión</Button></div> : protectedRoute()}</Route>
     {adminLinks.slice(1).map(([path]) => <Route key={path} path={path}>{protectedRoute()}</Route>)}
     <Route path="/app">{protectedRoute()}</Route>
     {shopLinks.slice(1).map(([path]) => <Route key={path} path={path}>{protectedRoute()}</Route>)}
