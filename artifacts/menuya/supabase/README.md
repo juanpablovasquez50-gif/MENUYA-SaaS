@@ -31,13 +31,26 @@ La base de datos MENUYA ya existente contiene las tablas, índices, restriccione
 
 Las políticas RLS son la autoridad final. La interfaz debe ocultar o deshabilitar acciones según el rol, pero nunca sustituye las políticas de base de datos.
 
+## Estado de validación (6 de noviembre de 2026)
+
+Migraciones 001–003 y el ajuste de permisos fueron aplicados al proyecto MENUYA existente. No se creó un proyecto adicional.
+
+Pruebas ejecutadas con usuarios y comercios sintéticos dentro de transacciones que terminaron en `ROLLBACK`:
+
+- Registro: crea el comercio en estado `pending` y no publicado.
+- Provisión: crea membresía owner, categoría inicial, configuración privada y suscripción pendiente.
+- Idempotencia: dos llamadas de registro del mismo usuario devuelven el mismo comercio.
+- Matriz cashier: deniega catálogo e inventario y permite los ámbitos de pedidos y caja.
+- Aislamiento RLS: el cajero ve el producto de su comercio y no ve el producto del otro comercio.
+- Limpieza: tras las pruebas, usuarios, comercios, membresías, productos y pedidos permanecen en cero.
+
+El asesor de seguridad mantiene una advertencia sobre `register_business` por ser `SECURITY DEFINER`; es intencional para permitir el alta autenticada y debe seguir bajo revisión. El asesor de rendimiento reporta índices aún no utilizados porque la base está sin carga real; no eliminarlos por ese motivo.
+
 ## Validación pendiente
 
-- Probar registro, confirmación de correo, login y recuperación de contraseña con cuentas autorizadas.
-- Verificar que el propietario sólo vea los comercios a los que pertenece.
-- Probar que un rol sin permiso no pueda escribir en las tablas restringidas.
-- Probar que un usuario de otro comercio no pueda leer ni modificar registros ajenos.
-- Conectar los módulos de productos, pedidos, clientes, inventario, ventas y editor a consultas reales. En esta etapa esos módulos aún no están migrados desde la demo/localStorage.
-- Ejecutar typecheck y build; revisar el PR antes de cualquier merge o despliegue.
+- Probar confirmación real de correo, login y recuperación de contraseña desde la interfaz.
+- Ejecutar una prueba de escritura denegada para cada rol y tabla sensible.
+- Migrar productos, pedidos, clientes, inventario, ventas y editor desde demo/localStorage a consultas reales.
+- Revisar el PR antes de cualquier merge o despliegue.
 
 No se debe insertar información ficticia en cuentas reales ni desplegar Render o modificar `main` sin aprobación expresa.
