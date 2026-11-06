@@ -9,14 +9,14 @@ export type MenuyaAuthContext = {
     business_id: string;
     role: string;
     status: string;
-    businesses: {
+    businesses: Array<{
       id: string;
       name: string;
       slug: string;
       business_type: string;
       status: string;
       is_published: boolean;
-    } | null;
+    }> | null;
   }>;
   isPlatformAdmin: boolean;
 };
@@ -153,3 +153,5 @@ export async function updatePassword(password: string) {
   const { error } = await supabase.auth.updateUser({ password });
   if (error) throw error;
 }
+
+export { isSupabaseConfigured };
