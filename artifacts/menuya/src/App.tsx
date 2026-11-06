@@ -9,6 +9,8 @@ import NotFound from '@/pages/not-found';
 import { Link, Route, Switch, Router as WouterRouter, useLocation, useParams } from 'wouter';
 import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BarChart3, Bell, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, ClipboardList, Clock3, CreditCard, ExternalLink, Eye, EyeOff, LayoutDashboard, LogOut, Menu, MoreHorizontal, Package, Pencil, Plus, Search, Settings, ShieldCheck, ShoppingBag, ShoppingCart, Store, Tag, Trash2, TrendingUp, Users, X, Zap } from 'lucide-react';
 import { type AuditLog, type Business, type CatalogEvent, type Category, type Customer, type DemoData, type Order, type OrderStatus, type Plan, type Product, type ProductChoice, repository } from '@/lib/menuya-data';
+import { type MenuyaAuthContext, ensureBusinessForCurrentUser, getAuthContext, isSupabaseConfigured, sendPasswordRecovery, signInWithEmail, signOut, signUpWithEmail, updatePassword } from '@/lib/menuya-auth';
+import { supabase } from '@/lib/supabase';
 
 const queryClient = new QueryClient();
 const money = (value: number) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value);
@@ -47,36 +49,66 @@ function Field({ field, onChange }: { field: FormField; onChange: (name: string,
 function Modal({ title, close, children }: { title: string; close: () => void; children: ReactNode }) {
   return <div className="modal-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) close(); }}><section className="modal" role="dialog" aria-modal="true" aria-label={title}><header className="modal-head"><div><span className="eyebrow">CLICKOK · DEMO</span><h2>{title}</h2></div><button className="icon-btn" onClick={close} aria-label="Cerrar" data-testid="button-close-modal"><X size={18} /></button></header>{children}</section></div>;
 }
-function AuthPage({ mode, data, onLogin, onRegister }: { mode: 'login' | 'register' | 'forgot'; data: DemoData; onLogin: (email: string, password: string) => string | null; onRegister: (values: Record<string, string>) => string | null }) {
+function AuthPage({ mode, data, onLogin, onRegister, onForgot, onReset }: {
+  mode: 'login' | 'register' | 'forgot' | 'reset';
+  data: DemoData;
+  onLogin: (email: string, password: string) => Promise<string | null>;
+  onRegister: (values: Record<string, string>) => Promise<string | null>;
+  onForgot: (email: string) => Promise<string | null>;
+  onReset: (password: string) => Promise<string | null>;
+}) {
   const [, setLocation] = useLocation();
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [sample, setSample] = useState('brasa');
-  const sampleBiz = data.businesses.find(b => b.id === sample);
-  const submit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); setError('');
+  const sampleBiz = data.businesses.find(b => b.id === 'brasa');
+  const submit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (busy) return;
+    setError('');
+    setDone(false);
     const values = Object.fromEntries(new FormData(e.currentTarget).entries()) as Record<string, string>;
-    const message = mode === 'login' ? onLogin(values.email, values.password) : mode === 'register' ? onRegister(values) : null;
-    if (message) setError(message); else if (mode === 'forgot') setDone(true); else setLocation(mode === 'login' ? (values.email === 'admin@menuya.com' ? '/admin' : '/app') : '/login');
+    if ((mode === 'register' || mode === 'reset') && values.password !== values.confirmPassword) {
+      setError('Las contraseñas no coinciden.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const message = mode === 'login'
+        ? await onLogin(values.email, values.password)
+        : mode === 'register'
+          ? await onRegister(values)
+          : mode === 'forgot' ? await onForgot(values.email) : await onReset(values.password);
+      if (message) setError(message);
+      else if (mode === 'login') setLocation('/app');
+      else if (mode === 'reset') { setDone(true); window.setTimeout(() => setLocation('/login'), 900); }
+      else setDone(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No fue posible completar la solicitud. Inténtalo de nuevo.');
+    } finally {
+      setBusy(false);
+    }
   };
-  return <div className="auth-layout"><aside className="auth-story"><Brand inverse /><div className="story-copy"><span className="eyebrow light">UNA TIENDA PROPIA, EN SERIO</span><h1>Tu negocio<br />merece su<br /><em>propia vitrina.</em></h1><p>Un catálogo que se siente tuyo. Pedidos organizados. Todo en un solo lugar.</p><div className="mini-store-preview"><div className="mini-preview-top"><span className="mini-avatar">{sampleBiz?.nombre.charAt(0)}</span><span><b>{sampleBiz?.nombre}</b><small>Catálogo digital · Abierto</small></span><ArrowRight size={17} /></div><div className="preview-products"><span /><span /><span /></div><div className="preview-caption">Así podría verse tu tienda</div></div></div><div className="auth-foot">Hecho para el comercio de aquí. <span>CLICKOK</span></div></aside>
-    <main className="auth-main"><div className="auth-mobile-brand"><Brand /></div><div className="auth-form-wrap"><span className="eyebrow">{mode === 'register' ? 'EMPIEZA EN MINUTOS' : mode === 'forgot' ? 'RECUPERA EL ACCESO' : 'QUÉ BUENO VERTE'}</span><h2>{mode === 'register' ? 'Abre tu tienda digital' : mode === 'forgot' ? '¿Olvidaste tu clave?' : 'Entra a tu espacio'}</h2><p className="subtle">{mode === 'register' ? 'Cuéntanos un poco de tu negocio.' : mode === 'forgot' ? 'Te enviaremos las instrucciones para recuperar tu cuenta.' : 'Tu negocio sigue justo donde lo dejaste.'}</p>
-      {error && <div className="notice notice-error" role="alert">{error}</div>}{done && <div className="notice notice-success">Si el correo existe, recibirás instrucciones para continuar.</div>}
+  return <div className="auth-layout"><aside className="auth-story"><Brand inverse /><div className="story-copy"><span className="eyebrow light">UNA TIENDA PROPIA, EN SERIO</span><h1>Tu negocio<br />merece su<br /><em>propia vitrina.</em></h1><p>Un catálogo que se siente tuyo. Pedidos organizados. Todo en un solo lugar.</p><div className="mini-store-preview"><div className="mini-preview-top"><span className="mini-avatar">{sampleBiz?.nombre.charAt(0) || 'M'}</span><span><b>{sampleBiz?.nombre || 'Tu negocio'}</b><small>Catálogo digital · Tu marca</small></span><ArrowRight size={17} /></div><div className="preview-products"><span /><span /><span /></div><div className="preview-caption">Así podría verse tu tienda</div></div></div><div className="auth-foot">Hecho para el comercio de aquí. <span>MENUYA</span></div></aside>
+    <main className="auth-main"><div className="auth-mobile-brand"><Brand /></div><div className="auth-form-wrap"><span className="eyebrow">{mode === 'register' ? 'EMPIEZA EN MINUTOS' : mode === 'forgot' || mode === 'reset' ? 'RECUPERA EL ACCESO' : 'QUÉ BUENO VERTE'}</span><h2>{mode === 'register' ? 'Abre tu tienda digital' : mode === 'forgot' ? '¿Olvidaste tu clave?' : mode === 'reset' ? 'Crea una nueva clave' : 'Entra a tu espacio'}</h2><p className="subtle">{mode === 'register' ? 'Crea tu cuenta y registra los datos de tu comercio.' : mode === 'forgot' ? 'Te enviaremos las instrucciones para recuperar tu cuenta.' : mode === 'reset' ? 'Elige una contraseña nueva para tu cuenta.' : 'Ingresa con el correo y la contraseña de tu cuenta.'}</p>
+      {error && <div className="notice notice-error" role="alert">{error}</div>}
+      {done && <div className="notice notice-success" role="status">{mode === 'forgot' ? 'Si el correo está registrado, recibirás instrucciones para recuperar el acceso.' : mode === 'reset' ? 'Tu contraseña fue actualizada. Ya puedes iniciar sesión.' : 'Tu cuenta fue creada. Revisa tu correo para confirmar la dirección; después inicia sesión y MENUYA terminará de registrar tu comercio.'}</div>}
       <form onSubmit={submit} className="form-stack">
-        {mode === 'register' && <><Field field={{ name: 'nombre', label: 'Tu nombre', required: true }} onChange={() => {}} /><Field field={{ name: 'negocio', label: 'Nombre del negocio', required: true }} onChange={() => {}} /><div className="field"><span>Sector</span><select name="sector" required data-testid="select-sector">{['Restaurante', 'Ropa', 'Barbería', 'Tecnología', 'Panadería', 'Otro'].map(x => <option key={x}>{x}</option>)}</select></div><Field field={{ name: 'telefono', label: 'Teléfono', required: true }} onChange={() => {}} /></>}
-        <Field field={{ name: 'email', label: 'Correo electrónico', type: 'email', required: true }} onChange={() => {}} />
-        {mode !== 'forgot' && <label className="field"><span>Contraseña</span><div className="password-wrap"><input name="password" required type={showPassword ? 'text' : 'password'} data-testid="input-password" /><button type="button" className="password-eye" onClick={() => setShowPassword(!showPassword)} aria-label="Mostrar u ocultar contraseña">{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div></label>}
-        {mode === 'register' && <p className="fine-print">La aprobación de comercios está configurada en modo <b>{data.platform.approval}</b>. Esta demo guarda la información solo en este navegador.</p>}
-        <Button type="submit" className="full-btn" testId="button-auth-submit">{mode === 'register' ? 'Crear mi tienda' : mode === 'forgot' ? 'Enviar instrucciones' : 'Entrar'} <ArrowRight size={16} /></Button>
+        {mode === 'register' && <><Field field={{ name: 'nombre', label: 'Tu nombre', required: true }} onChange={() => {}} /><Field field={{ name: 'negocio', label: 'Nombre del negocio', required: true }} onChange={() => {}} /><div className="field"><span>Sector *</span><select name="sector" required data-testid="select-sector">{['Restaurante', 'Ropa', 'Barbería', 'Tecnología', 'Panadería', 'Servicios', 'Otro'].map(x => <option key={x}>{x}</option>)}</select></div><Field field={{ name: 'telefono', label: 'Teléfono', type: 'tel', required: true }} onChange={() => {}} /></>}
+        {mode !== 'reset' && <Field field={{ name: 'email', label: 'Correo electrónico', type: 'email', required: true }} onChange={() => {}} />}
+        {mode !== 'forgot' && <><label className="field"><span>{mode === 'reset' ? 'Nueva contraseña *' : 'Contraseña *'}</span><div className="password-wrap"><input name="password" required minLength={8} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} type={showPassword ? 'text' : 'password'} data-testid="input-password" /><button type="button" className="password-eye" onClick={() => setShowPassword(!showPassword)} aria-label="Mostrar u ocultar contraseña">{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div></label>
+          {(mode === 'register' || mode === 'reset') && <Field field={{ name: 'confirmPassword', label: 'Confirma tu contraseña', type: 'password', required: true }} onChange={() => {}} />}
+        </>}
+        {mode === 'register' && <p className="fine-print">Tu comercio se crea inicialmente privado y pendiente de revisión. No se publicará automáticamente.</p>}
+        <Button type="submit" className="full-btn" disabled={busy} testId="button-auth-submit">{busy ? 'Procesando...' : mode === 'register' ? 'Crear mi cuenta y tienda' : mode === 'forgot' ? 'Enviar instrucciones' : mode === 'reset' ? 'Actualizar contraseña' : 'Entrar'} <ArrowRight size={16} /></Button>
       </form>
-      {mode === 'login' && <><div className="auth-divider"><span>o prueba la demo</span></div><div className="sample-login"><div className="field"><span>Comercio de muestra</span><select value={sample} onChange={e => setSample(e.target.value)} data-testid="select-demo-business">{data.businesses.filter(b => b.estado === 'activo').map(b => <option key={b.id} value={b.id}>{b.nombre}</option>)}</select></div><Button kind="soft" className="full-btn" onClick={() => { const user = data.users.find(u => u.id === sampleBiz?.owner_id); if (user) onLogin(user.email, user.password); setLocation('/app'); }} testId="button-demo-business">Entrar a {sampleBiz?.nombre} <ArrowRight size={16} /></Button></div><p className="demo-creds">Admin demo: <b>admin@menuya.com</b> · <b>MenuyaDemo2026!</b></p><Link href="/forgot-password" className="text-link">¿Olvidaste tu contraseña?</Link></>}
-      {mode !== 'forgot' && <p className="auth-switch">{mode === 'register' ? '¿Ya tienes cuenta?' : '¿Tienes un comercio?' } <Link href={mode === 'register' ? '/login' : '/register'}>{mode === 'register' ? 'Inicia sesión' : 'Crea tu tienda'}</Link></p>}
-      {mode === 'forgot' && <Link href="/login" className="back-link"><ArrowLeft size={15} /> Volver a iniciar sesión</Link>}
-      <p className="security-note"><ShieldCheck size={14} /> Acceso demostrativo. No es seguro ni multiusuario de producción.</p>
+      {mode === 'login' && <Link href="/forgot-password" className="text-link">¿Olvidaste tu contraseña?</Link>}
+      {(mode === 'login' || mode === 'register') && <p className="auth-switch">{mode === 'register' ? '¿Ya tienes cuenta?' : '¿Tienes un comercio?'} <Link href={mode === 'register' ? '/login' : '/register'}>{mode === 'register' ? 'Inicia sesión' : 'Crea tu tienda'}</Link></p>}
+      {(mode === 'forgot' || mode === 'reset') && <Link href="/login" className="back-link"><ArrowLeft size={15} /> Volver a iniciar sesión</Link>}
+      <p className="security-note"><ShieldCheck size={14} /> Acceso protegido por Supabase Auth.</p>
     </div></main></div>;
 }
-
 function Landing({ data }: { data: DemoData }) {
   return <div className="landing"><header className="landing-nav"><Brand /><nav><a href="#como-funciona">Cómo funciona</a><a href="#negocios">Para tu negocio</a></nav><div className="landing-actions"><Link href="/login" className="nav-login">Iniciar sesión</Link><Link href="/register" className="btn btn-solid" data-testid="link-create-store">Crear mi tienda <ArrowRight size={15} /></Link></div></header>
     <section className="hero"><div className="hero-copy"><span className="eyebrow"><i className="eyebrow-dot" /> TU NEGOCIO, EN SU PROPIO LUGAR</span><h1>Una tienda digital<br />que <em>sí se siente tuya.</em></h1><p>Publica tu catálogo, recibe pedidos y enfócate en lo que haces mejor. Sin enredos. Sin comisiones por venta.</p><div className="hero-ctas"><Link href="/register" className="btn btn-solid btn-large" data-testid="link-start-free">Abre tu tienda gratis <ArrowRight size={17} /></Link><Link href="/brasa" className="hero-secondary">Mira una tienda de ejemplo <ArrowRight size={15} /></Link></div><div className="hero-proof"><div className="proof-avatars"><b>I</b><b>H</b><b>M</b></div><span>Negocios locales, más cerca de sus clientes</span></div></div>
@@ -134,11 +166,18 @@ function MerchantPage({ path, data, business, update }: { path: string; data: De
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [modal, setModal] = useState<{ title: string; fields: FormField[]; save: (v: Record<string, string | boolean>) => void } | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [draftStoreColor, setDraftStoreColor] = useState('');
   const cats = data.categories.filter(c => c.business_id === business.id).sort((a, b) => a.orden - b.orden);
   const products = data.products.filter(p => p.business_id === business.id);
   const orders = data.orders.filter(o => o.business_id === business.id).sort((a, b) => b.created_at.localeCompare(a.created_at));
   const customers = data.customers.filter(c => c.business_id === business.id);
   const settings = data.settings.find(s => s.business_id === business.id)!;
+  useEffect(() => { setDraftStoreColor(settings.color); }, [settings.color, business.id]);
+  const previewStoreColor = draftStoreColor || settings.color;
+  const commitStoreColor = () => {
+    if (previewStoreColor === settings.color) return;
+    update(d => ({ ...d, settings: d.settings.map(item => item.business_id === business.id ? { ...item, color: previewStoreColor } : item) }), 'Color actualizado', business.nombre);
+  };
   const subscription = data.subscriptions.find(s => s.business_id === business.id);
   const plan = data.plans.find(p => p.id === subscription?.plan_id);
   const productLimit = plan?.max_productos ?? 15;
@@ -216,7 +255,7 @@ function MerchantPage({ path, data, business, update }: { path: string; data: De
     {selectedCustomer && <CustomerHistoryModal customer={selectedCustomer} orders={orders.filter(o => o.customer_id === selectedCustomer.id)} close={() => setSelectedCustomer(null)} onSelectOrder={order => { setSelectedCustomer(null); setSelectedOrder(order); }} />}
     {selectedOrder && <OrderModal order={selectedOrder} data={data} close={() => setSelectedOrder(null)} update={update} />}
   </>;
-  if (path === '/app/editor') return <><PageTitle eyebrow="LA PRIMERA IMPRESIÓN ES TUYA" title="Editor de tienda" description="Ajusta los detalles de tu vitrina y publícala a tu manera." action={<Link href={`/${business.slug}`} target="_blank" className="btn btn-outline"><Eye size={15} /> Vista previa</Link>} /><div className="editor-layout"><section className="panel editor-form"><div className="panel-head"><div><span className="eyebrow">IDENTIDAD DE TU TIENDA</span><h2>Hazla reconocible</h2></div><Pencil size={17} /></div><div className="form-stack"><label className="field"><span>Nombre del negocio</span><input defaultValue={business.nombre} onBlur={e => update(d => ({ ...d, businesses: d.businesses.map(b => b.id === business.id ? { ...b, nombre: e.target.value } : b) }), 'Nombre de tienda guardado', business.nombre)} data-testid="input-store-name" /></label><label className="field"><span>Frase de presentación</span><input defaultValue={settings.tagline} onBlur={e => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, tagline: e.target.value } : s) }), 'Presentación guardada', business.nombre)} data-testid="input-store-tagline" /></label><label className="field"><span>Color principal</span><div className="color-field"><input type="color" defaultValue={settings.color} onChange={e => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, color: e.target.value } : s) }), 'Color actualizado', business.nombre)} data-testid="input-store-color" /><span>{settings.color}</span><div className="color-swatch" style={{ backgroundColor: settings.color }} /></div></label><label className="field"><span>Fuente</span><select defaultValue={settings.fuente} onChange={e => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, fuente: e.target.value } : s) }), 'Tipografía actualizada', business.nombre)}><option>Manrope</option><option>DM Sans</option><option>Georgia</option></select></label><label className="field"><span>Imagen de portada (URL opcional)</span><input defaultValue={settings.portada} placeholder="https://..." onBlur={e => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, portada: e.target.value } : s) }), 'Portada actualizada', business.nombre)} /></label><div className="publish-row"><div><b>Publicar mi tienda</b><small>{settings.publicado ? 'Tu tienda está visible para todos.' : 'Tu tienda está oculta.'}</small></div><button className={`toggle ${settings.publicado ? 'toggle-on' : ''}`} onClick={() => { update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, publicado: !s.publicado } : s) }), settings.publicado ? 'Tienda despublicada' : 'Tienda publicada', business.nombre); }} aria-label="Cambiar publicación" data-testid="toggle-store-published"><i /></button></div></div></section><section className="store-preview-panel"><div className="preview-browser"><div className="browser-bar"><i /><i /><i /><span>clickok.co/{business.slug}</span></div><div className="live-preview" style={{ '--store-color': settings.color } as React.CSSProperties}><div className="live-cover"><span>HECHO PARA TI</span><b>{business.nombre}</b></div><div className="live-brand"><span>{business.nombre.charAt(0)}</span><div><b>{business.nombre}</b><small>{settings.tagline}</small></div></div><div className="live-search">⌕ &nbsp; Busca algo para hoy</div><div className="live-category">{cats.filter(c => c.activo).slice(0, 3).map(c => <span key={c.id}>{c.nombre}</span>)}</div><div className="live-products">{products.slice(0, 2).map(p => <div key={p.id}><span>{p.nombre.charAt(0)}</span><b>{p.nombre}</b><small>{money(p.precio)}</small></div>)}</div></div></div><div className="preview-caption"><span className="live-indicator" /> Vista previa en vivo <span>Los cambios se guardan automáticamente</span></div></section></div></>;
+  if (path === '/app/editor') return <><PageTitle eyebrow="LA PRIMERA IMPRESIÓN ES TUYA" title="Editor de tienda" description="Ajusta los detalles de tu vitrina y publícala a tu manera." action={<Link href={`/${business.slug}`} target="_blank" className="btn btn-outline"><Eye size={15} /> Vista previa</Link>} /><div className="editor-layout"><section className="panel editor-form"><div className="panel-head"><div><span className="eyebrow">IDENTIDAD DE TU TIENDA</span><h2>Hazla reconocible</h2></div><Pencil size={17} /></div><div className="form-stack"><label className="field"><span>Nombre del negocio</span><input defaultValue={business.nombre} onBlur={e => update(d => ({ ...d, businesses: d.businesses.map(b => b.id === business.id ? { ...b, nombre: e.target.value } : b) }), 'Nombre de tienda guardado', business.nombre)} data-testid="input-store-name" /></label><label className="field"><span>Frase de presentación</span><input defaultValue={settings.tagline} onBlur={e => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, tagline: e.target.value } : s) }), 'Presentación guardada', business.nombre)} data-testid="input-store-tagline" /></label><label className="field"><span>Color principal</span><div className="color-field"><input type="color" value={previewStoreColor} onChange={e => setDraftStoreColor(e.target.value)} onBlur={commitStoreColor} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); commitStoreColor(); } }} data-testid="input-store-color" /><span>{previewStoreColor.toUpperCase()}</span><div className="color-swatch" style={{ backgroundColor: previewStoreColor }} /></div></label><label className="field"><span>Fuente</span><select defaultValue={settings.fuente} onChange={e => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, fuente: e.target.value } : s) }), 'Tipografía actualizada', business.nombre)}><option>Manrope</option><option>DM Sans</option><option>Georgia</option></select></label><label className="field"><span>Imagen de portada (URL opcional)</span><input defaultValue={settings.portada} placeholder="https://..." onBlur={e => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, portada: e.target.value } : s) }), 'Portada actualizada', business.nombre)} /></label><div className="publish-row"><div><b>Publicar mi tienda</b><small>{settings.publicado ? 'Tu tienda está visible para todos.' : 'Tu tienda está oculta.'}</small></div><button className={`toggle ${settings.publicado ? 'toggle-on' : ''}`} onClick={() => { update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, publicado: !s.publicado } : s) }), settings.publicado ? 'Tienda despublicada' : 'Tienda publicada', business.nombre); }} aria-label="Cambiar publicación" data-testid="toggle-store-published"><i /></button></div></div></section><section className="store-preview-panel"><div className="preview-browser"><div className="browser-bar"><i /><i /><i /><span>clickok.co/{business.slug}</span></div><div className="live-preview" style={{ '--store-color': previewStoreColor } as React.CSSProperties}><div className="live-cover"><span>HECHO PARA TI</span><b>{business.nombre}</b></div><div className="live-brand"><span>{business.nombre.charAt(0)}</span><div><b>{business.nombre}</b><small>{settings.tagline}</small></div></div><div className="live-search">⌕ &nbsp; Busca algo para hoy</div><div className="live-category">{cats.filter(c => c.activo).slice(0, 3).map(c => <span key={c.id}>{c.nombre}</span>)}</div><div className="live-products">{products.slice(0, 2).map(p => <div key={p.id}><span>{p.nombre.charAt(0)}</span><b>{p.nombre}</b><small>{money(p.precio)}</small></div>)}</div></div></div><div className="preview-caption"><span className="live-indicator" /> Vista previa en vivo <span>Los cambios se guardan automáticamente</span></div></section></div></>;
   if (path === '/app/analytics') {
     const completed = orders.filter(o => o.estado !== 'cancelado');
     const total = completed.reduce((a, o) => a + o.total, 0);
@@ -446,20 +485,207 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
   </div>;
 }
 
+type PlatformBusinessRow = { id: string; name: string; slug: string; business_type: string; status: string; is_published: boolean; created_at: string; email: string | null; phone: string | null };
+
+function PlatformAdminPage({ context, onLogout }: { context: MenuyaAuthContext; onLogout: () => void }) {
+  const [rows, setRows] = useState<PlatformBusinessRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [busyId, setBusyId] = useState('');
+  const [filter, setFilter] = useState('pending');
+  const [notice, setNotice] = useState('');
+  const load = async () => {
+    setLoading(true); setError('');
+    const { data, error: queryError } = await supabase.rpc('platform_list_businesses');
+    if (queryError) setError(queryError.message);
+    else setRows((data || []) as PlatformBusinessRow[]);
+    setLoading(false);
+  };
+  useEffect(() => { void load(); }, []);
+  const decide = async (row: PlatformBusinessRow, status: 'active' | 'rejected' | 'suspended') => {
+    const verb = status === 'active' ? 'aprobar' : status === 'rejected' ? 'rechazar' : 'suspender';
+    if (!window.confirm(`¿Confirmas ${verb} el comercio “${row.name}”?`)) return;
+    setBusyId(row.id); setError(''); setNotice('');
+    const { error: rpcError } = await supabase.rpc('platform_set_business_status', {
+      p_business_id: row.id, p_status: status, p_note: null,
+    });
+    if (rpcError) setError(rpcError.message);
+    else { setNotice(`Comercio ${status === 'active' ? 'aprobado' : status === 'rejected' ? 'rechazado' : 'suspendido'} correctamente.`); await load(); }
+    setBusyId('');
+  };
+  const visible = rows.filter(row => filter === 'all' || row.status === filter);
+  return <div className="admin-shell">
+    <header className="page-head"><div><span className="eyebrow">MENUYA · SUPERADMIN</span><h1>Panel de plataforma</h1><p className="subtle">Gestión central de comercios y solicitudes de acceso.</p></div><div className="page-actions"><Button kind="outline" onClick={() => void load()}><Activity size={15}/> Actualizar</Button><Button kind="ghost" onClick={onLogout}><LogOut size={15}/> Salir</Button></div></header>
+    <div className="metrics-grid"><Metric label="Comercios registrados" value={String(rows.length)} note="Total en la plataforma" icon={Store}/><Metric label="Pendientes" value={String(rows.filter(x=>x.status==='pending').length)} note="Esperan aprobación" icon={ClipboardList}/><Metric label="Activos" value={String(rows.filter(x=>x.status==='active').length)} note="Pueden publicar su vitrina" icon={CheckCircle2}/><Metric label="Suspendidos o rechazados" value={String(rows.filter(x=>['suspended','rejected'].includes(x.status)).length)} note="Acceso restringido" icon={ShieldCheck}/></div>
+    {error && <div className="notice notice-error" role="alert">{error}</div>}{notice && <div className="notice notice-success" role="status">{notice}</div>}
+    <section className="panel"><div className="panel-head"><div><span className="eyebrow">CONTROL DE ACCESO</span><h2>Comercios</h2></div><select aria-label="Filtrar comercios" value={filter} onChange={e=>setFilter(e.target.value)}><option value="pending">Pendientes</option><option value="active">Activos</option><option value="rejected">Rechazados</option><option value="suspended">Suspendidos</option><option value="all">Todos</option></select></div>
+    {loading ? <div className="auth-loading"><span className="loader-line"/>Cargando comercios...</div> : visible.length === 0 ? <Empty title="No hay comercios en esta lista" text="Cuando existan solicitudes o comercios, aparecerán aquí."/> : <div className="table-wrap"><table className="data-table"><thead><tr><th>Comercio</th><th>Sector</th><th>Estado</th><th>Registro</th><th>Acciones</th></tr></thead><tbody>{visible.map(row=><tr key={row.id}><td><b>{row.name}</b><small>{row.email || row.phone || row.slug}</small></td><td>{row.business_type}</td><td><Status value={({pending:'pendiente',active:'activo',rejected:'rechazado',suspended:'suspendido'} as Record<string,string>)[row.status] || row.status}/></td><td>{shortDate(row.created_at)}</td><td><div className="table-actions">{row.status!=='active' && <Button kind="soft" disabled={busyId===row.id} onClick={()=>void decide(row,'active')}><Check size={14}/> Aprobar</Button>}{row.status!=='rejected' && <Button kind="ghost" disabled={busyId===row.id} onClick={()=>void decide(row,'rejected')}>Rechazar</Button>}{row.status!=='suspended' && row.status==='active' && <Button kind="ghost" disabled={busyId===row.id} onClick={()=>void decide(row,'suspended')}>Suspender</Button>}</div></td></tr>)}</tbody></table></div>}</section>
+    <div className="platform-note"><ShieldCheck size={16}/><span>Acceso restringido</span><p>Las decisiones se validan en Supabase contra la tabla platform_admins y quedan registradas en la auditoría de plataforma.</p></div>
+  </div>;
+}
+
+function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; onLogout: () => void }) {
+  const membership = context.memberships[0];
+  const business = membership?.businesses ?? undefined;
+  const [location] = useLocation();
+  const [remoteData, setRemoteData] = useState<DemoData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [savingError, setSavingError] = useState('');
+  const saveQueueRef = React.useRef<Promise<void>>(Promise.resolve());
+  const loadRemoteData = async () => {
+    if (!business?.id) return;
+    setLoading(true); setLoadError('');
+    const [categoryResult, productResult, settingsResult, subscriptionResult] = await Promise.all([
+      supabase.from('categories').select('id,business_id,name,sort_order,is_active').eq('business_id',business.id).order('sort_order'),
+      supabase.from('products').select('id,business_id,category_id,name,description,price,previous_price,image_url,is_active,is_available,is_featured,stock').eq('business_id',business.id).order('created_at',{ascending:false}),
+      supabase.from('store_settings').select('business_id,cover_url,logo_url,brand_color,font_family,contact_text,social_links,payment_methods,delivery_info,is_published,tagline').eq('business_id',business.id).maybeSingle(),
+      supabase.from('subscriptions').select('id,business_id,plan_id,status,starts_at,ends_at,plans(id,name,price,billing_period,max_products,features,is_active)').eq('business_id',business.id).maybeSingle(),
+    ]);
+    const firstError = categoryResult.error || productResult.error || settingsResult.error || subscriptionResult.error;
+    if (firstError) { setLoadError(firstError.message); setLoading(false); return; }
+    const profileName = context.profile?.full_name || String(context.user.user_metadata?.full_name || context.user.email || 'Comercio');
+    const biz = {
+      id: business.id, owner_id: context.user.id, nombre: business.name, slug: business.slug,
+      tipo: business.business_type, telefono: context.profile?.phone || '', estado: ({pending:'pendiente',active:'activo',rejected:'rechazado',suspended:'suspendido'} as Record<string, Business['estado']>)[business.status] || 'pendiente',
+      created_at: new Date().toISOString(),
+    };
+    const categories: Category[] = (categoryResult.data || []).map(c => ({id:c.id,business_id:c.business_id,nombre:c.name,orden:c.sort_order,activo:c.is_active}));
+    const products: Product[] = (productResult.data || []).map(p => ({id:p.id,business_id:p.business_id,category_id:p.category_id || '',nombre:p.name,descripcion:p.description || '',precio:Number(p.price),precio_anterior:p.previous_price ? Number(p.previous_price) : undefined,imagen:p.image_url || undefined,activo:p.is_active,disponible:p.is_available,destacado:p.is_featured,stock:p.stock ?? 0,variantes:[],complementos:[]}));
+    const s = settingsResult.data;
+    const settings: StoreSettings = {
+      business_id:business.id,portada:s?.cover_url || '',logo:s?.logo_url || '',color:s?.brand_color || '#7352e8',
+      fuente:s?.font_family || 'Manrope',contacto:s?.contact_text || biz.telefono,redes:typeof s?.social_links === 'string' ? s.social_links : '',
+      pagos:Array.isArray(s?.payment_methods) ? s.payment_methods.join(', ') : 'Efectivo, Nequi, transferencia',
+      entrega:s?.delivery_info || 'Domicilio y recoger en tienda',publicado:Boolean(s?.is_published && business.is_published),tagline:s?.tagline || 'Tu negocio, en su propio lugar.',
+    };
+    const sub = subscriptionResult.data as any;
+    const planRow = sub?.plans;
+    const plan: Plan = planRow ? {id:planRow.id,nombre:planRow.name,precio:Number(planRow.price),periodicidad:planRow.billing_period,max_productos:planRow.max_products,funciones:planRow.features || [],activo:planRow.is_active} : {id:'default',nombre:'Plan inicial',precio:0,periodicidad:'mes',max_productos:15,funciones:[],activo:true};
+    const data: DemoData = {
+      users:[{id:context.user.id,nombre:profileName,email:context.user.email || '',password:'',role:'owner',business_ids:[business.id]}],
+      businesses:[biz],categories,products,customers:[],orders:[],plans:[plan],
+      subscriptions:sub ? [{id:sub.id,business_id:sub.business_id,plan_id:sub.plan_id,estado:sub.status,inicio:sub.starts_at || '',vencimiento:sub.ends_at || ''}] : [],
+      settings:[settings],audit:[],catalog_events:[],platform:{name:'MENUYA',approval:'manual',default_plan:plan.id},
+    };
+    setRemoteData(data); setLoading(false);
+  };
+  useEffect(() => { void loadRemoteData(); }, [business?.id]);
+  const updateRemote = (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => {
+    if (!remoteData || !business?.id) return;
+    const previous = remoteData;
+    const next = fn(previous);
+    setRemoteData(next);
+    setSavingError('');
+    saveQueueRef.current = saveQueueRef.current.catch(() => undefined).then(async () => {
+      try {
+        const oldCats = new Map(previous.categories.map(x=>[x.id,x]));
+        const newCats = new Map(next.categories.map(x=>[x.id,x]));
+        for (const [id, item] of newCats) {
+          const payload = {business_id:business.id,name:item.nombre,sort_order:item.orden,is_active:item.activo};
+          const result = oldCats.has(id)
+            ? await supabase.from('categories').update(payload).eq('id',id).eq('business_id',business.id)
+            : await supabase.from('categories').insert(payload);
+          if (result.error) throw result.error;
+        }
+        for (const id of oldCats.keys()) if (!newCats.has(id)) {
+          const result=await supabase.from('categories').delete().eq('id',id).eq('business_id',business.id);
+          if(result.error) throw result.error;
+        }
+        const oldProducts = new Map(previous.products.map(x=>[x.id,x]));
+        const newProducts = new Map(next.products.map(x=>[x.id,x]));
+        for (const [id, item] of newProducts) {
+          const payload = {business_id:business.id,category_id:item.category_id || null,name:item.nombre,description:item.descripcion,price:item.precio,previous_price:item.precio_anterior ?? null,image_url:item.imagen ?? null,is_active:item.activo,is_available:item.disponible,is_featured:item.destacado,stock:item.stock ?? 0};
+          const result = oldProducts.has(id)
+            ? await supabase.from('products').update(payload).eq('id',id).eq('business_id',business.id)
+            : await supabase.from('products').insert(payload);
+          if(result.error) throw result.error;
+        }
+        for (const id of oldProducts.keys()) if (!newProducts.has(id)) {
+          const result=await supabase.from('products').delete().eq('id',id).eq('business_id',business.id);
+          if(result.error) throw result.error;
+        }
+
+        const oldSettings = previous.settings.find(x=>x.business_id===business.id);
+        const nextSettings = next.settings.find(x=>x.business_id===business.id);
+        if (nextSettings && JSON.stringify(oldSettings) !== JSON.stringify(nextSettings)) {
+          const result = await supabase.from('store_settings').upsert({
+            business_id:business.id,
+            cover_url:nextSettings.portada || null,
+            logo_url:nextSettings.logo || null,
+            brand_color:nextSettings.color,
+            font_family:nextSettings.fuente,
+            contact_text:nextSettings.contacto || null,
+            social_links:nextSettings.redes ?? '',
+            payment_methods:nextSettings.pagos ? nextSettings.pagos.split(',').map(x=>x.trim()).filter(Boolean) : [],
+            delivery_info:nextSettings.entrega || null,
+            is_published:nextSettings.publicado,
+            tagline:nextSettings.tagline || null,
+          }, {onConflict:'business_id'});
+          if (result.error) throw result.error;
+          const businessUpdate = await supabase.from('businesses')
+            .update({name:next.businesses.find(x=>x.id===business.id)?.nombre || business.name,is_published:nextSettings.publicado})
+            .eq('id',business.id);
+          if (businessUpdate.error) throw businessUpdate.error;
+        } else {
+          const oldBusiness = previous.businesses.find(x=>x.id===business.id);
+          const nextBusiness = next.businesses.find(x=>x.id===business.id);
+          if (oldBusiness && nextBusiness && oldBusiness.nombre !== nextBusiness.nombre) {
+            const result = await supabase.from('businesses').update({name:nextBusiness.nombre}).eq('id',business.id);
+            if (result.error) throw result.error;
+          }
+        }
+        // No recargar tras cada guardado: una respuesta antigua podía sobrescribir cambios recientes.
+      } catch (error) {
+        const saveError = error && typeof error === 'object' ? error as { message?: unknown; details?: unknown; hint?: unknown; code?: unknown } : null;
+        const errorParts = [saveError?.message, saveError?.details, saveError?.hint]
+          .filter((part): part is string => typeof part === 'string' && part.trim().length > 0);
+        const errorCode = typeof saveError?.code === 'string' ? ` [${saveError.code}]` : '';
+        const message = errorParts.join(' · ') || (error instanceof Error ? error.message : 'No fue posible guardar los cambios en Supabase.');
+        console.error('MENUYA: error guardando la vitrina en Supabase', error);
+        setSavingError(message + errorCode);
+        await loadRemoteData();
+      }
+    });
+  };
+  if (!business) return <div className="auth-layout"><main className="auth-main"><div className="auth-form-wrap"><h2>{context.isPlatformAdmin ? 'Acceso de plataforma' : 'Cuenta autenticada'}</h2><div className="notice notice-error">No encontramos un comercio vinculado a esta cuenta. No se crearán datos de demostración.</div><Button className="full-btn" onClick={onLogout}>Cerrar sesión <LogOut size={16}/></Button></div></main></div>;
+  if (loading) return <div className="auth-loading"><span className="loader-line" />Cargando tu espacio de MENUYA...</div>;
+  if (loadError || !remoteData) return <div className="auth-form-wrap"><div className="notice notice-error">{loadError || 'No fue posible cargar el comercio.'}</div><Button onClick={() => void loadRemoteData()}>Reintentar</Button></div>;
+  const session: Session = {userId:context.user.id,role:'owner'};
+  return <AppShell data={remoteData} session={session} update={updateRemote} logout={onLogout} business={remoteData.businesses[0]} activePath={location}>
+    {savingError && <div className="notice notice-error" role="alert">{savingError}</div>}
+    <MerchantPage path={location} data={remoteData} business={remoteData.businesses[0]} update={updateRemote} />
+  </AppShell>;
+}
+
 function Router() {
   const [data, setData] = useState<DemoData>(() => repository.load());
-  const [session, setSession] = useState<Session>(() => { try { return JSON.parse(localStorage.getItem('menuya-session') || 'null') as Session; } catch { return null; } });
-  const [businessId, setBusinessId] = useState(() => localStorage.getItem('menuya-business') || '');
+  const [remoteContext, setRemoteContext] = useState<MenuyaAuthContext | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authInitError, setAuthInitError] = useState('');
   const [toast, setToast] = useState('');
-  const [location, setLocation] = useLocation();
-  useEffect(() => { const change = () => setBusinessId(localStorage.getItem('menuya-business') || ''); window.addEventListener('menuya-business-change', change); return () => window.removeEventListener('menuya-business-change', change); }, []);
+  const [, setLocation] = useLocation();
   useEffect(() => { repository.save(data); }, [data]);
   useEffect(() => { if (!toast) return undefined; const timer = window.setTimeout(() => setToast(''), 3200); return () => window.clearTimeout(timer); }, [toast]);
+  useEffect(() => {
+    let mounted = true;
+    if (!isSupabaseConfigured) {
+      setAuthLoading(false);
+      return () => { mounted = false; };
+    }
+    getAuthContext()
+      .then(async context => context ? (context.isPlatformAdmin ? context : ensureBusinessForCurrentUser()) : null)
+      .then(context => { if (mounted) setRemoteContext(context); })
+      .catch(error => { if (mounted) setAuthInitError(error instanceof Error ? error.message : 'No se pudo recuperar la sesión.'); })
+      .finally(() => { if (mounted) setAuthLoading(false); });
+    return () => { mounted = false; };
+  }, []);
+
   const update = (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => {
     setData(current => {
       let next = fn(current);
       if (action) {
-        const actor = next.users.find(u => u.id === session?.userId)?.nombre || 'Visitante';
+        const actor = 'Visitante';
         const audit: AuditLog = { id: repository.id(), actor, accion: action, entidad: entity || 'Demo', fecha: repository.date(0) };
         next = { ...next, audit: [audit, ...next.audit].slice(0, 300) };
         setToast(action);
@@ -467,39 +693,79 @@ function Router() {
       return next;
     });
   };
-  const login = (email: string, password: string): string | null => {
-    const user = data.users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
-    if (!user) return 'El correo o la contraseña no coinciden.';
-    if (user.role !== 'admin') {
-      const biz = data.businesses.find(b => user.business_ids.includes(b.id));
-      if (!biz || biz.estado !== 'activo') return biz?.estado === 'pendiente' ? 'Tu solicitud está pendiente de aprobación. Vuelve pronto.' : 'Este comercio no tiene acceso activo.';
-      localStorage.setItem('menuya-business', biz.id); setBusinessId(biz.id);
+
+  const login = async (email: string, password: string): Promise<string | null> => {
+    if (!isSupabaseConfigured) return 'La conexión de MENUYA aún no está configurada en este entorno.';
+    try {
+      await signInWithEmail(email, password);
+      const context = await ensureBusinessForCurrentUser();
+      setRemoteContext(context);
+      return null;
+    } catch (error) {
+      return error instanceof Error ? error.message : 'No fue posible iniciar sesión.';
     }
-    const nextSession = { userId: user.id, role: user.role }; setSession(nextSession); localStorage.setItem('menuya-session', JSON.stringify(nextSession)); return null;
   };
-  const register = (v: Record<string, string>): string | null => {
-    if (data.users.some(u => u.email.toLowerCase() === v.email.toLowerCase())) return 'Ya existe una cuenta con ese correo.';
-    const id = repository.id(), business: Business = { id, owner_id: id, nombre: v.negocio.trim(), slug: v.negocio.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + id.slice(-3), tipo: v.sector.toLowerCase(), telefono: v.telefono, estado: data.platform.approval === 'automatica' ? 'activo' : 'pendiente', created_at: repository.date(0) };
-    const user = { id, nombre: v.nombre.trim(), email: v.email, password: v.password, role: 'owner' as const, business_ids: [id] };
-    const category: Category = { id: repository.id(), business_id: id, nombre: 'Favoritos', orden: 1, activo: true };
-    const planId = data.platform.default_plan;
-    setData(d => ({ ...d, users: [...d.users, user], businesses: [...d.businesses, business], categories: [...d.categories, category], settings: [...d.settings, { business_id: id, portada: '', logo: '', color: '#e7785d', fuente: 'Manrope', contacto: v.telefono, redes: '', pagos: 'Efectivo, Nequi', entrega: 'Domicilio y recoger en tienda', publicado: business.estado === 'activo', tagline: 'Un negocio local, hecho con cariño.' }], subscriptions: [...d.subscriptions, { id: repository.id(), business_id: id, plan_id: planId, estado: business.estado === 'activo' ? 'activa' : 'pendiente', inicio: repository.date(0), vencimiento: repository.date(-30) }], audit: [{ id: repository.id(), actor: v.nombre, accion: 'Registro de comercio', entidad: business.nombre, fecha: repository.date(0) }, ...d.audit] }));
-    return null;
+
+  const register = async (v: Record<string, string>): Promise<string | null> => {
+    if (!isSupabaseConfigured) return 'La conexión de MENUYA aún no está configurada en este entorno.';
+    try {
+      const result = await signUpWithEmail({
+        email: v.email,
+        password: v.password,
+        fullName: v.nombre,
+        phone: v.telefono,
+        businessName: v.negocio,
+        businessType: v.sector,
+      });
+      if (result.session) {
+        const context = await ensureBusinessForCurrentUser();
+        setRemoteContext(context);
+        setLocation('/app');
+      }
+      return null;
+    } catch (error) {
+      return error instanceof Error ? error.message : 'No fue posible crear la cuenta.';
+    }
   };
-  const logout = () => { setSession(null); localStorage.removeItem('menuya-session'); setLocation('/login'); };
-  const user = data.users.find(u => u.id === session?.userId);
-  const ownerBusiness = data.businesses.find(b => b.id === (businessId || user?.business_ids[0])) || data.businesses.find(b => b.owner_id === user?.id);
-  const merchantRoute = (path: string) => session?.role === 'admin' ? <AdminPage path={path} data={data} update={update} /> : session && ownerBusiness ? <AppShell data={data} session={session} update={update} logout={logout} business={ownerBusiness} activePath={path}><MerchantPage path={path} data={data} business={ownerBusiness} update={update} /></AppShell> : <RedirectToLogin setLocation={setLocation} />;
-  const adminRoute = (path: string) => session?.role === 'admin' ? <AppShell data={data} session={session} update={update} logout={logout} activePath={path}><AdminPage path={path} data={data} update={update} /></AppShell> : <RedirectToLogin setLocation={setLocation} />;
+
+  const reset = async (password: string): Promise<string | null> => {
+    if (!isSupabaseConfigured) return 'La conexión de MENUYA aún no está configurada en este entorno.';
+    try { await updatePassword(password); return null; }
+    catch (error) { return error instanceof Error ? error.message : 'No fue posible actualizar la contraseña.'; }
+  };
+
+  const forgot = async (email: string): Promise<string | null> => {
+    if (!isSupabaseConfigured) return 'La conexión de MENUYA aún no está configurada en este entorno.';
+    try { await sendPasswordRecovery(email); return null; }
+    catch (error) { return error instanceof Error ? error.message : 'No fue posible enviar las instrucciones.'; }
+  };
+
+  const logout = async () => {
+    try { if (isSupabaseConfigured) await signOut(); } finally {
+      setRemoteContext(null);
+
+      setLocation('/login');
+    }
+  };
+
+  const protectedRoute = () => authLoading
+    ? <div className="auth-loading"><span className="loader-line" />Comprobando tu sesión...</div>
+    : authInitError
+      ? <div className="auth-form-wrap"><div className="notice notice-error">{authInitError}</div><Link href="/login" className="text-link">Volver al acceso</Link></div>
+      : remoteContext
+        ? <RemoteAccessGate context={remoteContext} onLogout={logout} />
+        : <RedirectToLogin setLocation={setLocation} />;
+
   return <RoutedErrorBoundary><Switch>
     <Route path="/"><Landing data={data} /></Route>
-    <Route path="/login"><AuthPage mode="login" data={data} onLogin={login} onRegister={register} /></Route>
-    <Route path="/register"><AuthPage mode="register" data={data} onLogin={login} onRegister={register} /></Route>
-    <Route path="/forgot-password"><AuthPage mode="forgot" data={data} onLogin={login} onRegister={register} /></Route>
-    <Route path="/admin">{adminRoute('/admin')}</Route>
-    {adminLinks.slice(1).map(([path]) => <Route key={path} path={path}>{adminRoute(path)}</Route>)}
-    <Route path="/app">{merchantRoute('/app')}</Route>
-    {shopLinks.slice(1).map(([path]) => <Route key={path} path={path}>{merchantRoute(path)}</Route>)}
+    <Route path="/login"><AuthPage mode="login" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
+    <Route path="/register"><AuthPage mode="register" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
+    <Route path="/forgot-password"><AuthPage mode="forgot" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
+    <Route path="/reset-password"><AuthPage mode="reset" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
+    <Route path="/admin">{authLoading ? <div className="auth-loading"><span className="loader-line" />Comprobando acceso...</div> : remoteContext?.isPlatformAdmin ? <PlatformAdminPage context={remoteContext} onLogout={logout} /> : remoteContext ? <div className="auth-form-wrap"><div className="notice notice-error">Esta cuenta no tiene permisos de Superadmin.</div><Button onClick={logout}>Cerrar sesión</Button></div> : protectedRoute()}</Route>
+    {adminLinks.slice(1).map(([path]) => <Route key={path} path={path}>{protectedRoute()}</Route>)}
+    <Route path="/app">{protectedRoute()}</Route>
+    {shopLinks.slice(1).map(([path]) => <Route key={path} path={path}>{protectedRoute()}</Route>)}
     <Route path="/:slug"><PublicRoute data={data} update={update} /></Route>
     <Route component={NotFound} />
   </Switch>{toast && <div className="toast-message" role="status" data-testid="status-toast"><CheckCircle2 size={17} />{toast}</div>}</RoutedErrorBoundary>;
@@ -510,7 +776,64 @@ function RedirectToLogin({ setLocation }: { setLocation: (path: string) => void 
 }
 function PublicRoute({ data, update }: { data: DemoData; update: (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => void }) {
   const params = useParams<{ slug: string }>();
-  return <PublicStore data={data} slug={params.slug || ''} update={update} />;
+  const slug = params.slug || '';
+  const [storeData, setStoreData] = useState<DemoData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      setLoading(true); setLoadError('');
+      try {
+        const { data: businessRow, error: businessError } = await supabase
+          .from('businesses')
+          .select('id,name,slug,business_type,status,is_published')
+          .eq('slug', slug).maybeSingle();
+        if (businessError) throw businessError;
+        if (!businessRow || !businessRow.is_published) {
+          if (active) { setStoreData(null); setLoading(false); }
+          return;
+        }
+        const [categoryResult, productResult, settingsResult] = await Promise.all([
+          supabase.from('categories').select('id,business_id,name,sort_order,is_active').eq('business_id',businessRow.id).eq('is_active',true).order('sort_order'),
+          supabase.from('products').select('id,business_id,category_id,name,description,price,previous_price,image_url,is_active,is_available,is_featured,stock').eq('business_id',businessRow.id).eq('is_active',true).eq('is_available',true).order('created_at',{ascending:false}),
+          supabase.from('store_settings').select('business_id,cover_url,logo_url,brand_color,font_family,contact_text,social_links,payment_methods,delivery_info,is_published,tagline').eq('business_id',businessRow.id).maybeSingle(),
+        ]);
+        const queryError = categoryResult.error || productResult.error || settingsResult.error;
+        if (queryError) throw queryError;
+        if (!settingsResult.data?.is_published) {
+          if (active) { setStoreData(null); setLoading(false); }
+          return;
+        }
+        const profile = {
+          id:businessRow.id, owner_id:'', nombre:businessRow.name, slug:businessRow.slug,
+          tipo:businessRow.business_type || 'Comercio', telefono:'', estado:businessRow.status === 'active' ? 'activo' as const : 'pendiente' as const,
+          created_at:new Date().toISOString(),
+        };
+        const row = settingsResult.data;
+        const settings = {
+          business_id:businessRow.id, portada:row.cover_url || '', logo:row.logo_url || '',
+          color:row.brand_color || '#252525', fuente:row.font_family || 'Manrope',
+          contacto:row.contact_text || '', redes:typeof row.social_links === 'string' ? row.social_links : JSON.stringify(row.social_links || {}),
+          pagos:Array.isArray(row.payment_methods) ? row.payment_methods.join(', ') : 'Efectivo',
+          entrega:row.delivery_info || '', publicado:true, tagline:row.tagline || '',
+        };
+        const categories = (categoryResult.data || []).map(c=>({id:c.id,business_id:c.business_id,nombre:c.name,orden:c.sort_order,activo:c.is_active}));
+        const products = (productResult.data || []).map(p=>({id:p.id,business_id:p.business_id,category_id:p.category_id || '',nombre:p.name,descripcion:p.description || '',precio:Number(p.price),precio_anterior:p.previous_price ? Number(p.previous_price) : undefined,imagen:p.image_url || undefined,activo:p.is_active,disponible:p.is_available,destacado:p.is_featured,stock:p.stock ?? 0,variantes:[],complementos:[]}));
+        const remote: DemoData = {...data,users:[],businesses:[profile],categories,products,customers:[],orders:[],settings:[settings],subscriptions:[],audit:[],catalog_events:[]};
+        if (active) { setStoreData(remote); setLoading(false); }
+      } catch (error) {
+        if (active) { setLoadError(error instanceof Error ? error.message : 'No fue posible cargar la tienda.'); setLoading(false); }
+      }
+    };
+    if (slug && isSupabaseConfigured) void load();
+    else { setLoadError('La tienda pública no está configurada.'); setLoading(false); }
+    return () => { active = false; };
+  }, [slug]);
+  if (loading) return <div className="auth-loading"><span className="loader-line" />Cargando tienda...</div>;
+  if (loadError) return <div className="store-unavailable"><Brand /><div><span className="eyebrow">NO PUDIMOS CARGAR LA TIENDA</span><h1>Intenta nuevamente.</h1><p>{loadError}</p><Link href="/" className="btn btn-outline">Volver al inicio</Link></div></div>;
+  if (!storeData) return <NotFound />;
+  return <PublicStore data={storeData} slug={slug} update={update} />;
 }
 function App() {
   return <QueryClientProvider client={queryClient}><TooltipProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter><Toaster /></TooltipProvider></QueryClientProvider>;
