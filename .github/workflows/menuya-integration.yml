@@ -1,0 +1,31 @@
+name: MENUYA integration checks
+
+on:
+  push:
+    branches:
+      - integration/supabase-auth
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  menuya:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.8.1
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install workspace dependencies
+        run: pnpm install --no-frozen-lockfile
+      - name: Typecheck MENUYA
+        run: pnpm --filter @workspace/menuya typecheck
+      - name: Build MENUYA
+        run: pnpm --filter @workspace/menuya build
