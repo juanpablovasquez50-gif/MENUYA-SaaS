@@ -489,14 +489,11 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
 
 function Router() {
   const [data, setData] = useState<DemoData>(() => repository.load());
-  const [session, setSession] = useState<Session>(null);
-  const [businessId, setBusinessId] = useState(() => localStorage.getItem('menuya-business') || '');
   const [remoteContext, setRemoteContext] = useState<MenuyaAuthContext | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authInitError, setAuthInitError] = useState('');
   const [toast, setToast] = useState('');
-  const [location, setLocation] = useLocation();
-  useEffect(() => { const change = () => setBusinessId(localStorage.getItem('menuya-business') || ''); window.addEventListener('menuya-business-change', change); return () => window.removeEventListener('menuya-business-change', change); }, []);
+  const [, setLocation] = useLocation();
   useEffect(() => { repository.save(data); }, [data]);
   useEffect(() => { if (!toast) return undefined; const timer = window.setTimeout(() => setToast(''), 3200); return () => window.clearTimeout(timer); }, [toast]);
   useEffect(() => {
@@ -517,7 +514,7 @@ function Router() {
     setData(current => {
       let next = fn(current);
       if (action) {
-        const actor = next.users.find(u => u.id === session?.userId)?.nombre || 'Visitante';
+        const actor = 'Visitante';
         const audit: AuditLog = { id: repository.id(), actor, accion: action, entidad: entity || 'Demo', fecha: repository.date(0) };
         next = { ...next, audit: [audit, ...next.audit].slice(0, 300) };
         setToast(action);
@@ -575,15 +572,11 @@ function Router() {
   const logout = async () => {
     try { if (isSupabaseConfigured) await signOut(); } finally {
       setRemoteContext(null);
-      setSession(null);
-      localStorage.removeItem('menuya-session');
+
       setLocation('/login');
     }
   };
 
-  const user = data.users.find(u => u.id === session?.userId);
-  const ownerBusiness = data.businesses.find(b => b.id === (businessId || user?.business_ids[0])) || data.businesses.find(b => b.owner_id === user?.id);
-  const merchantRoute = (path: string) => session?.role === 'admin' ? <AdminPage path={path} data={data} update={update} /> : session && ownerBusiness ? <AppShell data={data} session={session} update={update} logout={logout} business={ownerBusiness} activePath={path}><MerchantPage path={path} data={data} business={ownerBusiness} update={update} /></AppShell> : <RedirectToLogin setLocation={setLocation} />;
   const protectedRoute = () => authLoading
     ? <div className="auth-loading"><span className="loader-line" />Comprobando tu sesión...</div>
     : authInitError
