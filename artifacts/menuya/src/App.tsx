@@ -597,7 +597,13 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
         }
         await loadRemoteData();
       } catch (error) {
-        setSavingError(error instanceof Error ? error.message : 'No fue posible guardar los cambios en Supabase.');
+        const saveError = error && typeof error === 'object' ? error as { message?: unknown; details?: unknown; hint?: unknown; code?: unknown } : null;
+        const errorParts = [saveError?.message, saveError?.details, saveError?.hint]
+          .filter((part): part is string => typeof part === 'string' && part.trim().length > 0);
+        const errorCode = typeof saveError?.code === 'string' ? ` [${saveError.code}]` : '';
+        const message = errorParts.join(' · ') || (error instanceof Error ? error.message : 'No fue posible guardar los cambios en Supabase.');
+        console.error('MENUYA: error guardando la vitrina en Supabase', error);
+        setSavingError(message + errorCode);
         await loadRemoteData();
       }
     })();
