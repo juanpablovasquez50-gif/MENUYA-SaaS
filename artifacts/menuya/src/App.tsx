@@ -481,93 +481,97 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
 function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; onLogout: () => void }) {
   const membership = context.memberships[0];
   const business = membership?.businesses ?? undefined;
-  const [categories, setCategories] = useState<Array<{id:string;name:string;sort_order:number;is_active:boolean}>>([]);
-  const [products, setProducts] = useState<Array<{id:string;name:string;description:string;price:number;is_active:boolean;is_available:boolean;category_id:string|null}>>([]);
+  const [location] = useLocation();
+  const [remoteData, setRemoteData] = useState<DemoData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
-  const [categoryName, setCategoryName] = useState('');
-  const [productName, setProductName] = useState('');
-  const [productDescription, setProductDescription] = useState('');
-  const [productPrice, setProductPrice] = useState('');
-  const [productCategory, setProductCategory] = useState('');
-  const canManageCatalog = ['owner','admin','manager','catalog'].includes(membership?.role || '');
-  const loadCatalog = async () => {
+  const [loadError, setLoadError] = useState('');
+  const [savingError, setSavingError] = useState('');
+  const loadRemoteData = async () => {
     if (!business?.id) return;
-    setLoading(true); setError('');
-    const [categoryResult, productResult] = await Promise.all([
-      supabase.from('categories').select('id,name,sort_order,is_active').eq('business_id',business.id).order('sort_order'),
-      supabase.from('products').select('id,name,description,price,is_active,is_available,category_id').eq('business_id',business.id).order('created_at',{ascending:false}),
+    setLoading(true); setLoadError('');
+    const [categoryResult, productResult, settingsResult, subscriptionResult] = await Promise.all([
+      supabase.from('categories').select('id,business_id,name,sort_order,is_active').eq('business_id',business.id).order('sort_order'),
+      supabase.from('products').select('id,business_id,category_id,name,description,price,previous_price,image_url,is_active,is_available,is_featured,stock').eq('business_id',business.id).order('created_at',{ascending:false}),
+      supabase.from('store_settings').select('business_id,cover_url,logo_url,brand_color,font_family,contact_text,social_links,payment_methods,delivery_info,is_published,tagline').eq('business_id',business.id).maybeSingle(),
+      supabase.from('subscriptions').select('id,business_id,plan_id,status,starts_at,ends_at,plans(id,name,price,billing_period,max_products,features,is_active)').eq('business_id',business.id).maybeSingle(),
     ]);
-    if (categoryResult.error) setError(categoryResult.error.message);
-    else {
-      setCategories(categoryResult.data || []);
-      if (!productCategory && categoryResult.data?.[0]) setProductCategory(categoryResult.data[0].id);
-    }
-    if (productResult.error) setError(productResult.error.message);
-    else setProducts(productResult.data || []);
-    setLoading(false);
+    const firstError = categoryResult.error || productResult.error || settingsResult.error || subscriptionResult.error;
+    if (firstError) { setLoadError(firstError.message); setLoading(false); return; }
+    const profileName = context.profile?.full_name || String(context.user.user_metadata?.full_name || context.user.email || 'Comercio');
+    const biz = {
+      id: business.id, owner_id: context.user.id, nombre: business.name, slug: business.slug,
+      tipo: business.business_type, telefono: context.profile?.phone || '', estado: (business.status || 'pending') as Business['estado'],
+      created_at: new Date().toISOString(),
+    };
+    const categories: Category[] = (categoryResult.data || []).map(c => ({id:c.id,business_id:c.business_id,nombre:c.name,orden:c.sort_order,activo:c.is_active}));
+    const products: Product[] = (productResult.data || []).map(p => ({id:p.id,business_id:p.business_id,category_id:p.category_id || '',nombre:p.name,descripcion:p.description || '',precio:Number(p.price),precio_anterior:p.previous_price ? Number(p.previous_price) : undefined,imagen:p.image_url || undefined,activo:p.is_active,disponible:p.is_available,destacado:p.is_featured,stock:p.stock ?? 0,variantes:[],complementos:[]}));
+    const s = settingsResult.data;
+    const settings: StoreSettings = {
+      business_id:business.id,portada:s?.cover_url || '',logo:s?.logo_url || '',color:s?.brand_color || '#7352e8',
+      fuente:s?.font_family || 'Manrope',contacto:s?.contact_text || biz.telefono,redes:typeof s?.social_links === 'string' ? s.social_links : '',
+      pagos:Array.isArray(s?.payment_methods) ? s.payment_methods.join(', ') : 'Efectivo, Nequi, transferencia',
+      entrega:s?.delivery_info || 'Domicilio y recoger en tienda',publicado:Boolean(s?.is_published && business.is_published),tagline:s?.tagline || 'Tu negocio, en su propio lugar.',
+    };
+    const sub = subscriptionResult.data as any;
+    const planRow = sub?.plans;
+    const plan: Plan = planRow ? {id:planRow.id,nombre:planRow.name,precio:Number(planRow.price),periodicidad:planRow.billing_period,max_productos:planRow.max_products,funciones:planRow.features || [],activo:planRow.is_active} : {id:'default',nombre:'Plan inicial',precio:0,periodicidad:'mes',max_productos:15,funciones:[],activo:true};
+    const data: DemoData = {
+      users:[{id:context.user.id,nombre:profileName,email:context.user.email || '',password:'',role:'owner',business_ids:[business.id]}],
+      businesses:[biz],categories,products,customers:[],orders:[],plans:[plan],
+      subscriptions:sub ? [{id:sub.id,business_id:sub.business_id,plan_id:sub.plan_id,estado:sub.status,inicio:sub.starts_at || '',vencimiento:sub.ends_at || ''}] : [],
+      settings:[settings],audit:[],catalog_events:[],platform:{name:'MENUYA',approval:'manual',default_plan:plan.id},
+    };
+    setRemoteData(data); setLoading(false);
   };
-  useEffect(() => { void loadCatalog(); }, [business?.id]);
-  const addCategory = async (event: FormEvent) => {
-    event.preventDefault(); if (!business?.id || !categoryName.trim()) return;
-    setSaving(true); setError(''); setNotice('');
-    const { error: insertError } = await supabase.from('categories').insert({business_id:business.id,name:categoryName.trim(),sort_order:categories.length+1,is_active:true});
-    if (insertError) setError(insertError.message);
-    else { setCategoryName(''); setNotice('Categoría guardada en Supabase.'); await loadCatalog(); }
-    setSaving(false);
-  };
-  const addProduct = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!business?.id || !productName.trim() || !productCategory || !Number.isFinite(Number(productPrice)) || Number(productPrice)<=0) return;
-    setSaving(true); setError(''); setNotice('');
-    const { error: insertError } = await supabase.from('products').insert({
-      business_id:business.id,category_id:productCategory,name:productName.trim(),
-      description:productDescription.trim(),price:Number(productPrice),
-      is_active:false,is_available:false,is_featured:false
-    });
-    if (insertError) setError(insertError.message);
-    else { setProductName(''); setProductDescription(''); setProductPrice(''); setNotice('Producto guardado como borrador privado en Supabase.'); await loadCatalog(); }
-    setSaving(false);
+  useEffect(() => { void loadRemoteData(); }, [business?.id]);
+  const updateRemote = (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => {
+    if (!remoteData || !business?.id) return;
+    const next = fn(remoteData);
+    setRemoteData(next);
+    setSavingError('');
+    void (async () => {
+      try {
+        const oldCats = new Map(remoteData.categories.map(x=>[x.id,x]));
+        const newCats = new Map(next.categories.map(x=>[x.id,x]));
+        for (const [id, item] of newCats) {
+          const payload = {business_id:business.id,name:item.nombre,sort_order:item.orden,is_active:item.activo};
+          const result = oldCats.has(id)
+            ? await supabase.from('categories').update(payload).eq('id',id).eq('business_id',business.id)
+            : await supabase.from('categories').insert(payload);
+          if (result.error) throw result.error;
+        }
+        for (const id of oldCats.keys()) if (!newCats.has(id)) {
+          const result=await supabase.from('categories').delete().eq('id',id).eq('business_id',business.id);
+          if(result.error) throw result.error;
+        }
+        const oldProducts = new Map(remoteData.products.map(x=>[x.id,x]));
+        const newProducts = new Map(next.products.map(x=>[x.id,x]));
+        for (const [id, item] of newProducts) {
+          const payload = {business_id:business.id,category_id:item.category_id || null,name:item.nombre,description:item.descripcion,price:item.precio,previous_price:item.precio_anterior ?? null,image_url:item.imagen ?? null,is_active:item.activo,is_available:item.disponible,is_featured:item.destacado,stock:item.stock ?? 0};
+          const result = oldProducts.has(id)
+            ? await supabase.from('products').update(payload).eq('id',id).eq('business_id',business.id)
+            : await supabase.from('products').insert(payload);
+          if(result.error) throw result.error;
+        }
+        for (const id of oldProducts.keys()) if (!newProducts.has(id)) {
+          const result=await supabase.from('products').delete().eq('id',id).eq('business_id',business.id);
+          if(result.error) throw result.error;
+        }
+        await loadRemoteData();
+      } catch (error) {
+        setSavingError(error instanceof Error ? error.message : 'No fue posible guardar los cambios en Supabase.');
+        await loadRemoteData();
+      }
+    })();
   };
   if (!business) return <div className="auth-layout"><main className="auth-main"><div className="auth-form-wrap"><h2>{context.isPlatformAdmin ? 'Acceso de plataforma' : 'Cuenta autenticada'}</h2><div className="notice notice-error">No encontramos un comercio vinculado a esta cuenta. No se crearán datos de demostración.</div><Button className="full-btn" onClick={onLogout}>Cerrar sesión <LogOut size={16}/></Button></div></main></div>;
-  const pending = business.status === 'pending';
-  return <div className="dashboard-shell" style={{minHeight:'100vh',background:'#f5f6f8',color:'#1d2939'}}>
-    <header style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'18px 5%',background:'#fff',borderBottom:'1px solid #e5e7eb',gap:16}}>
-      <div><div style={{fontWeight:800,fontSize:22}}>menuya<span style={{color:'#7352e8'}}>.</span></div><div style={{fontSize:12,color:'#667085'}}>Panel real · {business.name}</div></div>
-      <Button kind="ghost" onClick={onLogout}>Cerrar sesión <LogOut size={16}/></Button>
-    </header>
-    <main style={{maxWidth:1080,margin:'0 auto',padding:'28px 20px'}}>
-      <div style={{background:pending?'#fff7e8':'#e8f5ec',padding:16,borderRadius:12,marginBottom:22}}>
-        <b>{business.name}</b> · {pending?'Solicitud pendiente de revisión':'Comercio activo'}<p style={{margin:'6px 0 0',fontSize:14}}>Tu vitrina sigue privada. Los productos que registres quedarán guardados, pero no se publicarán hasta la aprobación y activación del comercio.</p>
-        <div style={{fontSize:13,marginTop:8}}>Enlace reservado: <b>/{business.slug}</b> · Rol: {membership?.role}</div>
-      </div>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,marginBottom:16,flexWrap:'wrap'}}><div><h1 style={{margin:0,fontSize:28}}>Tu catálogo</h1><p style={{margin:'5px 0',color:'#667085'}}>Estos datos se leen y guardan directamente en Supabase.</p></div><Button kind="outline" onClick={() => void loadCatalog()} disabled={loading}>Actualizar</Button></div>
-      {error && <div className="notice notice-error" role="alert">{error}</div>}
-      {notice && <div className="notice notice-success" role="status">{notice}</div>}
-      {loading ? <p>Cargando catálogo...</p> : <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:18,alignItems:'start'}}>
-        <section style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:14,padding:20}}>
-          <h2 style={{marginTop:0}}>Categorías ({categories.length})</h2>
-          {categories.map(category=><div key={category.id} style={{padding:'10px 0',borderBottom:'1px solid #eee'}}>{category.name} {!category.is_active&&<small>(inactiva)</small>}</div>)}
-          {canManageCatalog && <form onSubmit={addCategory} style={{display:'grid',gap:10,marginTop:16}}><label style={{fontSize:13}}>Nueva categoría<input value={categoryName} onChange={e=>setCategoryName(e.target.value)} required maxLength={80} style={{display:'block',width:'100%',padding:11,marginTop:5,border:'1px solid #d0d5dd',borderRadius:8}}/></label><Button type="submit" disabled={saving}>Guardar categoría <Plus size={15}/></Button></form>}
-        </section>
-        <section style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:14,padding:20}}>
-          <h2 style={{marginTop:0}}>Productos ({products.length})</h2>
-          {products.map(product=><div key={product.id} style={{padding:'10px 0',borderBottom:'1px solid #eee',display:'flex',justifyContent:'space-between',gap:10}}><span>{product.name}<small style={{display:'block',color:'#667085'}}>{product.is_active?'Activo':'Borrador privado'}</small></span><b>{money(Number(product.price))}</b></div>)}
-          {canManageCatalog && <form onSubmit={addProduct} style={{display:'grid',gap:10,marginTop:16}}>
-            <h3 style={{margin:'4px 0'}}>Agregar producto</h3>
-            <input aria-label="Nombre del producto" placeholder="Nombre del producto" value={productName} onChange={e=>setProductName(e.target.value)} required maxLength={120} style={{padding:11,border:'1px solid #d0d5dd',borderRadius:8}}/>
-            <textarea aria-label="Descripción" placeholder="Descripción (opcional)" value={productDescription} onChange={e=>setProductDescription(e.target.value)} style={{padding:11,border:'1px solid #d0d5dd',borderRadius:8}}/>
-            <input aria-label="Precio en COP" placeholder="Precio en COP" type="number" min="1" step="1" value={productPrice} onChange={e=>setProductPrice(e.target.value)} required style={{padding:11,border:'1px solid #d0d5dd',borderRadius:8}}/>
-            <select aria-label="Categoría" value={productCategory} onChange={e=>setProductCategory(e.target.value)} required style={{padding:11,border:'1px solid #d0d5dd',borderRadius:8}}>{categories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>
-            <Button type="submit" disabled={saving || categories.length===0}>Guardar producto como borrador <Plus size={15}/></Button>
-          </form>}
-        </section>
-      </div>}
-      <p style={{fontSize:12,color:'#667085',marginTop:22}}>Aislamiento por comercio activo mediante políticas RLS de Supabase. No se cargan datos de demostración.</p>
-    </main>
-  </div>;
+  if (loading) return <div className="auth-loading"><span className="loader-line" />Cargando tu espacio de MENUYA...</div>;
+  if (loadError || !remoteData) return <div className="auth-form-wrap"><div className="notice notice-error">{loadError || 'No fue posible cargar el comercio.'}</div><Button onClick={() => void loadRemoteData()}>Reintentar</Button></div>;
+  const session: Session = {userId:context.user.id,role:'owner'};
+  return <AppShell data={remoteData} session={session} update={updateRemote} logout={onLogout} business={remoteData.businesses[0]} activePath={location}>
+    {savingError && <div className="notice notice-error" role="alert">{savingError}</div>}
+    <MerchantPage path={location} data={remoteData} business={remoteData.businesses[0]} update={updateRemote} />
+  </AppShell>;
 }
 
 function Router() {
