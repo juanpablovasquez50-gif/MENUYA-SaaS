@@ -147,3 +147,9 @@ export async function ensureBusinessForCurrentUser(): Promise<MenuyaAuthContext 
   if (error) throw error;
   return getAuthContext();
 }
+
+export async function updatePassword(password: string) {
+  ensureConfigured();
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw error;
+}
