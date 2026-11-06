@@ -493,6 +493,7 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [savingError, setSavingError] = useState('');
+  const saveQueueRef = React.useRef<Promise<void>>(Promise.resolve());
   const loadRemoteData = async () => {
     if (!business?.id) return;
     setLoading(true); setLoadError('');
@@ -537,7 +538,7 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
     const next = fn(previous);
     setRemoteData(next);
     setSavingError('');
-    void (async () => {
+    saveQueueRef.current = saveQueueRef.current.catch(() => undefined).then(async () => {
       try {
         const oldCats = new Map(previous.categories.map(x=>[x.id,x]));
         const newCats = new Map(next.categories.map(x=>[x.id,x]));
@@ -595,7 +596,7 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
             if (result.error) throw result.error;
           }
         }
-        await loadRemoteData();
+        // No recargar tras cada guardado: una respuesta antigua podía sobrescribir cambios recientes.
       } catch (error) {
         const saveError = error && typeof error === 'object' ? error as { message?: unknown; details?: unknown; hint?: unknown; code?: unknown } : null;
         const errorParts = [saveError?.message, saveError?.details, saveError?.hint]
@@ -606,7 +607,7 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
         setSavingError(message + errorCode);
         await loadRemoteData();
       }
-    })();
+    });
   };
   if (!business) return <div className="auth-layout"><main className="auth-main"><div className="auth-form-wrap"><h2>{context.isPlatformAdmin ? 'Acceso de plataforma' : 'Cuenta autenticada'}</h2><div className="notice notice-error">No encontramos un comercio vinculado a esta cuenta. No se crearán datos de demostración.</div><Button className="full-btn" onClick={onLogout}>Cerrar sesión <LogOut size={16}/></Button></div></main></div>;
   if (loading) return <div className="auth-loading"><span className="loader-line" />Cargando tu espacio de MENUYA...</div>;
