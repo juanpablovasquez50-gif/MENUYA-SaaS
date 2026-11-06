@@ -10,6 +10,7 @@ import { Link, Route, Switch, Router as WouterRouter, useLocation, useParams } f
 import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BarChart3, Bell, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, ClipboardList, Clock3, CreditCard, ExternalLink, Eye, EyeOff, LayoutDashboard, LogOut, Menu, MoreHorizontal, Package, Pencil, Plus, Search, Settings, ShieldCheck, ShoppingBag, ShoppingCart, Store, Tag, Trash2, TrendingUp, Users, X, Zap } from 'lucide-react';
 import { type AuditLog, type Business, type CatalogEvent, type Category, type Customer, type DemoData, type Order, type OrderStatus, type Plan, type Product, type ProductChoice, repository } from '@/lib/menuya-data';
 import { type MenuyaAuthContext, ensureBusinessForCurrentUser, getAuthContext, isSupabaseConfigured, sendPasswordRecovery, signInWithEmail, signOut, signUpWithEmail, updatePassword } from '@/lib/menuya-auth';
+import { supabase } from '@/lib/supabase';
 
 const queryClient = new QueryClient();
 const money = (value: number) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value);
@@ -478,13 +479,95 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
 }
 
 function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; onLogout: () => void }) {
-  const business = context.memberships[0]?.businesses ?? undefined;
-  const status = business?.status || 'unlinked';
-  const isPending = status === 'pending';
-  return <div className="auth-layout"><aside className="auth-story"><Brand inverse /><div className="story-copy"><span className="eyebrow light">BIENVENIDO A MENUYA</span><h1>Tu negocio<br />ya tiene su<br /><em>propio lugar.</em></h1><p>Estamos preparando el espacio de gestión de tu comercio.</p></div><div className="auth-foot">Hecho para el comercio de aquí. <span>MENUYA</span></div></aside><main className="auth-main"><div className="auth-form-wrap"><span className="eyebrow">CUENTA VERIFICADA</span><h2>{business?.name || (context.isPlatformAdmin ? 'Acceso de plataforma' : 'Cuenta creada')}</h2>
-    {business ? <><div className={isPending ? 'notice notice-success' : 'notice'} role="status">{isPending ? 'Recibimos tu solicitud. Tu comercio está pendiente de revisión y permanece privado.' : status === 'active' ? 'Tu comercio está activo. Estamos terminando de conectar los módulos de gestión para evitar mostrarte datos de demostración.' : `El comercio tiene estado “${status}”. Contacta al equipo de MENUYA si necesitas ayuda.`}</div><p className="subtle">Enlace reservado: <b>/{business.slug}</b></p><p className="fine-print">Por seguridad, no cargamos los productos ni pedidos de la demo dentro de tu cuenta real. El panel se habilitará cuando la conexión de datos esté verificada.</p></> : <div className="notice notice-error" role="alert">{context.isPlatformAdmin ? 'Tu cuenta tiene permisos de plataforma. El panel de Super Admin todavía no está habilitado en esta etapa.' : 'Tu cuenta está autenticada, pero todavía no aparece un comercio vinculado. No crearemos datos de demostración ni duplicaremos el registro.'}</div>}
-    <Button className="full-btn" onClick={onLogout}>Cerrar sesión <LogOut size={16} /></Button><p className="security-note"><ShieldCheck size={14} /> Sesión real protegida por Supabase.</p>
-  </div></main></div>;
+  const membership = context.memberships[0];
+  const business = membership?.businesses ?? undefined;
+  const [categories, setCategories] = useState<Array<{id:string;name:string;sort_order:number;is_active:boolean}>>([]);
+  const [products, setProducts] = useState<Array<{id:string;name:string;description:string;price:number;is_active:boolean;is_available:boolean;category_id:string|null}>>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [categoryName, setCategoryName] = useState('');
+  const [productName, setProductName] = useState('');
+  const [productDescription, setProductDescription] = useState('');
+  const [productPrice, setProductPrice] = useState('');
+  const [productCategory, setProductCategory] = useState('');
+  const canManageCatalog = ['owner','admin','manager','catalog'].includes(membership?.role || '');
+  const loadCatalog = async () => {
+    if (!business?.id) return;
+    setLoading(true); setError('');
+    const [categoryResult, productResult] = await Promise.all([
+      supabase.from('categories').select('id,name,sort_order,is_active').eq('business_id',business.id).order('sort_order'),
+      supabase.from('products').select('id,name,description,price,is_active,is_available,category_id').eq('business_id',business.id).order('created_at',{ascending:false}),
+    ]);
+    if (categoryResult.error) setError(categoryResult.error.message);
+    else {
+      setCategories(categoryResult.data || []);
+      if (!productCategory && categoryResult.data?.[0]) setProductCategory(categoryResult.data[0].id);
+    }
+    if (productResult.error) setError(productResult.error.message);
+    else setProducts(productResult.data || []);
+    setLoading(false);
+  };
+  useEffect(() => { void loadCatalog(); }, [business?.id]);
+  const addCategory = async (event: FormEvent) => {
+    event.preventDefault(); if (!business?.id || !categoryName.trim()) return;
+    setSaving(true); setError(''); setNotice('');
+    const { error: insertError } = await supabase.from('categories').insert({business_id:business.id,name:categoryName.trim(),sort_order:categories.length+1,is_active:true});
+    if (insertError) setError(insertError.message);
+    else { setCategoryName(''); setNotice('Categoría guardada en Supabase.'); await loadCatalog(); }
+    setSaving(false);
+  };
+  const addProduct = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!business?.id || !productName.trim() || !productCategory || !Number.isFinite(Number(productPrice)) || Number(productPrice)<=0) return;
+    setSaving(true); setError(''); setNotice('');
+    const { error: insertError } = await supabase.from('products').insert({
+      business_id:business.id,category_id:productCategory,name:productName.trim(),
+      description:productDescription.trim(),price:Number(productPrice),
+      is_active:false,is_available:false,is_featured:false
+    });
+    if (insertError) setError(insertError.message);
+    else { setProductName(''); setProductDescription(''); setProductPrice(''); setNotice('Producto guardado como borrador privado en Supabase.'); await loadCatalog(); }
+    setSaving(false);
+  };
+  if (!business) return <div className="auth-layout"><main className="auth-main"><div className="auth-form-wrap"><h2>{context.isPlatformAdmin ? 'Acceso de plataforma' : 'Cuenta autenticada'}</h2><div className="notice notice-error">No encontramos un comercio vinculado a esta cuenta. No se crearán datos de demostración.</div><Button className="full-btn" onClick={onLogout}>Cerrar sesión <LogOut size={16}/></Button></div></main></div>;
+  const pending = business.status === 'pending';
+  return <div className="dashboard-shell" style={{minHeight:'100vh',background:'#f5f6f8',color:'#1d2939'}}>
+    <header style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'18px 5%',background:'#fff',borderBottom:'1px solid #e5e7eb',gap:16}}>
+      <div><div style={{fontWeight:800,fontSize:22}}>menuya<span style={{color:'#7352e8'}}>.</span></div><div style={{fontSize:12,color:'#667085'}}>Panel real · {business.name}</div></div>
+      <Button kind="ghost" onClick={onLogout}>Cerrar sesión <LogOut size={16}/></Button>
+    </header>
+    <main style={{maxWidth:1080,margin:'0 auto',padding:'28px 20px'}}>
+      <div style={{background:pending?'#fff7e8':'#e8f5ec',padding:16,borderRadius:12,marginBottom:22}}>
+        <b>{business.name}</b> · {pending?'Solicitud pendiente de revisión':'Comercio activo'}<p style={{margin:'6px 0 0',fontSize:14}}>Tu vitrina sigue privada. Los productos que registres quedarán guardados, pero no se publicarán hasta la aprobación y activación del comercio.</p>
+        <div style={{fontSize:13,marginTop:8}}>Enlace reservado: <b>/{business.slug}</b> · Rol: {membership?.role}</div>
+      </div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,marginBottom:16,flexWrap:'wrap'}}><div><h1 style={{margin:0,fontSize:28}}>Tu catálogo</h1><p style={{margin:'5px 0',color:'#667085'}}>Estos datos se leen y guardan directamente en Supabase.</p></div><Button kind="outline" onClick={() => void loadCatalog()} disabled={loading}>Actualizar</Button></div>
+      {error && <div className="notice notice-error" role="alert">{error}</div>}
+      {notice && <div className="notice notice-success" role="status">{notice}</div>}
+      {loading ? <p>Cargando catálogo...</p> : <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:18,alignItems:'start'}}>
+        <section style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:14,padding:20}}>
+          <h2 style={{marginTop:0}}>Categorías ({categories.length})</h2>
+          {categories.map(category=><div key={category.id} style={{padding:'10px 0',borderBottom:'1px solid #eee'}}>{category.name} {!category.is_active&&<small>(inactiva)</small>}</div>)}
+          {canManageCatalog && <form onSubmit={addCategory} style={{display:'grid',gap:10,marginTop:16}}><label style={{fontSize:13}}>Nueva categoría<input value={categoryName} onChange={e=>setCategoryName(e.target.value)} required maxLength={80} style={{display:'block',width:'100%',padding:11,marginTop:5,border:'1px solid #d0d5dd',borderRadius:8}}/></label><Button type="submit" disabled={saving}>Guardar categoría <Plus size={15}/></Button></form>}
+        </section>
+        <section style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:14,padding:20}}>
+          <h2 style={{marginTop:0}}>Productos ({products.length})</h2>
+          {products.map(product=><div key={product.id} style={{padding:'10px 0',borderBottom:'1px solid #eee',display:'flex',justifyContent:'space-between',gap:10}}><span>{product.name}<small style={{display:'block',color:'#667085'}}>{product.is_active?'Activo':'Borrador privado'}</small></span><b>{money(Number(product.price))}</b></div>)}
+          {canManageCatalog && <form onSubmit={addProduct} style={{display:'grid',gap:10,marginTop:16}}>
+            <h3 style={{margin:'4px 0'}}>Agregar producto</h3>
+            <input aria-label="Nombre del producto" placeholder="Nombre del producto" value={productName} onChange={e=>setProductName(e.target.value)} required maxLength={120} style={{padding:11,border:'1px solid #d0d5dd',borderRadius:8}}/>
+            <textarea aria-label="Descripción" placeholder="Descripción (opcional)" value={productDescription} onChange={e=>setProductDescription(e.target.value)} style={{padding:11,border:'1px solid #d0d5dd',borderRadius:8}}/>
+            <input aria-label="Precio en COP" placeholder="Precio en COP" type="number" min="1" step="1" value={productPrice} onChange={e=>setProductPrice(e.target.value)} required style={{padding:11,border:'1px solid #d0d5dd',borderRadius:8}}/>
+            <select aria-label="Categoría" value={productCategory} onChange={e=>setProductCategory(e.target.value)} required style={{padding:11,border:'1px solid #d0d5dd',borderRadius:8}}>{categories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>
+            <Button type="submit" disabled={saving || categories.length===0}>Guardar producto como borrador <Plus size={15}/></Button>
+          </form>}
+        </section>
+      </div>}
+      <p style={{fontSize:12,color:'#667085',marginTop:22}}>Aislamiento por comercio activo mediante políticas RLS de Supabase. No se cargan datos de demostración.</p>
+    </main>
+  </div>;
 }
 
 function Router() {
