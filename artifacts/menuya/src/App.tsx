@@ -500,7 +500,7 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
     const profileName = context.profile?.full_name || String(context.user.user_metadata?.full_name || context.user.email || 'Comercio');
     const biz = {
       id: business.id, owner_id: context.user.id, nombre: business.name, slug: business.slug,
-      tipo: business.business_type, telefono: context.profile?.phone || '', estado: (business.status || 'pending') as Business['estado'],
+      tipo: business.business_type, telefono: context.profile?.phone || '', estado: ({pending:'pendiente',active:'activo',rejected:'rechazado',suspended:'suspendido'} as Record<string, Business['estado']>)[business.status] || 'pendiente',
       created_at: new Date().toISOString(),
     };
     const categories: Category[] = (categoryResult.data || []).map(c => ({id:c.id,business_id:c.business_id,nombre:c.name,orden:c.sort_order,activo:c.is_active}));
