@@ -42,6 +42,8 @@ export async function signUpWithEmail(input: {
   password: string;
   fullName: string;
   phone: string;
+  businessName: string;
+  businessType: string;
 }) {
   ensureConfigured();
   const { data, error } = await supabase.auth.signUp({
@@ -51,6 +53,8 @@ export async function signUpWithEmail(input: {
       data: {
         full_name: input.fullName.trim(),
         phone: input.phone.trim(),
+        business_name: input.businessName.trim(),
+        business_type: input.businessType.trim(),
       },
     },
   });
@@ -112,4 +116,34 @@ export function subscribeToAuthChanges(
     callback(session);
   });
   return () => data.subscription.unsubscribe();
+}
+
+export async function ensureBusinessForCurrentUser(): Promise<MenuyaAuthContext | null> {
+  const context = await getAuthContext();
+  if (!context) return null;
+  if (context.memberships.length > 0 || context.isPlatformAdmin) return context;
+
+  const metadata = context.user.user_metadata || {};
+  const businessName = String(metadata.business_name || '').trim();
+  const businessType = String(metadata.business_type || '').trim();
+  const phone = String(metadata.phone || '').trim();
+  if (!businessName || !businessType) return context;
+
+  const slugBase = businessName
+    .normalize('NFD')
+    .replace(/[\\u0300-\\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 42) || 'mi-comercio';
+  const slug = `${slugBase}-${context.user.id.slice(0, 6)}`;
+  const { error } = await supabase.rpc('register_business', {
+    p_name: businessName,
+    p_slug: slug,
+    p_business_type: businessType,
+    p_phone: phone || null,
+    p_email: context.user.email || null,
+  });
+  if (error) throw error;
+  return getAuthContext();
 }
