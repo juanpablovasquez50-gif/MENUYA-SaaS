@@ -95,7 +95,7 @@ function AuthPage({ mode, data, onLogin, onRegister, onForgot, onReset }: {
       {done && <div className="notice notice-success" role="status">{mode === 'forgot' ? 'Si el correo está registrado, recibirás instrucciones para recuperar el acceso.' : mode === 'reset' ? 'Tu contraseña fue actualizada. Ya puedes iniciar sesión.' : 'Tu cuenta fue creada. Revisa tu correo para confirmar la dirección; después inicia sesión y MENUYA terminará de registrar tu comercio.'}</div>}
       <form onSubmit={submit} className="form-stack">
         {mode === 'register' && <><Field field={{ name: 'nombre', label: 'Tu nombre', required: true }} onChange={() => {}} /><Field field={{ name: 'negocio', label: 'Nombre del negocio', required: true }} onChange={() => {}} /><div className="field"><span>Sector *</span><select name="sector" required data-testid="select-sector">{['Restaurante', 'Ropa', 'Barbería', 'Tecnología', 'Panadería', 'Servicios', 'Otro'].map(x => <option key={x}>{x}</option>)}</select></div><Field field={{ name: 'telefono', label: 'Teléfono', type: 'tel', required: true }} onChange={() => {}} /></>}
-        <Field field={{ name: 'email', label: 'Correo electrónico', type: 'email', required: true }} onChange={() => {}} />
+        {mode !== 'reset' && <Field field={{ name: 'email', label: 'Correo electrónico', type: 'email', required: true }} onChange={() => {}} />}
         {mode !== 'forgot' && <><label className="field"><span>{mode === 'reset' ? 'Nueva contraseña *' : 'Contraseña *'}</span><div className="password-wrap"><input name="password" required minLength={8} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} type={showPassword ? 'text' : 'password'} data-testid="input-password" /><button type="button" className="password-eye" onClick={() => setShowPassword(!showPassword)} aria-label="Mostrar u ocultar contraseña">{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div></label>
           {(mode === 'register' || mode === 'reset') && <Field field={{ name: 'confirmPassword', label: 'Confirma tu contraseña', type: 'password', required: true }} onChange={() => {}} />}
         </>}
@@ -595,8 +595,9 @@ function Router() {
   return <RoutedErrorBoundary><Switch>
     <Route path="/"><Landing data={data} /></Route>
     <Route path="/login"><AuthPage mode="login" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
-    <Route path="/register"><AuthPage mode="register" data={data} onLogin={login} onRegister={register} onForgot={forgot} /></Route>
-    <Route path="/forgot-password"><AuthPage mode="forgot" data={data} onLogin={login} onRegister={register} onForgot={forgot} /></Route>
+    <Route path="/register"><AuthPage mode="register" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
+    <Route path="/forgot-password"><AuthPage mode="forgot" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
+    <Route path="/reset-password"><AuthPage mode="reset" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
     <Route path="/admin">{protectedRoute()}</Route>
     {adminLinks.slice(1).map(([path]) => <Route key={path} path={path}>{protectedRoute()}</Route>)}
     <Route path="/app">{protectedRoute()}</Route>
