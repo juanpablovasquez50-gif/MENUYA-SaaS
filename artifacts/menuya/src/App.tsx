@@ -478,7 +478,7 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
 }
 
 function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; onLogout: () => void }) {
-  const business = context.memberships[0]?.businesses?.[0];
+  const business = context.memberships[0]?.businesses ?? undefined;
   const status = business?.status || 'unlinked';
   const isPending = status === 'pending';
   return <div className="auth-layout"><aside className="auth-story"><Brand inverse /><div className="story-copy"><span className="eyebrow light">BIENVENIDO A MENUYA</span><h1>Tu negocio<br />ya tiene su<br /><em>propio lugar.</em></h1><p>Estamos preparando el espacio de gestión de tu comercio.</p></div><div className="auth-foot">Hecho para el comercio de aquí. <span>MENUYA</span></div></aside><main className="auth-main"><div className="auth-form-wrap"><span className="eyebrow">CUENTA VERIFICADA</span><h2>{business?.name || (context.isPlatformAdmin ? 'Acceso de plataforma' : 'Cuenta creada')}</h2>
