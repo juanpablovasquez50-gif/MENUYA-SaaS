@@ -47,36 +47,64 @@ function Field({ field, onChange }: { field: FormField; onChange: (name: string,
 function Modal({ title, close, children }: { title: string; close: () => void; children: ReactNode }) {
   return <div className="modal-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) close(); }}><section className="modal" role="dialog" aria-modal="true" aria-label={title}><header className="modal-head"><div><span className="eyebrow">CLICKOK · DEMO</span><h2>{title}</h2></div><button className="icon-btn" onClick={close} aria-label="Cerrar" data-testid="button-close-modal"><X size={18} /></button></header>{children}</section></div>;
 }
-function AuthPage({ mode, data, onLogin, onRegister }: { mode: 'login' | 'register' | 'forgot'; data: DemoData; onLogin: (email: string, password: string) => string | null; onRegister: (values: Record<string, string>) => string | null }) {
+function AuthPage({ mode, data, onLogin, onRegister, onForgot }: {
+  mode: 'login' | 'register' | 'forgot';
+  data: DemoData;
+  onLogin: (email: string, password: string) => Promise<string | null>;
+  onRegister: (values: Record<string, string>) => Promise<string | null>;
+  onForgot: (email: string) => Promise<string | null>;
+}) {
   const [, setLocation] = useLocation();
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [sample, setSample] = useState('brasa');
-  const sampleBiz = data.businesses.find(b => b.id === sample);
-  const submit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); setError('');
+  const sampleBiz = data.businesses.find(b => b.id === 'brasa');
+  const submit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (busy) return;
+    setError('');
+    setDone(false);
     const values = Object.fromEntries(new FormData(e.currentTarget).entries()) as Record<string, string>;
-    const message = mode === 'login' ? onLogin(values.email, values.password) : mode === 'register' ? onRegister(values) : null;
-    if (message) setError(message); else if (mode === 'forgot') setDone(true); else setLocation(mode === 'login' ? (values.email === 'admin@menuya.com' ? '/admin' : '/app') : '/login');
+    if (mode === 'register' && values.password !== values.confirmPassword) {
+      setError('Las contraseñas no coinciden.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const message = mode === 'login'
+        ? await onLogin(values.email, values.password)
+        : mode === 'register'
+          ? await onRegister(values)
+          : await onForgot(values.email);
+      if (message) setError(message);
+      else if (mode === 'login') setLocation('/app');
+      else setDone(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No fue posible completar la solicitud. Inténtalo de nuevo.');
+    } finally {
+      setBusy(false);
+    }
   };
-  return <div className="auth-layout"><aside className="auth-story"><Brand inverse /><div className="story-copy"><span className="eyebrow light">UNA TIENDA PROPIA, EN SERIO</span><h1>Tu negocio<br />merece su<br /><em>propia vitrina.</em></h1><p>Un catálogo que se siente tuyo. Pedidos organizados. Todo en un solo lugar.</p><div className="mini-store-preview"><div className="mini-preview-top"><span className="mini-avatar">{sampleBiz?.nombre.charAt(0)}</span><span><b>{sampleBiz?.nombre}</b><small>Catálogo digital · Abierto</small></span><ArrowRight size={17} /></div><div className="preview-products"><span /><span /><span /></div><div className="preview-caption">Así podría verse tu tienda</div></div></div><div className="auth-foot">Hecho para el comercio de aquí. <span>CLICKOK</span></div></aside>
-    <main className="auth-main"><div className="auth-mobile-brand"><Brand /></div><div className="auth-form-wrap"><span className="eyebrow">{mode === 'register' ? 'EMPIEZA EN MINUTOS' : mode === 'forgot' ? 'RECUPERA EL ACCESO' : 'QUÉ BUENO VERTE'}</span><h2>{mode === 'register' ? 'Abre tu tienda digital' : mode === 'forgot' ? '¿Olvidaste tu clave?' : 'Entra a tu espacio'}</h2><p className="subtle">{mode === 'register' ? 'Cuéntanos un poco de tu negocio.' : mode === 'forgot' ? 'Te enviaremos las instrucciones para recuperar tu cuenta.' : 'Tu negocio sigue justo donde lo dejaste.'}</p>
-      {error && <div className="notice notice-error" role="alert">{error}</div>}{done && <div className="notice notice-success">Si el correo existe, recibirás instrucciones para continuar.</div>}
+  return <div className="auth-layout"><aside className="auth-story"><Brand inverse /><div className="story-copy"><span className="eyebrow light">UNA TIENDA PROPIA, EN SERIO</span><h1>Tu negocio<br />merece su<br /><em>propia vitrina.</em></h1><p>Un catálogo que se siente tuyo. Pedidos organizados. Todo en un solo lugar.</p><div className="mini-store-preview"><div className="mini-preview-top"><span className="mini-avatar">{sampleBiz?.nombre.charAt(0) || 'M'}</span><span><b>{sampleBiz?.nombre || 'Tu negocio'}</b><small>Catálogo digital · Tu marca</small></span><ArrowRight size={17} /></div><div className="preview-products"><span /><span /><span /></div><div className="preview-caption">Así podría verse tu tienda</div></div></div><div className="auth-foot">Hecho para el comercio de aquí. <span>MENUYA</span></div></aside>
+    <main className="auth-main"><div className="auth-mobile-brand"><Brand /></div><div className="auth-form-wrap"><span className="eyebrow">{mode === 'register' ? 'EMPIEZA EN MINUTOS' : mode === 'forgot' ? 'RECUPERA EL ACCESO' : 'QUÉ BUENO VERTE'}</span><h2>{mode === 'register' ? 'Abre tu tienda digital' : mode === 'forgot' ? '¿Olvidaste tu clave?' : 'Entra a tu espacio'}</h2><p className="subtle">{mode === 'register' ? 'Crea tu cuenta y registra los datos de tu comercio.' : mode === 'forgot' ? 'Te enviaremos las instrucciones para recuperar tu cuenta.' : 'Ingresa con el correo y la contraseña de tu cuenta.'}</p>
+      {error && <div className="notice notice-error" role="alert">{error}</div>}
+      {done && <div className="notice notice-success" role="status">{mode === 'forgot' ? 'Si el correo está registrado, recibirás instrucciones para recuperar el acceso.' : 'Tu cuenta fue creada. Revisa tu correo para confirmar la dirección; después inicia sesión y MENUYA terminará de registrar tu comercio.'}</div>}
       <form onSubmit={submit} className="form-stack">
-        {mode === 'register' && <><Field field={{ name: 'nombre', label: 'Tu nombre', required: true }} onChange={() => {}} /><Field field={{ name: 'negocio', label: 'Nombre del negocio', required: true }} onChange={() => {}} /><div className="field"><span>Sector</span><select name="sector" required data-testid="select-sector">{['Restaurante', 'Ropa', 'Barbería', 'Tecnología', 'Panadería', 'Otro'].map(x => <option key={x}>{x}</option>)}</select></div><Field field={{ name: 'telefono', label: 'Teléfono', required: true }} onChange={() => {}} /></>}
+        {mode === 'register' && <><Field field={{ name: 'nombre', label: 'Tu nombre', required: true }} onChange={() => {}} /><Field field={{ name: 'negocio', label: 'Nombre del negocio', required: true }} onChange={() => {}} /><div className="field"><span>Sector *</span><select name="sector" required data-testid="select-sector">{['Restaurante', 'Ropa', 'Barbería', 'Tecnología', 'Panadería', 'Servicios', 'Otro'].map(x => <option key={x}>{x}</option>)}</select></div><Field field={{ name: 'telefono', label: 'Teléfono', type: 'tel', required: true }} onChange={() => {}} /></>}
         <Field field={{ name: 'email', label: 'Correo electrónico', type: 'email', required: true }} onChange={() => {}} />
-        {mode !== 'forgot' && <label className="field"><span>Contraseña</span><div className="password-wrap"><input name="password" required type={showPassword ? 'text' : 'password'} data-testid="input-password" /><button type="button" className="password-eye" onClick={() => setShowPassword(!showPassword)} aria-label="Mostrar u ocultar contraseña">{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div></label>}
-        {mode === 'register' && <p className="fine-print">La aprobación de comercios está configurada en modo <b>{data.platform.approval}</b>. Esta demo guarda la información solo en este navegador.</p>}
-        <Button type="submit" className="full-btn" testId="button-auth-submit">{mode === 'register' ? 'Crear mi tienda' : mode === 'forgot' ? 'Enviar instrucciones' : 'Entrar'} <ArrowRight size={16} /></Button>
+        {mode !== 'forgot' && <><label className="field"><span>Contraseña *</span><div className="password-wrap"><input name="password" required minLength={8} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} type={showPassword ? 'text' : 'password'} data-testid="input-password" /><button type="button" className="password-eye" onClick={() => setShowPassword(!showPassword)} aria-label="Mostrar u ocultar contraseña">{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div></label>
+          {mode === 'register' && <Field field={{ name: 'confirmPassword', label: 'Confirma tu contraseña', type: 'password', required: true }} onChange={() => {}} />}
+        </>}
+        {mode === 'register' && <p className="fine-print">Tu comercio se crea inicialmente privado y pendiente de revisión. No se publicará automáticamente.</p>}
+        <Button type="submit" className="full-btn" disabled={busy} testId="button-auth-submit">{busy ? 'Procesando...' : mode === 'register' ? 'Crear mi cuenta y tienda' : mode === 'forgot' ? 'Enviar instrucciones' : 'Entrar'} <ArrowRight size={16} /></Button>
       </form>
-      {mode === 'login' && <><div className="auth-divider"><span>o prueba la demo</span></div><div className="sample-login"><div className="field"><span>Comercio de muestra</span><select value={sample} onChange={e => setSample(e.target.value)} data-testid="select-demo-business">{data.businesses.filter(b => b.estado === 'activo').map(b => <option key={b.id} value={b.id}>{b.nombre}</option>)}</select></div><Button kind="soft" className="full-btn" onClick={() => { const user = data.users.find(u => u.id === sampleBiz?.owner_id); if (user) onLogin(user.email, user.password); setLocation('/app'); }} testId="button-demo-business">Entrar a {sampleBiz?.nombre} <ArrowRight size={16} /></Button></div><p className="demo-creds">Admin demo: <b>admin@menuya.com</b> · <b>MenuyaDemo2026!</b></p><Link href="/forgot-password" className="text-link">¿Olvidaste tu contraseña?</Link></>}
-      {mode !== 'forgot' && <p className="auth-switch">{mode === 'register' ? '¿Ya tienes cuenta?' : '¿Tienes un comercio?' } <Link href={mode === 'register' ? '/login' : '/register'}>{mode === 'register' ? 'Inicia sesión' : 'Crea tu tienda'}</Link></p>}
+      {mode === 'login' && <Link href="/forgot-password" className="text-link">¿Olvidaste tu contraseña?</Link>}
+      {mode !== 'forgot' && <p className="auth-switch">{mode === 'register' ? '¿Ya tienes cuenta?' : '¿Tienes un comercio?'} <Link href={mode === 'register' ? '/login' : '/register'}>{mode === 'register' ? 'Inicia sesión' : 'Crea tu tienda'}</Link></p>}
       {mode === 'forgot' && <Link href="/login" className="back-link"><ArrowLeft size={15} /> Volver a iniciar sesión</Link>}
-      <p className="security-note"><ShieldCheck size={14} /> Acceso demostrativo. No es seguro ni multiusuario de producción.</p>
+      <p className="security-note"><ShieldCheck size={14} /> Acceso protegido por Supabase Auth.</p>
     </div></main></div>;
 }
-
 function Landing({ data }: { data: DemoData }) {
   return <div className="landing"><header className="landing-nav"><Brand /><nav><a href="#como-funciona">Cómo funciona</a><a href="#negocios">Para tu negocio</a></nav><div className="landing-actions"><Link href="/login" className="nav-login">Iniciar sesión</Link><Link href="/register" className="btn btn-solid" data-testid="link-create-store">Crear mi tienda <ArrowRight size={15} /></Link></div></header>
     <section className="hero"><div className="hero-copy"><span className="eyebrow"><i className="eyebrow-dot" /> TU NEGOCIO, EN SU PROPIO LUGAR</span><h1>Una tienda digital<br />que <em>sí se siente tuya.</em></h1><p>Publica tu catálogo, recibe pedidos y enfócate en lo que haces mejor. Sin enredos. Sin comisiones por venta.</p><div className="hero-ctas"><Link href="/register" className="btn btn-solid btn-large" data-testid="link-start-free">Abre tu tienda gratis <ArrowRight size={17} /></Link><Link href="/brasa" className="hero-secondary">Mira una tienda de ejemplo <ArrowRight size={15} /></Link></div><div className="hero-proof"><div className="proof-avatars"><b>I</b><b>H</b><b>M</b></div><span>Negocios locales, más cerca de sus clientes</span></div></div>
