@@ -9,6 +9,7 @@ import NotFound from '@/pages/not-found';
 import { Link, Route, Switch, Router as WouterRouter, useLocation, useParams } from 'wouter';
 import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BarChart3, Bell, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, ClipboardList, Clock3, CreditCard, ExternalLink, Eye, EyeOff, LayoutDashboard, LogOut, Menu, MoreHorizontal, Package, Pencil, Plus, Search, Settings, ShieldCheck, ShoppingBag, ShoppingCart, Store, Tag, Trash2, TrendingUp, Users, X, Zap } from 'lucide-react';
 import { type AuditLog, type Business, type CatalogEvent, type Category, type Customer, type DemoData, type Order, type OrderStatus, type Plan, type Product, type ProductChoice, repository } from '@/lib/menuya-data';
+import { type MenuyaAuthContext, ensureBusinessForCurrentUser, getAuthContext, isSupabaseConfigured, sendPasswordRecovery, signInWithEmail, signOut, signUpWithEmail } from '@/lib/menuya-auth';
 
 const queryClient = new QueryClient();
 const money = (value: number) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value);
@@ -474,15 +475,42 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
   </div>;
 }
 
+function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; onLogout: () => void }) {
+  const business = context.memberships[0]?.businesses;
+  const status = business?.status || 'unlinked';
+  const isPending = status === 'pending';
+  return <div className="auth-layout"><aside className="auth-story"><Brand inverse /><div className="story-copy"><span className="eyebrow light">BIENVENIDO A MENUYA</span><h1>Tu negocio<br />ya tiene su<br /><em>propio lugar.</em></h1><p>Estamos preparando el espacio de gestión de tu comercio.</p></div><div className="auth-foot">Hecho para el comercio de aquí. <span>MENUYA</span></div></aside><main className="auth-main"><div className="auth-form-wrap"><span className="eyebrow">CUENTA VERIFICADA</span><h2>{business?.name || (context.isPlatformAdmin ? 'Acceso de plataforma' : 'Cuenta creada')}</h2>
+    {business ? <><div className={isPending ? 'notice notice-success' : 'notice'} role="status">{isPending ? 'Recibimos tu solicitud. Tu comercio está pendiente de revisión y permanece privado.' : status === 'active' ? 'Tu comercio está activo. Estamos terminando de conectar los módulos de gestión para evitar mostrarte datos de demostración.' : `El comercio tiene estado “${status}”. Contacta al equipo de MENUYA si necesitas ayuda.`}</div><p className="subtle">Enlace reservado: <b>/{business.slug}</b></p><p className="fine-print">Por seguridad, no cargamos los productos ni pedidos de la demo dentro de tu cuenta real. El panel se habilitará cuando la conexión de datos esté verificada.</p></> : <div className="notice notice-error" role="alert">{context.isPlatformAdmin ? 'Tu cuenta tiene permisos de plataforma. El panel de Super Admin todavía no está habilitado en esta etapa.' : 'Tu cuenta está autenticada, pero todavía no aparece un comercio vinculado. No crearemos datos de demostración ni duplicaremos el registro.'}</div>}
+    <Button className="full-btn" onClick={onLogout}>Cerrar sesión <LogOut size={16} /></Button><p className="security-note"><ShieldCheck size={14} /> Sesión real protegida por Supabase.</p>
+  </div></main></div>;
+}
+
 function Router() {
   const [data, setData] = useState<DemoData>(() => repository.load());
-  const [session, setSession] = useState<Session>(() => { try { return JSON.parse(localStorage.getItem('menuya-session') || 'null') as Session; } catch { return null; } });
+  const [session, setSession] = useState<Session>(null);
   const [businessId, setBusinessId] = useState(() => localStorage.getItem('menuya-business') || '');
+  const [remoteContext, setRemoteContext] = useState<MenuyaAuthContext | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authInitError, setAuthInitError] = useState('');
   const [toast, setToast] = useState('');
   const [location, setLocation] = useLocation();
   useEffect(() => { const change = () => setBusinessId(localStorage.getItem('menuya-business') || ''); window.addEventListener('menuya-business-change', change); return () => window.removeEventListener('menuya-business-change', change); }, []);
   useEffect(() => { repository.save(data); }, [data]);
   useEffect(() => { if (!toast) return undefined; const timer = window.setTimeout(() => setToast(''), 3200); return () => window.clearTimeout(timer); }, [toast]);
+  useEffect(() => {
+    let mounted = true;
+    if (!isSupabaseConfigured) {
+      setAuthLoading(false);
+      return () => { mounted = false; };
+    }
+    getAuthContext()
+      .then(async context => context ? ensureBusinessForCurrentUser() : null)
+      .then(context => { if (mounted) setRemoteContext(context); })
+      .catch(error => { if (mounted) setAuthInitError(error instanceof Error ? error.message : 'No se pudo recuperar la sesión.'); })
+      .finally(() => { if (mounted) setAuthLoading(false); });
+    return () => { mounted = false; };
+  }, []);
+
   const update = (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => {
     setData(current => {
       let next = fn(current);
@@ -495,39 +523,76 @@ function Router() {
       return next;
     });
   };
-  const login = (email: string, password: string): string | null => {
-    const user = data.users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
-    if (!user) return 'El correo o la contraseña no coinciden.';
-    if (user.role !== 'admin') {
-      const biz = data.businesses.find(b => user.business_ids.includes(b.id));
-      if (!biz || biz.estado !== 'activo') return biz?.estado === 'pendiente' ? 'Tu solicitud está pendiente de aprobación. Vuelve pronto.' : 'Este comercio no tiene acceso activo.';
-      localStorage.setItem('menuya-business', biz.id); setBusinessId(biz.id);
+
+  const login = async (email: string, password: string): Promise<string | null> => {
+    if (!isSupabaseConfigured) return 'La conexión de MENUYA aún no está configurada en este entorno.';
+    try {
+      await signInWithEmail(email, password);
+      const context = await ensureBusinessForCurrentUser();
+      setRemoteContext(context);
+      return null;
+    } catch (error) {
+      return error instanceof Error ? error.message : 'No fue posible iniciar sesión.';
     }
-    const nextSession = { userId: user.id, role: user.role }; setSession(nextSession); localStorage.setItem('menuya-session', JSON.stringify(nextSession)); return null;
   };
-  const register = (v: Record<string, string>): string | null => {
-    if (data.users.some(u => u.email.toLowerCase() === v.email.toLowerCase())) return 'Ya existe una cuenta con ese correo.';
-    const id = repository.id(), business: Business = { id, owner_id: id, nombre: v.negocio.trim(), slug: v.negocio.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + id.slice(-3), tipo: v.sector.toLowerCase(), telefono: v.telefono, estado: data.platform.approval === 'automatica' ? 'activo' : 'pendiente', created_at: repository.date(0) };
-    const user = { id, nombre: v.nombre.trim(), email: v.email, password: v.password, role: 'owner' as const, business_ids: [id] };
-    const category: Category = { id: repository.id(), business_id: id, nombre: 'Favoritos', orden: 1, activo: true };
-    const planId = data.platform.default_plan;
-    setData(d => ({ ...d, users: [...d.users, user], businesses: [...d.businesses, business], categories: [...d.categories, category], settings: [...d.settings, { business_id: id, portada: '', logo: '', color: '#e7785d', fuente: 'Manrope', contacto: v.telefono, redes: '', pagos: 'Efectivo, Nequi', entrega: 'Domicilio y recoger en tienda', publicado: business.estado === 'activo', tagline: 'Un negocio local, hecho con cariño.' }], subscriptions: [...d.subscriptions, { id: repository.id(), business_id: id, plan_id: planId, estado: business.estado === 'activo' ? 'activa' : 'pendiente', inicio: repository.date(0), vencimiento: repository.date(-30) }], audit: [{ id: repository.id(), actor: v.nombre, accion: 'Registro de comercio', entidad: business.nombre, fecha: repository.date(0) }, ...d.audit] }));
-    return null;
+
+  const register = async (v: Record<string, string>): Promise<string | null> => {
+    if (!isSupabaseConfigured) return 'La conexión de MENUYA aún no está configurada en este entorno.';
+    try {
+      const result = await signUpWithEmail({
+        email: v.email,
+        password: v.password,
+        fullName: v.nombre,
+        phone: v.telefono,
+        businessName: v.negocio,
+        businessType: v.sector,
+      });
+      if (result.session) {
+        const context = await ensureBusinessForCurrentUser();
+        setRemoteContext(context);
+        setLocation('/app');
+      }
+      return null;
+    } catch (error) {
+      return error instanceof Error ? error.message : 'No fue posible crear la cuenta.';
+    }
   };
-  const logout = () => { setSession(null); localStorage.removeItem('menuya-session'); setLocation('/login'); };
+
+  const forgot = async (email: string): Promise<string | null> => {
+    if (!isSupabaseConfigured) return 'La conexión de MENUYA aún no está configurada en este entorno.';
+    try { await sendPasswordRecovery(email); return null; }
+    catch (error) { return error instanceof Error ? error.message : 'No fue posible enviar las instrucciones.'; }
+  };
+
+  const logout = async () => {
+    try { if (isSupabaseConfigured) await signOut(); } finally {
+      setRemoteContext(null);
+      setSession(null);
+      localStorage.removeItem('menuya-session');
+      setLocation('/login');
+    }
+  };
+
   const user = data.users.find(u => u.id === session?.userId);
   const ownerBusiness = data.businesses.find(b => b.id === (businessId || user?.business_ids[0])) || data.businesses.find(b => b.owner_id === user?.id);
   const merchantRoute = (path: string) => session?.role === 'admin' ? <AdminPage path={path} data={data} update={update} /> : session && ownerBusiness ? <AppShell data={data} session={session} update={update} logout={logout} business={ownerBusiness} activePath={path}><MerchantPage path={path} data={data} business={ownerBusiness} update={update} /></AppShell> : <RedirectToLogin setLocation={setLocation} />;
-  const adminRoute = (path: string) => session?.role === 'admin' ? <AppShell data={data} session={session} update={update} logout={logout} activePath={path}><AdminPage path={path} data={data} update={update} /></AppShell> : <RedirectToLogin setLocation={setLocation} />;
+  const protectedRoute = () => authLoading
+    ? <div className="auth-loading"><span className="loader-line" />Comprobando tu sesión...</div>
+    : authInitError
+      ? <div className="auth-form-wrap"><div className="notice notice-error">{authInitError}</div><Link href="/login" className="text-link">Volver al acceso</Link></div>
+      : remoteContext
+        ? <RemoteAccessGate context={remoteContext} onLogout={logout} />
+        : <RedirectToLogin setLocation={setLocation} />;
+
   return <RoutedErrorBoundary><Switch>
     <Route path="/"><Landing data={data} /></Route>
-    <Route path="/login"><AuthPage mode="login" data={data} onLogin={login} onRegister={register} /></Route>
-    <Route path="/register"><AuthPage mode="register" data={data} onLogin={login} onRegister={register} /></Route>
-    <Route path="/forgot-password"><AuthPage mode="forgot" data={data} onLogin={login} onRegister={register} /></Route>
-    <Route path="/admin">{adminRoute('/admin')}</Route>
-    {adminLinks.slice(1).map(([path]) => <Route key={path} path={path}>{adminRoute(path)}</Route>)}
-    <Route path="/app">{merchantRoute('/app')}</Route>
-    {shopLinks.slice(1).map(([path]) => <Route key={path} path={path}>{merchantRoute(path)}</Route>)}
+    <Route path="/login"><AuthPage mode="login" data={data} onLogin={login} onRegister={register} onForgot={forgot} /></Route>
+    <Route path="/register"><AuthPage mode="register" data={data} onLogin={login} onRegister={register} onForgot={forgot} /></Route>
+    <Route path="/forgot-password"><AuthPage mode="forgot" data={data} onLogin={login} onRegister={register} onForgot={forgot} /></Route>
+    <Route path="/admin">{protectedRoute()}</Route>
+    {adminLinks.slice(1).map(([path]) => <Route key={path} path={path}>{protectedRoute()}</Route>)}
+    <Route path="/app">{protectedRoute()}</Route>
+    {shopLinks.slice(1).map(([path]) => <Route key={path} path={path}>{protectedRoute()}</Route>)}
     <Route path="/:slug"><PublicRoute data={data} update={update} /></Route>
     <Route component={NotFound} />
   </Switch>{toast && <div className="toast-message" role="status" data-testid="status-toast"><CheckCircle2 size={17} />{toast}</div>}</RoutedErrorBoundary>;
