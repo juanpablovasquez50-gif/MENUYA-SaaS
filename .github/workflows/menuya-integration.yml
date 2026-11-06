@@ -1,9 +1,14 @@
 name: MENUYA integration checks
 
+permissions:
+  contents: write
+
 on:
   push:
     branches:
       - integration/supabase-auth
+    paths-ignore:
+      - pnpm-lock.yaml
   pull_request:
     branches:
       - main
@@ -25,6 +30,15 @@ jobs:
           cache: pnpm
       - name: Install workspace dependencies
         run: pnpm install --no-frozen-lockfile
+      - name: Commit resolved pnpm lockfile
+        run: |
+          if ! git diff --quiet -- pnpm-lock.yaml; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add pnpm-lock.yaml
+            git commit -m 'chore(menuya): refresh pnpm lockfile'
+            git push origin HEAD:${GITHUB_REF_NAME}
+          fi
       - name: Typecheck MENUYA
         run: pnpm --filter @workspace/menuya typecheck
       - name: Build MENUYA
