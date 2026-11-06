@@ -730,7 +730,64 @@ function RedirectToLogin({ setLocation }: { setLocation: (path: string) => void 
 }
 function PublicRoute({ data, update }: { data: DemoData; update: (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => void }) {
   const params = useParams<{ slug: string }>();
-  return <PublicStore data={data} slug={params.slug || ''} update={update} />;
+  const slug = params.slug || '';
+  const [storeData, setStoreData] = useState<DemoData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      setLoading(true); setLoadError('');
+      try {
+        const { data: businessRow, error: businessError } = await supabase
+          .from('businesses')
+          .select('id,name,slug,business_type,status,is_published')
+          .eq('slug', slug).maybeSingle();
+        if (businessError) throw businessError;
+        if (!businessRow || !businessRow.is_published) {
+          if (active) { setStoreData(null); setLoading(false); }
+          return;
+        }
+        const [categoryResult, productResult, settingsResult] = await Promise.all([
+          supabase.from('categories').select('id,business_id,name,sort_order,is_active').eq('business_id',businessRow.id).eq('is_active',true).order('sort_order'),
+          supabase.from('products').select('id,business_id,category_id,name,description,price,previous_price,image_url,is_active,is_available,is_featured,stock').eq('business_id',businessRow.id).eq('is_active',true).eq('is_available',true).order('created_at',{ascending:false}),
+          supabase.from('store_settings').select('business_id,cover_url,logo_url,brand_color,font_family,contact_text,social_links,payment_methods,delivery_info,is_published,tagline').eq('business_id',businessRow.id).maybeSingle(),
+        ]);
+        const queryError = categoryResult.error || productResult.error || settingsResult.error;
+        if (queryError) throw queryError;
+        if (!settingsResult.data?.is_published) {
+          if (active) { setStoreData(null); setLoading(false); }
+          return;
+        }
+        const profile = {
+          id:businessRow.id, owner_id:'', nombre:businessRow.name, slug:businessRow.slug,
+          tipo:businessRow.business_type || 'Comercio', telefono:'', estado:businessRow.status === 'active' ? 'activo' as const : 'pendiente' as const,
+          created_at:new Date().toISOString(),
+        };
+        const row = settingsResult.data;
+        const settings = {
+          business_id:businessRow.id, portada:row.cover_url || '', logo:row.logo_url || '',
+          color:row.brand_color || '#252525', fuente:row.font_family || 'Manrope',
+          contacto:row.contact_text || '', redes:typeof row.social_links === 'string' ? row.social_links : JSON.stringify(row.social_links || {}),
+          pagos:Array.isArray(row.payment_methods) ? row.payment_methods.join(', ') : 'Efectivo',
+          entrega:row.delivery_info || '', publicado:true, tagline:row.tagline || '',
+        };
+        const categories = (categoryResult.data || []).map(c=>({id:c.id,business_id:c.business_id,nombre:c.name,orden:c.sort_order,activo:c.is_active}));
+        const products = (productResult.data || []).map(p=>({id:p.id,business_id:p.business_id,category_id:p.category_id || '',nombre:p.name,descripcion:p.description || '',precio:Number(p.price),precio_anterior:p.previous_price ? Number(p.previous_price) : undefined,imagen:p.image_url || undefined,activo:p.is_active,disponible:p.is_available,destacado:p.is_featured,stock:p.stock ?? 0,variantes:[],complementos:[]}));
+        const remote: DemoData = {...data,users:[],businesses:[profile],categories,products,customers:[],orders:[],settings:[settings],subscriptions:[],audit:[],catalog_events:[]};
+        if (active) { setStoreData(remote); setLoading(false); }
+      } catch (error) {
+        if (active) { setLoadError(error instanceof Error ? error.message : 'No fue posible cargar la tienda.'); setLoading(false); }
+      }
+    };
+    if (slug && isSupabaseConfigured) void load();
+    else { setLoadError('La tienda pública no está configurada.'); setLoading(false); }
+    return () => { active = false; };
+  }, [slug]);
+  if (loading) return <div className="auth-loading"><span className="loader-line" />Cargando tienda...</div>;
+  if (loadError) return <div className="store-unavailable"><Brand /><div><span className="eyebrow">NO PUDIMOS CARGAR LA TIENDA</span><h1>Intenta nuevamente.</h1><p>{loadError}</p><Link href="/" className="btn btn-outline">Volver al inicio</Link></div></div>;
+  if (!storeData) return <NotFound />;
+  return <PublicStore data={storeData} slug={slug} update={update} />;
 }
 function App() {
   return <QueryClientProvider client={queryClient}><TooltipProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter><Toaster /></TooltipProvider></QueryClientProvider>;
