@@ -30,12 +30,12 @@ begin
       using errcode = '42501';
   end if;
 
-  if pg_catalog.length(pg_catalog.btrim(pg_catalog.coalesce(p_name, ''))) < 2
+  if pg_catalog.length(pg_catalog.btrim(coalesce(p_name, ''))) < 2
      or pg_catalog.length(pg_catalog.btrim(p_name)) > 100 then
     raise exception 'El nombre del comercio debe tener entre 2 y 100 caracteres.';
   end if;
 
-  if pg_catalog.length(pg_catalog.btrim(pg_catalog.coalesce(p_business_type, ''))) < 2
+  if pg_catalog.length(pg_catalog.btrim(coalesce(p_business_type, ''))) < 2
      or pg_catalog.length(pg_catalog.btrim(p_business_type)) > 80 then
     raise exception 'Selecciona un sector válido.';
   end if;
@@ -54,7 +54,7 @@ begin
     return;
   end if;
 
-  v_slug := pg_catalog.lower(pg_catalog.btrim(pg_catalog.coalesce(p_slug, '')));
+  v_slug := pg_catalog.lower(pg_catalog.btrim(coalesce(p_slug, '')));
   if v_slug !~ '^[a-z0-9]+(-[a-z0-9]+)*$' then
     raise exception 'El enlace de la tienda no tiene un formato válido.';
   end if;
@@ -84,8 +84,8 @@ begin
     pg_catalog.btrim(p_name),
     v_slug,
     pg_catalog.btrim(p_business_type),
-    nullif(pg_catalog.btrim(pg_catalog.coalesce(p_phone, '')), ''),
-    nullif(pg_catalog.lower(pg_catalog.btrim(pg_catalog.coalesce(p_email, ''))), ''),
+    nullif(pg_catalog.btrim(coalesce(p_phone, '')), ''),
+    nullif(pg_catalog.lower(pg_catalog.btrim(coalesce(p_email, ''))), ''),
     'pending',
     false
   )
@@ -99,7 +99,7 @@ begin
     payment_methods, social_links, is_published, tagline
   ) values (
     v_business_id, '#252525', 'Manrope',
-    nullif(pg_catalog.btrim(pg_catalog.coalesce(p_phone, '')), ''),
+    nullif(pg_catalog.btrim(coalesce(p_phone, '')), ''),
     '["Efectivo","Nequi","Transferencia"]'::jsonb,
     '{}'::jsonb, false, 'Tu negocio, en su propio lugar.'
   );
