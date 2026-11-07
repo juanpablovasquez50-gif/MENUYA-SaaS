@@ -41,7 +41,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Validate and build
-        run: pnpm build
+        run: |
+          pnpm run typecheck
+          pnpm --filter @workspace/menuya build
         env:
           VITE_SUPABASE_URL: https://example.supabase.co
           VITE_SUPABASE_PUBLISHABLE_KEY: validation-placeholder
