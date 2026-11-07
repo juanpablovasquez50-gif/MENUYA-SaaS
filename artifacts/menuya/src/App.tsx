@@ -616,6 +616,15 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
     setRemoteData(data); setLoading(false);
   };
   useEffect(() => { void loadRemoteData(); }, [business?.id]);
+  useEffect(() => {
+    if (!business?.id) return;
+    const channel = supabase.channel(`merchant-dashboard-${business.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `business_id=eq.${business.id}` }, () => { void loadRemoteData(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'customers', filter: `business_id=eq.${business.id}` }, () => { void loadRemoteData(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales', filter: `business_id=eq.${business.id}` }, () => { void loadRemoteData(); })
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [business?.id]);
   const updateRemote = (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => {
     if (!remoteData || !business?.id) return;
     const previous = remoteData;
