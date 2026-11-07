@@ -519,15 +519,15 @@ function PlatformAdminLogin({ onLogin }: { onLogin: (email: string, password: st
     finally { setBusy(false); }
   };
   return <main className="sa-login">
-    <div className="sa-login-brand"><span className="sa-brand-mark">m.</span><span>MENUYA <small>CONTROL CENTER</small></span></div>
+    <div className="sa-login-brand"><img src="/brand-clickok-dark.svg" alt="CLICKOK" style={{width:188,height:'auto',display:'block'}} /><span className="sr-only">CLICKOK CONTROL CENTER</span></div>
     <section className="sa-login-card">
       <div className="sa-login-icon"><ShieldCheck size={25}/></div>
       <span className="sa-kicker">ÁREA RESTRINGIDA · ATOM LABS</span>
       <h1>Administración<br/><em>de plataforma.</em></h1>
-      <p>Ingresa con tus credenciales autorizadas para gestionar Menuya.</p>
+      <p>Ingresa con tus credenciales autorizadas para gestionar CLICKOK.</p>
       {error && <div className="notice notice-error" role="alert">{error}</div>}
       <form onSubmit={submit}>
-        <label className="sa-field"><span>Correo administrador</span><input name="email" type="email" autoComplete="username" placeholder="admin@menuya.co" required/></label>
+        <label className="sa-field"><span>Correo administrador</span><input name="email" type="email" autoComplete="username" placeholder="Correo autorizado" required/></label>
         <label className="sa-field"><span>Contraseña</span><div className="sa-password"><input name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="Tu contraseña" required/><button type="button" onClick={()=>setShowPassword(v=>!v)} aria-label="Mostrar contraseña">{showPassword ? <EyeOff size={17}/> : <Eye size={17}/>}</button></div></label>
         <button className="sa-submit" type="submit" disabled={busy}>{busy ? 'Verificando acceso…' : 'Entrar al panel'} <ArrowRight size={17}/></button>
       </form>
