@@ -230,11 +230,30 @@ function MerchantPage({ path, data, business, update }: { path: string; data: De
   const HeaderAction = ({ text, onClick }: { text: string; onClick: () => void }) => <Button onClick={onClick} testId="button-create"><Plus size={16} /> {text}</Button>;
 
   if (path === '/app' || path === '/app/') {
-    const todayOrders = orders.filter(o => new Date(o.created_at).toDateString() === new Date().toDateString());
-    const totalSales = orders.filter(o => o.estado !== 'cancelado').reduce((s, o) => s + o.total, 0);
+    const now = Date.now();
+    const currentStart = now - 30 * 86400000;
+    const previousStart = now - 60 * 86400000;
+    const validOrders = orders.filter(o => o.estado !== 'cancelado');
+    const currentOrders = validOrders.filter(o => new Date(o.created_at).getTime() >= currentStart);
+    const previousOrders = validOrders.filter(o => {
+      const time = new Date(o.created_at).getTime();
+      return time >= previousStart && time < currentStart;
+    });
+    const currentSales = currentOrders.reduce((sum, order) => sum + order.total, 0);
+    const previousSales = previousOrders.reduce((sum, order) => sum + order.total, 0);
+    const currentCustomers = new Set(currentOrders.map(order => order.customer_id).filter(Boolean)).size;
+    const previousCustomers = new Set(previousOrders.map(order => order.customer_id).filter(Boolean)).size;
+    const variation = (current: number, previous: number) => previous > 0
+      ? `${current >= previous ? '+' : ''}${Math.round(((current - previous) / previous) * 100)}% vs. período anterior`
+      : undefined;
     return <><PageTitle eyebrow="TU NEGOCIO, EN UN VISTAZO" title={`Hola, ${data.users.find(u => u.id === business.owner_id)?.nombre.split(' ')[0] || 'bienvenido'}.`} description="Esto es lo que está pasando en tu tienda." action={<Link href={`/${business.slug}`} className="btn btn-outline" target="_blank"><Eye size={16} /> Ver mi tienda</Link>} />
       {business.estado !== 'activo' && <div className="notice notice-warn"><Clock3 size={18} /><span><b>Tu tienda está {statusLabel[business.estado]?.toLowerCase()}.</b> {business.estado === 'pendiente' ? 'La tienda no será visible al público hasta su aprobación.' : 'Contacta al equipo de CLICKOK si necesitas ayuda.'}</span></div>}
-      <div className="metrics-grid"><Metric label="Pedidos recibidos" value={String(orders.length)} note={`${todayOrders.length} hoy`} icon={ShoppingCart} trend="+12%" /><Metric label="Ventas registradas" value={money(totalSales)} note="Acumulado de demo" icon={TrendingUp} trend="+8%" /><Metric label="Productos publicados" value={String(products.filter(p => p.activo).length)} note={productLimit >= 999999 ? 'Sin límite de productos' : `de ${productLimit} disponibles`} icon={Package} /><Metric label="Clientes" value={String(customers.length)} note="Con pedido registrado" icon={Users} /></div>
+      <div className="metrics-grid">
+        <Metric label="Pedidos recibidos" value={String(currentOrders.length)} note="Últimos 30 días" icon={ShoppingCart} trend={variation(currentOrders.length, previousOrders.length)} />
+        <Metric label="Ventas registradas" value={money(currentSales)} note="Últimos 30 días · pedidos no cancelados" icon={TrendingUp} trend={variation(currentSales, previousSales)} />
+        <Metric label="Productos publicados" value={String(products.filter(p => p.activo).length)} note={productLimit >= 999999 ? 'Sin límite de productos' : `de ${productLimit} disponibles`} icon={Package} />
+        <Metric label="Clientes activos" value={String(currentCustomers)} note="Con pedidos en los últimos 30 días" icon={Users} trend={variation(currentCustomers, previousCustomers)} />
+      </div>
       <div className="dashboard-grid"><section className="panel recent-panel"><div className="panel-head"><div><span className="eyebrow">MOVIMIENTO RECIENTE</span><h2>Últimos pedidos</h2></div><Link href="/app/orders" className="text-link">Ver todos <ArrowRight size={14} /></Link></div>{orders.length ? <div className="recent-list">{orders.slice(0, 4).map(o => <button className="recent-row" key={o.id} onClick={() => setSelectedOrder(o)} data-testid={`row-order-${o.id}`}><span className="order-number">#{String(o.numero).padStart(3, '0')}</span><span className="recent-customer"><b>{data.customers.find(c => c.id === o.customer_id)?.nombre}</b><small>{o.items.map(i => `${i.cantidad} × ${i.nombre}`).join(', ')}</small></span><span className="recent-total">{money(o.total)}</span><Status value={o.estado} /></button>)}</div> : <Empty title="Aún no llegan pedidos" text="Cuando tus clientes compren, verás sus pedidos aquí." />}</section><section className="panel quick-panel"><div className="panel-head"><div><span className="eyebrow">SIGUIENTE PASO</span><h2>Haz crecer tu tienda</h2></div><Zap size={17} /></div><div className="setup-progress"><span>Tu tienda está lista para crecer</span><b>{products.length > 0 && settings.publicado ? '100%' : '60%'}</b><div><i style={{ width: products.length > 0 && settings.publicado ? '100%' : '60%' }} /></div></div><Link href="/app/products" className="quick-link"><span className="quick-icon"><Package size={17} /></span><span><b>Completa tu catálogo</b><small>Agrega productos y precios</small></span><ChevronRight size={16} /></Link><Link href="/app/editor" className="quick-link"><span className="quick-icon coral"><Pencil size={17} /></span><span><b>Personaliza tu vitrina</b><small>Colores, portada y contacto</small></span><ChevronRight size={16} /></Link><Link href="/app/subscription" className="quick-link"><span className="quick-icon sand"><CreditCard size={17} /></span><span><b>Tu plan: {plan?.nombre || 'Semilla'}</b><small>Conoce lo que incluye</small></span><ChevronRight size={16} /></Link></section></div>
       <div className="bottom-note"><span>Tu tienda pública</span><Link href={`/${business.slug}`}>clickok.co/{business.slug} <ExternalLink size={13} /></Link><span className="note-separator" /><span>Los datos de esta demo se guardan solo en este navegador.</span></div>
       {selectedOrder && <OrderModal order={selectedOrder} data={data} close={() => setSelectedOrder(null)} update={update} />}
