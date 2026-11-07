@@ -477,19 +477,48 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
     setConfiguring(null);
   };
   const setQty = (id: string, amount: number) => setCart(c => { const next = { ...c }; if (amount <= 0) delete next[id]; else next[id] = amount; return next; });
-  const submitOrder = (e: FormEvent<HTMLFormElement>) => {
+  const submitOrder = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault(); setError('');
     const form = new FormData(e.currentTarget);
     const nombre = String(form.get('nombre') || '').trim(), telefono = String(form.get('telefono') || '').trim();
     const entrega = String(form.get('entrega') || 'domicilio') as 'domicilio' | 'recoger';
     const direccion = String(form.get('direccion') || '').trim();
     if (!nombre || !telefono || (entrega === 'domicilio' && !direccion)) { setError('Completa tu nombre, teléfono y dirección para el domicilio.'); return; }
-    const customer = data.customers.find(c => c.business_id === business.id && c.telefono === telefono);
-    const customerId = customer?.id || repository.id();
-    const numero = Math.max(0, ...data.orders.filter(o => o.business_id === business.id).map(o => o.numero)) + 1;
-    const order: Order = { id: repository.id(), business_id: business.id, numero, customer_id: customerId, items: cartItems.map(x => ({ product_id: x.p.id, nombre: x.p.nombre, precio: itemUnitPrice(x), cantidad: x.cantidad, variante: x.variante?.nombre, complementos: x.complementos.map(choice => ({ nombre: choice.nombre, precio_extra: choice.precio_extra })) })), total: subtotal, estado: 'pendiente', entrega, direccion: entrega === 'domicilio' ? direccion : undefined, observaciones: String(form.get('observaciones') || ''), metodo_pago: String(form.get('metodo_pago') || 'Efectivo'), created_at: repository.date(0) };
-    update(d => ({ ...d, customers: customer ? d.customers.map(c => c.id === customer.id ? { ...c, total_pedidos: c.total_pedidos + 1, total_compras: c.total_compras + subtotal, ultimo_pedido: order.created_at } : c) : [...d.customers, { id: customerId, business_id: business.id, nombre, telefono, total_pedidos: 1, total_compras: subtotal, ultimo_pedido: order.created_at }], orders: [...d.orders, order] }), `Pedido #${String(numero).padStart(3, '0')} recibido`, business.nombre);
-    setCart({}); setCartChoices({}); setCheckout(false); setSuccess(true);
+    if (!cartItems.length) { setError('Agrega al menos un producto al pedido.'); return; }
+    try {
+      const { data: created, error: createError } = await supabase.functions.invoke('create-store-order', {
+        body: {
+          business_id: business.id,
+          customer: { name: nombre, phone: telefono },
+          fulfillment_type: entrega === 'domicilio' ? 'delivery' : 'pickup',
+          delivery_address: entrega === 'domicilio' ? direccion : null,
+          notes: String(form.get('observaciones') || '').trim(),
+          payment_method: String(form.get('metodo_pago') || 'Efectivo'),
+          items: cartItems.map(x => ({
+            product_id: x.p.id,
+            quantity: x.cantidad,
+            variant_value_id: x.variante?.id || null,
+            addon_value_ids: x.complementos.map(choice => choice.id)
+          }))
+        }
+      });
+      if (createError) throw createError;
+      if (!created?.order) throw new Error('El servidor no confirmó el registro del pedido.');
+      const order = created.order as Order;
+      update(d => ({
+        ...d,
+        customers: d.customers.some(customer => customer.telefono === telefono && customer.business_id === business.id)
+          ? d.customers.map(customer => customer.telefono === telefono && customer.business_id === business.id
+            ? { ...customer, total_pedidos: customer.total_pedidos + 1, total_compras: customer.total_compras + order.total, ultimo_pedido: order.created_at }
+            : customer)
+          : [...d.customers, { id: order.customer_id || repository.id(), business_id: business.id, nombre, telefono, total_pedidos: 1, total_compras: order.total, ultimo_pedido: order.created_at }],
+        orders: [order, ...d.orders.filter(existing => existing.id !== order.id)]
+      }), `Pedido #${String(order.numero).padStart(3, '0')} recibido`, business.nombre);
+      setCart({}); setCartChoices({}); setCheckout(false); setSuccess(true);
+    } catch (err) {
+      console.error('CLICKOK: error registrando pedido de vitrina', err);
+      setError(err instanceof Error ? err.message : 'No fue posible registrar el pedido. Intenta nuevamente.');
+    }
   };
   if (business.estado !== 'activo' || !settings?.publicado) return <div className="store-unavailable"><Brand /><div><span className="eyebrow">VITRINA NO DISPONIBLE</span><h1>Esta tienda está en pausa.</h1><p>Vuelve a visitarla más adelante.</p><Link href="/" className="btn btn-outline">Conocer CLICKOK</Link></div><small>CLICKOK · Catálogos digitales y pedidos</small></div>;
   return <div className="public-store" style={{ '--store-color': settings.color } as React.CSSProperties}><header className="public-header"><Brand /><span className="public-powered">UNA TIENDA DE <b>CLICKOK</b></span></header><section className="public-hero"><div className="public-cover" style={settings.portada ? { backgroundImage: `linear-gradient(90deg,rgba(22,49,43,.56),rgba(22,49,43,.05)),url("${settings.portada}")` } : undefined}><span className="cover-kicker">CATÁLOGO DIGITAL</span><span className="cover-shop-name">{business.nombre}</span></div><div className="public-store-intro"><div className="public-logo">{settings.logo || business.nombre.charAt(0)}</div><div><h1>{business.nombre}</h1><p>{settings.tagline || 'Una tienda local que te atiende de cerca.'}</p></div><span className="open-label"><i /> Abierto</span></div><div className="public-contact"><span>{business.tipo}</span><span>·</span><span>{settings.contacto || business.telefono}</span><span>·</span><span>{settings.entrega}</span></div></section><main className="public-main"><div className="public-toolbar"><label className="search-field"><Search size={17} /><input placeholder="Busca algo que te guste..." value={search} onChange={e => setSearch(e.target.value)} data-testid="input-store-search" /></label>{cartItems.length > 0 && <button className="cart-button" onClick={() => setCheckout(true)} data-testid="button-open-cart"><ShoppingCart size={17} /><span>{Object.values(cart).reduce((a, n) => a + n, 0)}</span>{money(subtotal)}</button>}</div><div className="public-categories"><button className={category === 'todos' ? 'category-active' : ''} onClick={() => setCategory('todos')}>Todo el catálogo</button>{cats.map(c => <button key={c.id} className={category === c.id ? 'category-active' : ''} onClick={() => setCategory(c.id)}>{c.nombre}</button>)}</div><div className="public-section-title"><span className="eyebrow">{category === 'todos' ? 'HECHO PARA TI' : cats.find(c => c.id === category)?.nombre}</span><h2>{search ? 'Resultados' : category === 'todos' ? 'Lo que se te antoje.' : 'Escoge tu favorito.'}</h2></div>{products.length ? <div className="public-products">{products.map((p, i) => <article className="public-product" key={p.id} data-testid={`card-store-product-${p.id}`}><div className={`public-product-art public-art-${i % 5}`}><span>{p.destacado ? 'FAVORITO' : cats.find(c => c.id === p.category_id)?.nombre}</span><b>{p.nombre.slice(0, 1)}</b><button onClick={() => addItem(p)} aria-label={`Agregar ${p.nombre}`} data-testid={`button-add-${p.id}`}><Plus size={19} /></button></div><div className="public-product-info"><div><h3>{p.nombre}</h3><p>{p.descripcion}</p><b>{money(p.precio)}</b>{p.precio_anterior && <del>{money(p.precio_anterior)}</del>}</div>{cart[p.id] ? <div className="quantity-control"><button onClick={() => setQty(p.id, cart[p.id] - 1)} aria-label="Quitar uno">−</button><b>{cart[p.id]}</b><button onClick={() => addItem(p)} aria-label="Agregar uno más">+</button></div> : <button className="add-mobile" onClick={() => addItem(p)}>Agregar <Plus size={14} /></button>}</div></article>)}</div> : <Empty title="No encontramos eso" text="Prueba con otra palabra o categoría." />}
