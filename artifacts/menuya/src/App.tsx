@@ -230,11 +230,30 @@ function MerchantPage({ path, data, business, update }: { path: string; data: De
   const HeaderAction = ({ text, onClick }: { text: string; onClick: () => void }) => <Button onClick={onClick} testId="button-create"><Plus size={16} /> {text}</Button>;
 
   if (path === '/app' || path === '/app/') {
-    const todayOrders = orders.filter(o => new Date(o.created_at).toDateString() === new Date().toDateString());
-    const totalSales = orders.filter(o => o.estado !== 'cancelado').reduce((s, o) => s + o.total, 0);
+    const now = Date.now();
+    const currentStart = now - 30 * 86400000;
+    const previousStart = now - 60 * 86400000;
+    const validOrders = orders.filter(o => o.estado !== 'cancelado');
+    const currentOrders = validOrders.filter(o => new Date(o.created_at).getTime() >= currentStart);
+    const previousOrders = validOrders.filter(o => {
+      const time = new Date(o.created_at).getTime();
+      return time >= previousStart && time < currentStart;
+    });
+    const currentSales = currentOrders.reduce((sum, order) => sum + order.total, 0);
+    const previousSales = previousOrders.reduce((sum, order) => sum + order.total, 0);
+    const currentCustomers = new Set(currentOrders.map(order => order.customer_id).filter(Boolean)).size;
+    const previousCustomers = new Set(previousOrders.map(order => order.customer_id).filter(Boolean)).size;
+    const variation = (current: number, previous: number) => previous > 0
+      ? `${current >= previous ? '+' : ''}${Math.round(((current - previous) / previous) * 100)}% vs. período anterior`
+      : undefined;
     return <><PageTitle eyebrow="TU NEGOCIO, EN UN VISTAZO" title={`Hola, ${data.users.find(u => u.id === business.owner_id)?.nombre.split(' ')[0] || 'bienvenido'}.`} description="Esto es lo que está pasando en tu tienda." action={<Link href={`/${business.slug}`} className="btn btn-outline" target="_blank"><Eye size={16} /> Ver mi tienda</Link>} />
       {business.estado !== 'activo' && <div className="notice notice-warn"><Clock3 size={18} /><span><b>Tu tienda está {statusLabel[business.estado]?.toLowerCase()}.</b> {business.estado === 'pendiente' ? 'La tienda no será visible al público hasta su aprobación.' : 'Contacta al equipo de CLICKOK si necesitas ayuda.'}</span></div>}
-      <div className="metrics-grid"><Metric label="Pedidos recibidos" value={String(orders.length)} note={`${todayOrders.length} hoy`} icon={ShoppingCart} trend="+12%" /><Metric label="Ventas registradas" value={money(totalSales)} note="Acumulado de demo" icon={TrendingUp} trend="+8%" /><Metric label="Productos publicados" value={String(products.filter(p => p.activo).length)} note={productLimit >= 999999 ? 'Sin límite de productos' : `de ${productLimit} disponibles`} icon={Package} /><Metric label="Clientes" value={String(customers.length)} note="Con pedido registrado" icon={Users} /></div>
+      <div className="metrics-grid">
+        <Metric label="Pedidos recibidos" value={String(currentOrders.length)} note="Últimos 30 días" icon={ShoppingCart} trend={variation(currentOrders.length, previousOrders.length)} />
+        <Metric label="Ventas registradas" value={money(currentSales)} note="Últimos 30 días · pedidos no cancelados" icon={TrendingUp} trend={variation(currentSales, previousSales)} />
+        <Metric label="Productos publicados" value={String(products.filter(p => p.activo).length)} note={productLimit >= 999999 ? 'Sin límite de productos' : `de ${productLimit} disponibles`} icon={Package} />
+        <Metric label="Clientes activos" value={String(currentCustomers)} note="Con pedidos en los últimos 30 días" icon={Users} trend={variation(currentCustomers, previousCustomers)} />
+      </div>
       <div className="dashboard-grid"><section className="panel recent-panel"><div className="panel-head"><div><span className="eyebrow">MOVIMIENTO RECIENTE</span><h2>Últimos pedidos</h2></div><Link href="/app/orders" className="text-link">Ver todos <ArrowRight size={14} /></Link></div>{orders.length ? <div className="recent-list">{orders.slice(0, 4).map(o => <button className="recent-row" key={o.id} onClick={() => setSelectedOrder(o)} data-testid={`row-order-${o.id}`}><span className="order-number">#{String(o.numero).padStart(3, '0')}</span><span className="recent-customer"><b>{data.customers.find(c => c.id === o.customer_id)?.nombre}</b><small>{o.items.map(i => `${i.cantidad} × ${i.nombre}`).join(', ')}</small></span><span className="recent-total">{money(o.total)}</span><Status value={o.estado} /></button>)}</div> : <Empty title="Aún no llegan pedidos" text="Cuando tus clientes compren, verás sus pedidos aquí." />}</section><section className="panel quick-panel"><div className="panel-head"><div><span className="eyebrow">SIGUIENTE PASO</span><h2>Haz crecer tu tienda</h2></div><Zap size={17} /></div><div className="setup-progress"><span>Tu tienda está lista para crecer</span><b>{products.length > 0 && settings.publicado ? '100%' : '60%'}</b><div><i style={{ width: products.length > 0 && settings.publicado ? '100%' : '60%' }} /></div></div><Link href="/app/products" className="quick-link"><span className="quick-icon"><Package size={17} /></span><span><b>Completa tu catálogo</b><small>Agrega productos y precios</small></span><ChevronRight size={16} /></Link><Link href="/app/editor" className="quick-link"><span className="quick-icon coral"><Pencil size={17} /></span><span><b>Personaliza tu vitrina</b><small>Colores, portada y contacto</small></span><ChevronRight size={16} /></Link><Link href="/app/subscription" className="quick-link"><span className="quick-icon sand"><CreditCard size={17} /></span><span><b>Tu plan: {plan?.nombre || 'Semilla'}</b><small>Conoce lo que incluye</small></span><ChevronRight size={16} /></Link></section></div>
       <div className="bottom-note"><span>Tu tienda pública</span><Link href={`/${business.slug}`}>clickok.co/{business.slug} <ExternalLink size={13} /></Link><span className="note-separator" /><span>Los datos de esta demo se guardan solo en este navegador.</span></div>
       {selectedOrder && <OrderModal order={selectedOrder} data={data} close={() => setSelectedOrder(null)} update={update} />}
@@ -552,13 +571,15 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
   const loadRemoteData = async () => {
     if (!business?.id) return;
     setLoading(true); setLoadError('');
-    const [categoryResult, productResult, settingsResult, subscriptionResult] = await Promise.all([
+    const [categoryResult, productResult, settingsResult, subscriptionResult, orderResult, customerResult] = await Promise.all([
       supabase.from('categories').select('id,business_id,name,sort_order,is_active').eq('business_id',business.id).order('sort_order'),
       supabase.from('products').select('id,business_id,category_id,name,description,price,previous_price,image_url,is_active,is_available,is_featured,stock').eq('business_id',business.id).order('created_at',{ascending:false}),
       supabase.from('store_settings').select('business_id,cover_url,logo_url,brand_color,font_family,contact_text,social_links,payment_methods,delivery_info,is_published,tagline').eq('business_id',business.id).maybeSingle(),
       supabase.from('subscriptions').select('id,business_id,plan_id,status,starts_at,ends_at,plans(id,name,price,billing_period,max_products,features,is_active)').eq('business_id',business.id).maybeSingle(),
+      supabase.from('orders').select('id,business_id,customer_id,order_number,status,fulfillment_type,delivery_address,notes,payment_method,total,created_at,customers(name,phone),order_items(product_id,product_name,unit_price,quantity,variant_name,addons_snapshot)').eq('business_id',business.id).order('created_at',{ascending:false}),
+      supabase.from('customers').select('id,business_id,name,phone,total_orders,total_spent,last_order_at').eq('business_id',business.id).order('last_order_at',{ascending:false}),
     ]);
-    const firstError = categoryResult.error || productResult.error || settingsResult.error || subscriptionResult.error;
+    const firstError = categoryResult.error || productResult.error || settingsResult.error || subscriptionResult.error || orderResult.error || customerResult.error;
     if (firstError) { setLoadError(firstError.message); setLoading(false); return; }
     const profileName = context.profile?.full_name || String(context.user.user_metadata?.full_name || context.user.email || 'Comercio');
     const biz = {
@@ -580,13 +601,30 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
     const plan: Plan = planRow ? {id:planRow.id,nombre:planRow.name,precio:Number(planRow.price),periodicidad:planRow.billing_period,max_productos:planRow.max_products,funciones:planRow.features || [],activo:planRow.is_active} : {id:'default',nombre:'Plan inicial',precio:0,periodicidad:'mes',max_productos:15,funciones:[],activo:true};
     const data: DemoData = {
       users:[{id:context.user.id,nombre:profileName,email:context.user.email || '',password:'',role:'owner',business_ids:[business.id]}],
-      businesses:[biz],categories,products,customers:[],orders:[],plans:[plan],
+      businesses:[biz],categories,products,
+      customers:(customerResult.data || []).map(c => ({id:c.id,business_id:c.business_id,nombre:c.name,telefono:c.phone || '',total_pedidos:c.total_orders || 0,total_compras:Number(c.total_spent || 0),ultimo_pedido:c.last_order_at || ''})),
+      orders:(orderResult.data || []).map(o => ({
+        id:o.id,business_id:o.business_id,numero:Number(o.order_number || 0),customer_id:o.customer_id,
+        items:(o.order_items || []).map(item => ({product_id:item.product_id || '',nombre:item.product_name,precio:Number(item.unit_price || 0),cantidad:item.quantity, variante:item.variant_name || undefined,complementos:Array.isArray(item.addons_snapshot) ? item.addons_snapshot : []})),
+        total:Number(o.total || 0),estado:({new:'pendiente',pending:'pendiente',confirmed:'confirmado',preparing:'preparando',ready:'listo',out_for_delivery:'en_camino',delivered:'entregado',cancelled:'cancelado'} as Record<string, OrderStatus>)[o.status] || 'pendiente',
+        entrega:o.fulfillment_type === 'delivery' ? 'domicilio' : 'recoger',direccion:o.delivery_address || '',observaciones:o.notes || '',metodo_pago:o.payment_method || '—',created_at:o.created_at,
+      })),
+      plans:[plan],
       subscriptions:sub ? [{id:sub.id,business_id:sub.business_id,plan_id:sub.plan_id,estado:sub.status,inicio:sub.starts_at || '',vencimiento:sub.ends_at || ''}] : [],
       settings:[settings],audit:[],catalog_events:[],platform:{name:'MENUYA',approval:'manual',default_plan:plan.id},
     };
     setRemoteData(data); setLoading(false);
   };
   useEffect(() => { void loadRemoteData(); }, [business?.id]);
+  useEffect(() => {
+    if (!business?.id) return;
+    const channel = supabase.channel(`merchant-dashboard-${business.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `business_id=eq.${business.id}` }, () => { void loadRemoteData(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'customers', filter: `business_id=eq.${business.id}` }, () => { void loadRemoteData(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales', filter: `business_id=eq.${business.id}` }, () => { void loadRemoteData(); })
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [business?.id]);
   const updateRemote = (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => {
     if (!remoteData || !business?.id) return;
     const previous = remoteData;
