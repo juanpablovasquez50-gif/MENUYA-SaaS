@@ -487,12 +487,45 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
 
 type PlatformBusinessRow = { id: string; name: string; slug: string; business_type: string; status: string; is_published: boolean; created_at: string; email: string | null; phone: string | null };
 
+function PlatformAdminLogin({ onLogin }: { onLogin: (email: string, password: string) => Promise<string | null> }) {
+  const [, setLocation] = useLocation();
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault(); if (busy) return;
+    const values = Object.fromEntries(new FormData(event.currentTarget).entries()) as Record<string,string>;
+    setBusy(true); setError('');
+    try { const message = await onLogin(values.email, values.password); if (message) setError(message); else setLocation('/admin'); }
+    catch (err) { setError(err instanceof Error ? err.message : 'No fue posible iniciar sesión.'); }
+    finally { setBusy(false); }
+  };
+  return <main className="sa-login">
+    <div className="sa-login-brand"><span className="sa-brand-mark">m.</span><span>MENUYA <small>CONTROL CENTER</small></span></div>
+    <section className="sa-login-card">
+      <div className="sa-login-icon"><ShieldCheck size={25}/></div>
+      <span className="sa-kicker">ÁREA RESTRINGIDA · ATOM LABS</span>
+      <h1>Administración<br/><em>de plataforma.</em></h1>
+      <p>Ingresa con tus credenciales autorizadas para gestionar Menuya.</p>
+      {error && <div className="notice notice-error" role="alert">{error}</div>}
+      <form onSubmit={submit}>
+        <label className="sa-field"><span>Correo administrador</span><input name="email" type="email" autoComplete="username" placeholder="admin@menuya.co" required/></label>
+        <label className="sa-field"><span>Contraseña</span><div className="sa-password"><input name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="Tu contraseña" required/><button type="button" onClick={()=>setShowPassword(v=>!v)} aria-label="Mostrar contraseña">{showPassword ? <EyeOff size={17}/> : <Eye size={17}/>}</button></div></label>
+        <button className="sa-submit" type="submit" disabled={busy}>{busy ? 'Verificando acceso…' : 'Entrar al panel'} <ArrowRight size={17}/></button>
+      </form>
+      <div className="sa-login-secure"><ShieldCheck size={14}/> Acceso verificado por Supabase · Solo personal autorizado</div>
+    </section>
+    <footer className="sa-login-footer">MENUYA <span>•</span> ATOM LABS <span>•</span> ADMINISTRACIÓN SEGURA</footer>
+  </main>;
+}
+
 function PlatformAdminPage({ context, onLogout }: { context: MenuyaAuthContext; onLogout: () => void }) {
   const [rows, setRows] = useState<PlatformBusinessRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState('');
   const [filter, setFilter] = useState('pending');
+  const [query, setQuery] = useState('');
   const [notice, setNotice] = useState('');
   const load = async () => {
     setLoading(true); setError('');
@@ -506,21 +539,44 @@ function PlatformAdminPage({ context, onLogout }: { context: MenuyaAuthContext; 
     const verb = status === 'active' ? 'aprobar' : status === 'rejected' ? 'rechazar' : 'suspender';
     if (!window.confirm(`¿Confirmas ${verb} el comercio “${row.name}”?`)) return;
     setBusyId(row.id); setError(''); setNotice('');
-    const { error: rpcError } = await supabase.rpc('platform_set_business_status', {
-      p_business_id: row.id, p_status: status, p_note: null,
-    });
+    const { error: rpcError } = await supabase.rpc('platform_set_business_status', { p_business_id: row.id, p_status: status, p_note: null });
     if (rpcError) setError(rpcError.message);
     else { setNotice(`Comercio ${status === 'active' ? 'aprobado' : status === 'rejected' ? 'rechazado' : 'suspendido'} correctamente.`); await load(); }
     setBusyId('');
   };
-  const visible = rows.filter(row => filter === 'all' || row.status === filter);
-  return <div className="admin-shell">
-    <header className="page-head"><div><span className="eyebrow">MENUYA · SUPERADMIN</span><h1>Panel de plataforma</h1><p className="subtle">Gestión central de comercios y solicitudes de acceso.</p></div><div className="page-actions"><Button kind="outline" onClick={() => void load()}><Activity size={15}/> Actualizar</Button><Button kind="ghost" onClick={onLogout}><LogOut size={15}/> Salir</Button></div></header>
-    <div className="metrics-grid"><Metric label="Comercios registrados" value={String(rows.length)} note="Total en la plataforma" icon={Store}/><Metric label="Pendientes" value={String(rows.filter(x=>x.status==='pending').length)} note="Esperan aprobación" icon={ClipboardList}/><Metric label="Activos" value={String(rows.filter(x=>x.status==='active').length)} note="Pueden publicar su vitrina" icon={CheckCircle2}/><Metric label="Suspendidos o rechazados" value={String(rows.filter(x=>['suspended','rejected'].includes(x.status)).length)} note="Acceso restringido" icon={ShieldCheck}/></div>
-    {error && <div className="notice notice-error" role="alert">{error}</div>}{notice && <div className="notice notice-success" role="status">{notice}</div>}
-    <section className="panel"><div className="panel-head"><div><span className="eyebrow">CONTROL DE ACCESO</span><h2>Comercios</h2></div><select aria-label="Filtrar comercios" value={filter} onChange={e=>setFilter(e.target.value)}><option value="pending">Pendientes</option><option value="active">Activos</option><option value="rejected">Rechazados</option><option value="suspended">Suspendidos</option><option value="all">Todos</option></select></div>
-    {loading ? <div className="auth-loading"><span className="loader-line"/>Cargando comercios...</div> : visible.length === 0 ? <Empty title="No hay comercios en esta lista" text="Cuando existan solicitudes o comercios, aparecerán aquí."/> : <div className="table-wrap"><table className="data-table"><thead><tr><th>Comercio</th><th>Sector</th><th>Estado</th><th>Registro</th><th>Acciones</th></tr></thead><tbody>{visible.map(row=><tr key={row.id}><td><b>{row.name}</b><small>{row.email || row.phone || row.slug}</small></td><td>{row.business_type}</td><td><Status value={({pending:'pendiente',active:'activo',rejected:'rechazado',suspended:'suspendido'} as Record<string,string>)[row.status] || row.status}/></td><td>{shortDate(row.created_at)}</td><td><div className="table-actions">{row.status!=='active' && <Button kind="soft" disabled={busyId===row.id} onClick={()=>void decide(row,'active')}><Check size={14}/> Aprobar</Button>}{row.status!=='rejected' && <Button kind="ghost" disabled={busyId===row.id} onClick={()=>void decide(row,'rejected')}>Rechazar</Button>}{row.status!=='suspended' && row.status==='active' && <Button kind="ghost" disabled={busyId===row.id} onClick={()=>void decide(row,'suspended')}>Suspender</Button>}</div></td></tr>)}</tbody></table></div>}</section>
-    <div className="platform-note"><ShieldCheck size={16}/><span>Acceso restringido</span><p>Las decisiones se validan en Supabase contra la tabla platform_admins y quedan registradas en la auditoría de plataforma.</p></div>
+  const pending = rows.filter(row=>row.status==='pending').length;
+  const active = rows.filter(row=>row.status==='active').length;
+  const visible = rows.filter(row=>(filter==='all'||row.status===filter) && [row.name,row.email,row.phone,row.slug,row.business_type].filter(Boolean).join(' ').toLowerCase().includes(query.toLowerCase()));
+  const initials = (context.profile?.full_name || context.user.email || 'Admin').split(/[ @]/)[0].slice(0,2).toUpperCase();
+  return <div className="sa-shell">
+    <aside className="sa-sidebar">
+      <div className="sa-logo"><span className="sa-brand-mark">m.</span><span>menuya<small>CONTROL CENTER</small></span></div>
+      <div className="sa-workspace"><span className="sa-workspace-dot"/><span>ATOM LABS<small>Workspace principal</small></span><ChevronDown size={15}/></div>
+      <span className="sa-nav-label">PLATAFORMA</span>
+      <a className="sa-nav-item active" href="#overview"><LayoutDashboard size={17}/> Resumen</a>
+      <a className="sa-nav-item" href="#businesses"><Store size={17}/> Comercios <b>{pending}</b></a>
+      <a className="sa-nav-item" href="#businesses"><ClipboardList size={17}/> Solicitudes</a>
+      <div className="sa-sidebar-bottom"><div className="sa-secure-box"><ShieldCheck size={17}/><b>Entorno protegido</b><span>Las acciones quedan auditadas en Supabase.</span></div><button className="sa-logout" onClick={onLogout}><LogOut size={17}/> Cerrar sesión</button></div>
+    </aside>
+    <main className="sa-main" id="overview">
+      <header className="sa-topbar"><div><span>MENUYA</span><ChevronRight size={14}/><b>Panel de plataforma</b></div><div className="sa-profile"><span className="sa-profile-avatar">{initials}</span><span><b>{context.profile?.full_name || 'Administrador'}</b><small>Superadministrador</small></span><button onClick={onLogout} aria-label="Cerrar sesión"><LogOut size={17}/></button></div></header>
+      <div className="sa-content">
+        <div className="sa-welcome"><div><span className="sa-kicker">CENTRO DE CONTROL · MENUYA</span><h1>Hola, {context.profile?.full_name?.split(' ')[0] || 'administrador'}.</h1><p>Este es el estado general de tu plataforma.</p></div><button className="sa-refresh" onClick={()=>void load()} disabled={loading}><Activity size={16}/> {loading?'Actualizando…':'Actualizar datos'}</button></div>
+        {error && <div className="notice notice-error" role="alert">{error}</div>}{notice && <div className="notice notice-success" role="status">{notice}</div>}
+        <section className="sa-stats">
+          <article className="sa-stat"><span className="sa-stat-icon violet"><Store size={19}/></span><small>Comercios registrados</small><strong>{rows.length}</strong><span>Registros en Menuya</span></article>
+          <article className="sa-stat"><span className="sa-stat-icon amber"><Clock3 size={19}/></span><small>Por revisar</small><strong>{pending}</strong><span>Solicitudes pendientes</span></article>
+          <article className="sa-stat"><span className="sa-stat-icon green"><CheckCircle2 size={19}/></span><small>Comercios activos</small><strong>{active}</strong><span>Con acceso habilitado</span></article>
+          <article className="sa-stat"><span className="sa-stat-icon slate"><ShieldCheck size={19}/></span><small>Restringidos</small><strong>{rows.filter(x=>['suspended','rejected'].includes(x.status)).length}</strong><span>Suspendidos o rechazados</span></article>
+        </section>
+        <section className="sa-panel" id="businesses">
+          <div className="sa-panel-heading"><div><span className="sa-kicker">GESTIÓN DE ACCESOS</span><h2>Directorio de comercios</h2><p>Revisa registros y administra el estado de cada negocio.</p></div><span className="sa-total">{rows.length} registros</span></div>
+          <div className="sa-toolbar"><div className="sa-search"><Search size={17}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar comercio, correo o sector…"/></div><div className="sa-filters"><button className={filter==='pending'?'selected':''} onClick={()=>setFilter('pending')}>Pendientes <b>{pending}</b></button><button className={filter==='active'?'selected':''} onClick={()=>setFilter('active')}>Activos</button><button className={filter==='all'?'selected':''} onClick={()=>setFilter('all')}>Todos</button><button className={filter==='rejected'?'selected':''} onClick={()=>setFilter('rejected')}>Rechazados</button><button className={filter==='suspended'?'selected':''} onClick={()=>setFilter('suspended')}>Suspendidos</button></div></div>
+          {loading ? <div className="sa-empty"><span className="loader-line"/>Cargando directorio…</div> : visible.length===0 ? <div className="sa-empty"><span className="sa-empty-icon"><Store size={22}/></span><b>No encontramos comercios</b><span>Prueba con otro filtro o término de búsqueda.</span></div> : <div className="sa-table-wrap"><table className="sa-table"><thead><tr><th>COMERCIO</th><th>SECTOR</th><th>ESTADO</th><th>FECHA DE REGISTRO</th><th>ACCIONES</th></tr></thead><tbody>{visible.map(row=><tr key={row.id}><td><div className="sa-business"><span>{row.name.slice(0,1).toUpperCase()}</span><div><b>{row.name}</b><small>{row.email || row.phone || row.slug}</small></div></div></td><td>{row.business_type || 'Sin clasificar'}</td><td><span className={`sa-status ${row.status}`}><i/>{({pending:'Pendiente',active:'Activo',rejected:'Rechazado',suspended:'Suspendido'} as Record<string,string>)[row.status] || row.status}</span></td><td>{shortDate(row.created_at)}</td><td><div className="sa-actions">{row.status!=='active' && <button className="approve" disabled={busyId===row.id} onClick={()=>void decide(row,'active')}><Check size={14}/> Aprobar</button>}{row.status!=='rejected' && <button className="reject" disabled={busyId===row.id} onClick={()=>void decide(row,'rejected')}>Rechazar</button>}{row.status==='active' && <button className="reject" disabled={busyId===row.id} onClick={()=>void decide(row,'suspended')}>Suspender</button>}</div></td></tr>)}</tbody></table></div>}
+        </section>
+        <footer className="sa-footer"><span>MENUYA · ATOM LABS</span><span><ShieldCheck size={14}/> Sesión protegida · Acciones auditadas</span></footer>
+      </div>
+    </main>
   </div>;
 }
 
@@ -698,7 +754,8 @@ function Router() {
     if (!isSupabaseConfigured) return 'La conexión de MENUYA aún no está configurada en este entorno.';
     try {
       await signInWithEmail(email, password);
-      const context = await ensureBusinessForCurrentUser();
+      const authContext = await getAuthContext();
+      const context = authContext?.isPlatformAdmin ? authContext : await ensureBusinessForCurrentUser();
       setRemoteContext(context);
       return null;
     } catch (error) {
@@ -758,6 +815,7 @@ function Router() {
 
   return <RoutedErrorBoundary><Switch>
     <Route path="/"><Landing data={data} /></Route>
+    <Route path="/admin/login"><PlatformAdminLogin onLogin={login} /></Route>
     <Route path="/login"><AuthPage mode="login" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
     <Route path="/register"><AuthPage mode="register" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
     <Route path="/forgot-password"><AuthPage mode="forgot" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
