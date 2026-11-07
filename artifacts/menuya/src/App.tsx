@@ -9,7 +9,7 @@ import NotFound from '@/pages/not-found';
 import { Link, Route, Switch, Router as WouterRouter, useLocation, useParams } from 'wouter';
 import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BarChart3, Bell, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, ClipboardList, Clock3, CreditCard, ExternalLink, Eye, EyeOff, LayoutDashboard, LogOut, Menu, MoreHorizontal, Package, Pencil, Plus, Search, Settings, ShieldCheck, ShoppingBag, ShoppingCart, Store, Tag, Trash2, TrendingUp, Users, X, Zap } from 'lucide-react';
 import { type AuditLog, type Business, type CatalogEvent, type Category, type Customer, type DemoData, type Order, type OrderStatus, type Plan, type Product, type ProductChoice, repository } from '@/lib/menuya-data';
-import { type MenuyaAuthContext, ensureBusinessForCurrentUser, getAuthContext, isSupabaseConfigured, sendPasswordRecovery, signInWithEmail, signOut, signUpWithEmail, updatePassword } from '@/lib/menuya-auth';
+import { type MenuyaAuthContext, ensureBusinessForCurrentUser, getAuthContext, isSupabaseConfigured, sendPasswordRecovery, preparePasswordRecovery, signInWithEmail, signOut, signUpWithEmail, updatePassword } from '@/lib/menuya-auth';
 import { supabase } from '@/lib/supabase';
 
 const queryClient = new QueryClient();
@@ -62,6 +62,23 @@ function AuthPage({ mode, data, onLogin, onRegister, onForgot, onReset }: {
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [recoveryReady, setRecoveryReady] = useState(mode !== 'reset');
+  useEffect(() => {
+    if (mode !== 'reset') return;
+    let active = true;
+    preparePasswordRecovery()
+      .then((ready) => {
+        if (!active) return;
+        setRecoveryReady(ready);
+        if (!ready) setError('El enlace no inició una sesión de recuperación. Solicita un correo nuevo y abre el enlace directamente desde el mismo navegador.');
+      })
+      .catch((err) => {
+        if (!active) return;
+        setRecoveryReady(false);
+        setError(err instanceof Error ? err.message : 'No fue posible validar el enlace de recuperación.');
+      });
+    return () => { active = false; };
+  }, [mode]);
   const sampleBiz = data.businesses.find(b => b.id === 'brasa');
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -101,7 +118,7 @@ function AuthPage({ mode, data, onLogin, onRegister, onForgot, onReset }: {
           {(mode === 'register' || mode === 'reset') && <Field field={{ name: 'confirmPassword', label: 'Confirma tu contraseña', type: 'password', required: true }} onChange={() => {}} />}
         </>}
         {mode === 'register' && <p className="fine-print">Tu comercio se crea inicialmente privado y pendiente de revisión. No se publicará automáticamente.</p>}
-        <Button type="submit" className="full-btn" disabled={busy} testId="button-auth-submit">{busy ? 'Procesando...' : mode === 'register' ? 'Crear mi cuenta y tienda' : mode === 'forgot' ? 'Enviar instrucciones' : mode === 'reset' ? 'Actualizar contraseña' : 'Entrar'} <ArrowRight size={16} /></Button>
+        <Button type="submit" className="full-btn" disabled={busy || (mode === "reset" && !recoveryReady)} testId="button-auth-submit">{busy ? 'Procesando...' : mode === 'register' ? 'Crear mi cuenta y tienda' : mode === 'forgot' ? 'Enviar instrucciones' : mode === 'reset' ? 'Actualizar contraseña' : 'Entrar'} <ArrowRight size={16} /></Button>
       </form>
       {mode === 'login' && <Link href="/forgot-password" className="text-link">¿Olvidaste tu contraseña?</Link>}
       {(mode === 'login' || mode === 'register') && <p className="auth-switch">{mode === 'register' ? '¿Ya tienes cuenta?' : '¿Tienes un comercio?'} <Link href={mode === 'register' ? '/login' : '/register'}>{mode === 'register' ? 'Inicia sesión' : 'Crea tu tienda'}</Link></p>}
