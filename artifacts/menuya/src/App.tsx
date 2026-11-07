@@ -186,6 +186,8 @@ function MerchantPage({ path, data, business, update }: { path: string; data: De
   const [modal, setModal] = useState<{ title: string; fields: FormField[]; save: (v: Record<string, string | boolean>) => void } | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [draftStoreColor, setDraftStoreColor] = useState('');
+  const [checkoutBusy, setCheckoutBusy] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState('');
   const cats = data.categories.filter(c => c.business_id === business.id).sort((a, b) => a.orden - b.orden);
   const products = data.products.filter(p => p.business_id === business.id);
   const orders = data.orders.filter(o => o.business_id === business.id).sort((a, b) => b.created_at.localeCompare(a.created_at));
@@ -193,6 +195,18 @@ function MerchantPage({ path, data, business, update }: { path: string; data: De
   const settings = data.settings.find(s => s.business_id === business.id)!;
   useEffect(() => { setDraftStoreColor(settings.color); }, [settings.color, business.id]);
   const previewStoreColor = draftStoreColor || settings.color;
+  const startSubscriptionCheckout = async (planId: string) => {
+    setCheckoutBusy(planId); setCheckoutError('');
+    try {
+      const { data: result, error } = await supabase.functions.invoke('create-subscription-checkout', { body: { business_id: business.id, plan_id: planId } });
+      if (error) throw error;
+      if (!result?.checkout_url || typeof result.checkout_url !== 'string' || !result.checkout_url.startsWith('https://checkout.wompi.co/p/')) throw new Error(result?.error || 'Wompi no devolvió un enlace de pago válido.');
+      window.location.assign(result.checkout_url);
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : 'No fue posible iniciar el pago.');
+      setCheckoutBusy(null);
+    }
+  };
   const commitStoreColor = () => {
     if (previewStoreColor === settings.color) return;
     update(d => ({ ...d, settings: d.settings.map(item => item.business_id === business.id ? { ...item, color: previewStoreColor } : item) }), 'Color actualizado', business.nombre);
@@ -331,7 +345,7 @@ function MerchantPage({ path, data, business, update }: { path: string; data: De
     </>;
   }
   if (path === '/app/settings') return <><PageTitle eyebrow="DATOS DEL NEGOCIO" title="Ajustes" description="Mantén al día la información que tus clientes necesitan." /><div className="settings-grid"><section className="panel setting-section"><span className="eyebrow">INFORMACIÓN PÚBLICA</span><h2>Que te encuentren</h2><div className="form-stack"><SettingInput label="Nombre del negocio" value={business.nombre} id="business-name" onSave={v => update(d => ({ ...d, businesses: d.businesses.map(b => b.id === business.id ? { ...b, nombre: v } : b) }), 'Datos guardados', 'Negocio')} /><SettingInput label="Teléfono" value={business.telefono} id="business-phone" onSave={v => update(d => ({ ...d, businesses: d.businesses.map(b => b.id === business.id ? { ...b, telefono: v } : b) }), 'Teléfono actualizado', 'Negocio')} /><SettingInput label="Correo de contacto" value={settings.contacto} id="contact-email" onSave={v => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, contacto: v } : s) }), 'Contacto actualizado', 'Negocio')} /><SettingInput label="Redes sociales" value={settings.redes} id="business-social" onSave={v => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, redes: v } : s) }), 'Redes actualizadas', 'Negocio')} /></div></section><section className="panel setting-section"><span className="eyebrow">CÓMO OPERAS</span><h2>Pagos y entregas</h2><div className="form-stack"><SettingInput label="Métodos de pago" value={settings.pagos} id="payment-methods" onSave={v => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, pagos: v } : s) }), 'Métodos de pago guardados', 'Negocio')} /><SettingInput label="Opciones de entrega" value={settings.entrega} id="delivery-methods" onSave={v => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, entrega: v } : s) }), 'Opciones de entrega guardadas', 'Negocio')} /><div className="settings-info"><CircleHelp size={17} /><p>CLICKOK organiza tus pedidos. El cobro y la coordinación de entrega siguen directamente contigo y tu cliente.</p></div></div></section></div><div className="notice notice-info"><ShieldCheck size={17} /> Datos locales de demostración: no compartas información sensible ni uses datos reales de clientes.</div></>;
-  if (path === '/app/subscription') return <><PageTitle eyebrow="TU TIENDA, A TU RITMO" title="Plan y suscripción" description="Empieza con lo esencial. Cambia cuando tu negocio lo pida." /><div className="current-plan"><div><span className="eyebrow">PLAN ACTUAL</span><h2>{plan?.nombre || 'Gratis'}<span>{money(plan?.precio || 0)} <small>/ mes</small></span></h2><p>Suscripción {statusLabel[subscription?.estado || 'activa']?.toLowerCase()} · Renueva el {shortDate(subscription?.vencimiento || new Date().toISOString())}</p></div><Status value={subscription?.estado || 'activa'} /></div><div className="plans-grid">{data.plans.filter(p => p.activo).map(p => <article className={`plan-card ${p.id === plan?.id ? 'plan-selected' : ''}`} key={p.id}><span className="eyebrow">{p.id === 'pro' ? 'PARA CRECER' : p.id === 'starter' ? 'EL FAVORITO' : 'PARA EMPEZAR'}</span><h3>{p.nombre}</h3><p className="plan-price">{money(p.precio)}<small> / mes</small></p><p className="plan-products">{p.max_productos >= 999999 ? 'Productos ilimitados' : `Hasta ${p.max_productos} productos`}</p><ul>{p.funciones.map(f => <li key={f}><Check size={15} /> {f}</li>)}</ul><Button kind={p.id === plan?.id ? 'soft' : 'outline'} disabled={p.id === plan?.id} onClick={() => update(d => ({ ...d, subscriptions: d.subscriptions.map(s => s.business_id === business.id ? { ...s, plan_id: p.id } : s) }), `Plan ${p.nombre} seleccionado`, business.nombre)} testId={`button-plan-${p.id}`}>{p.id === plan?.id ? 'Tu plan actual' : 'Elegir este plan'}</Button></article>)}</div><p className="fine-print">Demo local: la selección de plan no procesa pagos ni crea una suscripción real.</p></>;
+    <div className="plans-grid">{data.plans.filter(p => p.activo).map(p => <article className={`plan-card ${p.id === plan?.id ? 'plan-selected' : ''}`} key={p.id}><span className="eyebrow">{p.id === 'pro' ? 'PARA CRECER' : p.id === 'starter' ? 'EL FAVORITO' : 'PARA EMPEZAR'}</span><h3>{p.nombre}</h3><p className="plan-price">{money(p.precio)}<small> / {p.periodicidad === 'year' ? 'año' : 'mes'}</small></p><p className="plan-products">{p.max_productos >= 999999 ? 'Productos ilimitados' : `Hasta ${p.max_productos} productos`}</p><ul>{p.funciones.map(f => <li key={f}><Check size={15} /> {f}</li>)}</ul><Button kind={p.id === plan?.id ? 'soft' : 'outline'} disabled={p.id === plan?.id || p.precio <= 0 || Boolean(checkoutBusy)} onClick={() => void startSubscriptionCheckout(p.id)} testId={`button-plan-${p.id}`}>{p.id === plan?.id ? 'Tu plan actual' : checkoutBusy === p.id ? 'Conectando con Wompi…' : p.precio <= 0 ? 'Plan gratuito' : 'Pagar con Wompi'}</Button></article>)}</div>{checkoutError && <div className="notice notice-error" role="alert">{checkoutError}</div>}<p className="fine-print">Pagos procesados de forma segura por Wompi. Tu plan se activa cuando recibimos la confirmación del pago.</p>;
   return <Empty title="Página en construcción" text="Este espacio estará disponible pronto." />;
 }
 
@@ -621,16 +635,17 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
   const loadRemoteData = async () => {
     if (!business?.id) return;
     setLoading(true); setLoadError('');
-    const [categoryResult, productResult, settingsResult, subscriptionResult, orderResult, customerResult, catalogEventResult] = await Promise.all([
+    const [categoryResult, productResult, settingsResult, subscriptionResult, planResult, orderResult, customerResult, catalogEventResult] = await Promise.all([
       supabase.from('categories').select('id,business_id,name,sort_order,is_active').eq('business_id',business.id).order('sort_order'),
       supabase.from('products').select('id,business_id,category_id,name,description,price,previous_price,image_url,is_active,is_available,is_featured,stock').eq('business_id',business.id).order('created_at',{ascending:false}),
       supabase.from('store_settings').select('business_id,cover_url,logo_url,brand_color,font_family,contact_text,social_links,payment_methods,delivery_info,is_published,tagline').eq('business_id',business.id).maybeSingle(),
       supabase.from('subscriptions').select('id,business_id,plan_id,status,starts_at,ends_at,plans(id,name,price,billing_period,max_products,features,is_active)').eq('business_id',business.id).maybeSingle(),
+      supabase.from('plans').select('id,code,name,price,billing_period,max_products,features,is_active').eq('is_active',true).order('price'),
       supabase.from('orders').select('id,business_id,customer_id,order_number,status,fulfillment_type,delivery_address,notes,payment_method,total,created_at,order_items!order_items_order_id_fkey(product_id,product_name,unit_price,quantity,variant_name,addons_snapshot)').eq('business_id',business.id).order('created_at',{ascending:false}),
       supabase.from('customers').select('id,business_id,name,phone,total_orders,total_spent,last_order_at').eq('business_id',business.id).order('last_order_at',{ascending:false}),
       supabase.from('catalog_events').select('id,business_id,product_id,event_type,created_at').eq('business_id',business.id).gte('created_at',new Date(Date.now()-30*86400000).toISOString()).order('created_at',{ascending:false}),
     ]);
-    const firstError = categoryResult.error || productResult.error || settingsResult.error || subscriptionResult.error || orderResult.error || customerResult.error || catalogEventResult.error;
+    const firstError = categoryResult.error || productResult.error || settingsResult.error || subscriptionResult.error || planResult.error || orderResult.error || customerResult.error || catalogEventResult.error;
     if (firstError) { setLoadError(firstError.message); setLoading(false); return; }
     const profileName = context.profile?.full_name || String(context.user.user_metadata?.full_name || context.user.email || 'Comercio');
     const biz = {
@@ -650,6 +665,7 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
     const sub = subscriptionResult.data as any;
     const planRow = sub?.plans;
     const plan: Plan = planRow ? {id:planRow.id,nombre:planRow.name,precio:Number(planRow.price),periodicidad:planRow.billing_period,max_productos:planRow.max_products,funciones:planRow.features || [],activo:planRow.is_active} : {id:'default',nombre:'Plan inicial',precio:0,periodicidad:'mes',max_productos:15,funciones:[],activo:true};
+    const allPlans: Plan[] = (planResult.data || []).map(p => ({id:p.id,nombre:p.name,precio:Number(p.price),periodicidad:p.billing_period,max_productos:p.max_products,funciones:p.features || [],activo:p.is_active}));
     const data: DemoData = {
       users:[{id:context.user.id,nombre:profileName,email:context.user.email || '',password:'',role:'owner',business_ids:[business.id]}],
       businesses:[biz],categories,products,
@@ -660,7 +676,7 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
         total:Number(o.total || 0),estado:({new:'pendiente',pending:'pendiente',confirmed:'confirmado',preparing:'preparando',ready:'listo',out_for_delivery:'en_camino',delivered:'entregado',cancelled:'cancelado'} as Record<string, OrderStatus>)[o.status] || 'pendiente',
         entrega:o.fulfillment_type === 'delivery' ? 'domicilio' : 'recoger',direccion:o.delivery_address || '',observaciones:o.notes || '',metodo_pago:o.payment_method || '—',created_at:o.created_at,
       })),
-      plans:[plan],
+      plans:allPlans.length ? allPlans : [plan],
       subscriptions:sub ? [{id:sub.id,business_id:sub.business_id,plan_id:sub.plan_id,estado:sub.status,inicio:sub.starts_at || '',vencimiento:sub.ends_at || ''}] : [],
       settings:[settings],audit:[],catalog_events:(catalogEventResult.data || []).map(event => ({id:event.id,business_id:event.business_id,product_id:event.product_id || undefined,tipo:event.event_type === 'visit' ? 'visita' as const : 'consulta' as const,created_at:event.created_at})),platform:{name:'MENUYA',approval:'manual',default_plan:plan.id},
     };
