@@ -93,7 +93,9 @@ CREATE TRIGGER platform_audit_subscriptions_update AFTER UPDATE ON public.subscr
 FOR EACH ROW WHEN (to_jsonb(OLD) IS DISTINCT FROM to_jsonb(NEW))
 EXECUTE FUNCTION public.platform_capture_admin_audit();
 
-CREATE OR REPLACE FUNCTION public.platform_list_audit_logs()
+DROP FUNCTION IF EXISTS public.platform_list_audit_logs();
+
+CREATE FUNCTION public.platform_list_audit_logs()
 RETURNS TABLE(
   id uuid,business_name text,previous_status text,new_status text,note text,
   created_at timestamptz,actor_user_id uuid,actor_email text,action text,
