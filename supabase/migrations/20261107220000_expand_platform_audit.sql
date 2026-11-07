@@ -81,25 +81,34 @@ BEGIN
 END;
 $function$;
 
-DROP TRIGGER IF EXISTS platform_audit_businesses ON public.businesses;
-CREATE TRIGGER platform_audit_businesses
-AFTER INSERT OR UPDATE ON public.businesses
-FOR EACH ROW
-WHEN (TG_OP = 'INSERT' OR OLD.status IS DISTINCT FROM NEW.status OR OLD.is_published IS DISTINCT FROM NEW.is_published)
+DROP TRIGGER IF EXISTS platform_audit_businesses_insert ON public.businesses;
+DROP TRIGGER IF EXISTS platform_audit_businesses_update ON public.businesses;
+CREATE TRIGGER platform_audit_businesses_insert
+AFTER INSERT ON public.businesses FOR EACH ROW
+EXECUTE FUNCTION public.platform_capture_admin_audit();
+CREATE TRIGGER platform_audit_businesses_update
+AFTER UPDATE ON public.businesses FOR EACH ROW
+WHEN (OLD.status IS DISTINCT FROM NEW.status OR OLD.is_published IS DISTINCT FROM NEW.is_published)
 EXECUTE FUNCTION public.platform_capture_admin_audit();
 
-DROP TRIGGER IF EXISTS platform_audit_plans ON public.plans;
-CREATE TRIGGER platform_audit_plans
-AFTER INSERT OR UPDATE ON public.plans
-FOR EACH ROW
-WHEN (TG_OP = 'INSERT' OR to_jsonb(OLD) IS DISTINCT FROM to_jsonb(NEW))
+DROP TRIGGER IF EXISTS platform_audit_plans_insert ON public.plans;
+DROP TRIGGER IF EXISTS platform_audit_plans_update ON public.plans;
+CREATE TRIGGER platform_audit_plans_insert
+AFTER INSERT ON public.plans FOR EACH ROW
+EXECUTE FUNCTION public.platform_capture_admin_audit();
+CREATE TRIGGER platform_audit_plans_update
+AFTER UPDATE ON public.plans FOR EACH ROW
+WHEN (to_jsonb(OLD) IS DISTINCT FROM to_jsonb(NEW))
 EXECUTE FUNCTION public.platform_capture_admin_audit();
 
-DROP TRIGGER IF EXISTS platform_audit_subscriptions ON public.subscriptions;
-CREATE TRIGGER platform_audit_subscriptions
-AFTER INSERT OR UPDATE ON public.subscriptions
-FOR EACH ROW
-WHEN (TG_OP = 'INSERT' OR to_jsonb(OLD) IS DISTINCT FROM to_jsonb(NEW))
+DROP TRIGGER IF EXISTS platform_audit_subscriptions_insert ON public.subscriptions;
+DROP TRIGGER IF EXISTS platform_audit_subscriptions_update ON public.subscriptions;
+CREATE TRIGGER platform_audit_subscriptions_insert
+AFTER INSERT ON public.subscriptions FOR EACH ROW
+EXECUTE FUNCTION public.platform_capture_admin_audit();
+CREATE TRIGGER platform_audit_subscriptions_update
+AFTER UPDATE ON public.subscriptions FOR EACH ROW
+WHEN (to_jsonb(OLD) IS DISTINCT FROM to_jsonb(NEW))
 EXECUTE FUNCTION public.platform_capture_admin_audit();
 
 CREATE OR REPLACE FUNCTION public.platform_list_audit_logs()
