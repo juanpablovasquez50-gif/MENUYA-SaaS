@@ -576,7 +576,7 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
       supabase.from('products').select('id,business_id,category_id,name,description,price,previous_price,image_url,is_active,is_available,is_featured,stock').eq('business_id',business.id).order('created_at',{ascending:false}),
       supabase.from('store_settings').select('business_id,cover_url,logo_url,brand_color,font_family,contact_text,social_links,payment_methods,delivery_info,is_published,tagline').eq('business_id',business.id).maybeSingle(),
       supabase.from('subscriptions').select('id,business_id,plan_id,status,starts_at,ends_at,plans(id,name,price,billing_period,max_products,features,is_active)').eq('business_id',business.id).maybeSingle(),
-      supabase.from('orders').select('id,business_id,customer_id,order_number,status,fulfillment_type,delivery_address,notes,payment_method,total,created_at,order_items(product_id,product_name,unit_price,quantity,variant_name,addons_snapshot)').eq('business_id',business.id).order('created_at',{ascending:false}),
+      supabase.from('orders').select('id,business_id,customer_id,order_number,status,fulfillment_type,delivery_address,notes,payment_method,total,created_at,order_items!order_items_order_id_fkey(product_id,product_name,unit_price,quantity,variant_name,addons_snapshot)').eq('business_id',business.id).order('created_at',{ascending:false}),
       supabase.from('customers').select('id,business_id,name,phone,total_orders,total_spent,last_order_at').eq('business_id',business.id).order('last_order_at',{ascending:false}),
     ]);
     const firstError = categoryResult.error || productResult.error || settingsResult.error || subscriptionResult.error || orderResult.error || customerResult.error;
