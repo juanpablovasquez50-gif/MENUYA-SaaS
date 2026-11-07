@@ -148,8 +148,45 @@ export async function ensureBusinessForCurrentUser(): Promise<MenuyaAuthContext 
   return getAuthContext();
 }
 
+export async function preparePasswordRecovery(): Promise<boolean> {
+  ensureConfigured();
+  const current = await supabase.auth.getSession();
+  if (current.data.session) return true;
+
+  const url = new URL(window.location.href);
+  const code = url.searchParams.get('code');
+  const tokenHash = url.searchParams.get('token_hash');
+  const type = url.searchParams.get('type');
+  const hash = new URLSearchParams(url.hash.replace(/^#/, ''));
+  const accessToken = hash.get('access_token');
+  const refreshToken = hash.get('refresh_token');
+
+  if (code) {
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) throw error;
+    if (data.session) return true;
+  }
+  if (tokenHash && type === 'recovery') {
+    const { data, error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' });
+    if (error) throw error;
+    if (data.session) return true;
+  }
+  if (accessToken && refreshToken) {
+    const { data, error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+    if (error) throw error;
+    if (data.session) return true;
+  }
+  const refreshed = await supabase.auth.getSession();
+  return Boolean(refreshed.data.session);
+}
+
 export async function updatePassword(password: string) {
   ensureConfigured();
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  if (!sessionData.session) {
+    throw new Error('El enlace de recuperación no inició sesión. Solicita un correo nuevo y abre el enlace completo.');
+  }
   const { error } = await supabase.auth.updateUser({ password });
   if (error) throw error;
 }
