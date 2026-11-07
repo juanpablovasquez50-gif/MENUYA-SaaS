@@ -68,6 +68,7 @@ BEGIN
 
   IF TG_OP='INSERT' THEN v_action := 'created';
   ELSIF TG_OP='DELETE' THEN v_action := 'deleted';
+  ELSIF TG_TABLE_NAME = 'businesses' THEN v_action := 'status_changed';
   ELSE v_action := 'updated';
   END IF;
 
@@ -129,9 +130,41 @@ BEGIN
       COALESCE(l.entity_name,l.business_name),l.metadata
     FROM public.platform_audit_logs l
     LEFT JOIN auth.users au ON au.id=l.actor_user_id
+    WHERE NOT (l.action='status_changed' AND l.previous_status IS NOT NULL AND l.previous_status=l.new_status)
     ORDER BY l.created_at DESC LIMIT 200;
 END;
 $function$;
+
+
+CREATE OR REPLACE FUNCTION public.platform_save_setting(
+  p_setting_key text,p_setting_value jsonb,p_description text DEFAULT NULL
+)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path TO ''
+AS $function$
+DECLARE v_old jsonb;
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM public.platform_admins pa WHERE pa.user_id=auth.uid()) THEN
+    RAISE EXCEPTION 'No tienes permisos de Superadmin.' USING errcode='42501';
+  END IF;
+  IF p_setting_key IS NULL OR p_setting_key !~ '^[a-z][a-z0-9_.-]{1,79} FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.platform_list_audit_logs() TO authenticated,service_role;
+ OR p_setting_value IS NULL THEN
+    RAISE EXCEPTION 'Clave o valor de ajuste inválido.' USING errcode='22023';
+  END IF;
+  SELECT setting_value INTO v_old FROM public.platform_settings WHERE setting_key=p_setting_key;
+  INSERT INTO public.platform_settings(setting_key,setting_value,description,updated_by,updated_at)
+  VALUES(p_setting_key,p_setting_value,p_description,auth.uid(),now())
+  ON CONFLICT(setting_key) DO UPDATE SET setting_value=EXCLUDED.setting_value,
+    description=EXCLUDED.description,updated_by=EXCLUDED.updated_by,updated_at=now();
+  INSERT INTO public.platform_audit_logs(actor_user_id,business_name,previous_status,new_status,note,action,entity_type,entity_name,metadata)
+  VALUES(auth.uid(),'Ajustes de plataforma',CASE WHEN v_old IS NULL THEN NULL ELSE 'updated' END,
+    CASE WHEN v_old IS NULL THEN 'created' ELSE 'updated' END,
+    'Ajuste modificado: '||p_setting_key,CASE WHEN v_old IS NULL THEN 'created' ELSE 'updated' END,
+    'setting',p_setting_key,p_setting_value);
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.platform_save_setting(text,jsonb,text) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.platform_save_setting(text,jsonb,text) TO authenticated,service_role;
 
 REVOKE ALL ON FUNCTION public.platform_list_audit_logs() FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.platform_list_audit_logs() TO authenticated,service_role;
