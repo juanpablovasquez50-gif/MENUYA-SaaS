@@ -721,6 +721,29 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
             if (result.error) throw result.error;
           }
         }
+        const oldOrders = new Map(previous.orders.map(order => [order.id, order]));
+        const nextOrders = new Map(next.orders.map(order => [order.id, order]));
+        const statusToDatabase: Record<OrderStatus, string> = {
+          pendiente: 'pending',
+          confirmado: 'confirmed',
+          preparando: 'preparing',
+          listo: 'ready',
+          en_camino: 'out_for_delivery',
+          entregado: 'delivered',
+          cancelado: 'cancelled',
+        };
+        for (const [id, order] of nextOrders) {
+          const before = oldOrders.get(id);
+          if (!before || before.estado === order.estado) continue;
+          const result = await supabase.from('orders')
+            .update({ status: statusToDatabase[order.estado] })
+            .eq('id', id)
+            .eq('business_id', business.id)
+            .select('id,status')
+            .maybeSingle();
+          if (result.error) throw result.error;
+          if (!result.data) throw new Error('No se pudo actualizar el pedido. Verifica los permisos de la cuenta del comercio.');
+        }
         // No recargar tras cada guardado: una respuesta antigua podía sobrescribir cambios recientes.
       } catch (error) {
         const saveError = error && typeof error === 'object' ? error as { message?: unknown; details?: unknown; hint?: unknown; code?: unknown } : null;
