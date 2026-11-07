@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import { useLocation } from 'wouter';
-import { Activity, ArrowRight, Check, CheckCircle2, ChevronDown, ChevronRight, Clock3, CreditCard, LayoutDashboard, LogOut, Package, Plus, Search, ShieldCheck, Store, Tag, Users } from 'lucide-react';
+import { Activity, ArrowRight, Check, CheckCircle2, ChevronDown, ChevronRight, Clock3, CreditCard, LayoutDashboard, LogOut, Plus, Search, ShieldCheck, Store, Tag, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { MenuyaAuthContext } from '@/lib/menuya-auth';
 
@@ -35,7 +36,7 @@ export default function PlatformAdminCenter({context,onLogout}:{context:MenuyaAu
   setBusy(row.id);setError('');const {error:e}=await supabase.rpc('platform_set_business_status',{p_business_id:row.id,p_status:status,p_note:null});
   if(e)setError(e.message);else{setNotice('Estado del comercio actualizado.');await load();}setBusy('');
  };
- const savePlan=async(e:React.FormEvent<HTMLFormElement>)=>{
+ const savePlan=async(e:FormEvent<HTMLFormElement>)=>{
   e.preventDefault();const f=new FormData(e.currentTarget);setBusy('plan');setError('');
   const features=String(f.get('features')||'').split(',').map(x=>x.trim()).filter(Boolean);
   const {error:e2}=await supabase.rpc('platform_save_plan',{p_plan_id:editing?.id||null,p_code:String(f.get('code')),p_name:String(f.get('name')),p_price:Number(f.get('price')),p_billing_period:String(f.get('billing_period')),p_max_products:Number(f.get('max_products')),p_features:features,p_is_active:f.get('is_active')==='on'});
@@ -73,7 +74,7 @@ export default function PlatformAdminCenter({context,onLogout}:{context:MenuyaAu
   {subEdit&&<div className="modal-backdrop"><form className="modal" onSubmit={saveSub}><header className="modal-head"><div><span className="eyebrow">GESTIÓN DE SUSCRIPCIÓN</span><h2>{subEdit.business_name}</h2></div><button type="button" className="icon-btn" onClick={()=>setSubEdit(null)}>×</button></header><div className="form-stack"><label className="field"><span>Plan</span><select name="plan_id" defaultValue={subEdit.plan_id}>{plans.map(p=><option key={p.id} value={p.id}>{p.name} · {cop(p.price)}</option>)}</select></label><label className="field"><span>Estado</span><select name="status" defaultValue={subEdit.status}>{['pending','active','past_due','cancelled','expired'].map(s=><option key={s} value={s}>{({pending:'Pendiente',active:'Activa',past_due:'En mora',cancelled:'Cancelada',expired:'Vencida'} as any)[s]}</option>)}</select></label><label className="field"><span>Vencimiento</span><input name="ends_at" type="date" defaultValue={subEdit.ends_at?.slice(0,10)||''}/></label><button className="sa-submit" disabled={busy===subEdit.id}>{busy===subEdit.id?'Guardando…':'Guardar cambios'}</button></div></form></div>}
  </div>;
 }
-function PanelHead({title,subtitle,count,action}:{title:string;subtitle:string;count?:number;action?:React.ReactNode}){return <div className="sa-panel-heading"><div><span className="sa-kicker">ADMINISTRACIÓN</span><h2>{title}</h2><p>{subtitle}</p></div><div className="sa-total">{action||count!==undefined? action||count+' registros':null}</div></div>}
+function PanelHead({title,subtitle,count,action}:{title:string;subtitle:string;count?:number;action?:ReactNode}){return <div className="sa-panel-heading"><div><span className="sa-kicker">ADMINISTRACIÓN</span><h2>{title}</h2><p>{subtitle}</p></div><div className="sa-total">{action||count!==undefined? action||count+' registros':null}</div></div>}
 function SearchBox({value,change}:{value:string;change:(v:string)=>void}){return <div className="sa-toolbar"><div className="sa-search"><Search size={17}/><input value={value} onChange={e=>change(e.target.value)} placeholder="Buscar…"/></div></div>}
-function DataTable({headers,rows}:{headers:string[];rows:React.ReactNode[][]}){return <div className="sa-table-wrap"><table className="sa-table"><thead><tr>{headers.map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{rows.length?rows.map((r,i)=><tr key={i}>{r.map((c,j)=><td key={j}>{c as React.ReactNode}</td>)}</tr>):<tr><td colSpan={headers.length}><div className="sa-empty">No hay registros para mostrar.</div></td></tr>}</tbody></table></div>}
+function DataTable({headers,rows}:{headers:string[];rows:ReactNode[][]}){return <div className="sa-table-wrap"><table className="sa-table"><thead><tr>{headers.map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{rows.length?rows.map((r,i)=><tr key={i}>{r.map((c,j)=><td key={j}>{c}</td>)}</tr>):<tr><td colSpan={headers.length}><div className="sa-empty">No hay registros para mostrar.</div></td></tr>}</tbody></table></div>}
 function AuditList(){const [rows,setRows]=useState<any[]>([]);const [err,setErr]=useState('');useEffect(()=>{supabase.from('platform_audit_logs').select('business_name,previous_status,new_status,note,created_at').order('created_at',{ascending:false}).limit(100).then(({data,error})=>{if(error)setErr(error.message);else setRows(data||[]);});},[]);return <>{err?<div className="notice notice-error">{err}</div>:<DataTable headers={['COMERCIO','ESTADO ANTERIOR','ESTADO NUEVO','NOTA','FECHA']} rows={rows.map(x=>[x.business_name||'—',x.previous_status||'—',x.new_status||'—',x.note||'—',date(x.created_at)])}/>}</>}
