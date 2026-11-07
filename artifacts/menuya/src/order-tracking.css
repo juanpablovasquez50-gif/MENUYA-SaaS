@@ -1,0 +1,21 @@
+
+/* Customer order tracking */
+.public-header-actions{display:flex;align-items:center;gap:18px}
+.public-track-link{font-size:13px;font-weight:700;color:var(--store-color,#6d4aff);text-decoration:none}
+.public-track-link:hover{text-decoration:underline}
+.tracking-page{min-height:100vh;display:grid;place-items:center;padding:28px 16px;background:#f7f7fb}
+.tracking-card{width:min(100%,560px);background:#fff;border:1px solid #ececf2;border-radius:22px;padding:32px;box-shadow:0 18px 60px rgba(25,20,50,.08);display:flex;flex-direction:column;gap:14px}
+.tracking-card>.brand{margin-bottom:12px;align-self:flex-start}
+.tracking-card h1{font-size:clamp(28px,5vw,38px);margin:0;color:#24212c}
+.tracking-card h2{margin:4px 0 14px;font-size:23px}
+.tracking-form{display:flex;flex-direction:column;gap:12px;margin-top:8px}
+.tracking-result{border-top:1px solid #ececf2;padding-top:22px;margin-top:8px}
+.tracking-steps{list-style:none;padding:0;margin:22px 0;display:grid;gap:16px}
+.tracking-steps li{display:flex;align-items:center;gap:12px;color:#8b8995;font-weight:600}
+.tracking-step-dot{width:28px;height:28px;border:1px solid #d9d7e1;border-radius:50%;display:grid;place-items:center;font-size:12px;flex:none}
+.tracking-step-done{color:#30264f!important}
+.tracking-step-done .tracking-step-dot{background:#6d4aff;color:white;border-color:#6d4aff}
+.tracking-result small{color:#85818f}
+.tracking-back{color:#6d4aff;text-decoration:none;font-weight:700;font-size:13px;margin-top:8px}
+.tracking-success-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:16px 0}
+@media(max-width:600px){.public-header-actions{gap:8px}.public-powered{display:none}.tracking-card{padding:24px 18px}.tracking-success-actions{flex-direction:column}.tracking-success-actions .btn{justify-content:center}}

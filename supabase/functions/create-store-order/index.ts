@@ -39,10 +39,11 @@ Deno.serve(async(req:Request)=>{
   else{const {data,error}=await db.from("customers").insert({business_id,name:String(customer.name).trim(),phone,total_orders:1,total_spent:subtotal,last_order_at:new Date().toISOString()}).select("id,total_orders,total_spent").single();if(error)throw error;saved=data;}
   const {data:last}=await db.from("orders").select("order_number").eq("business_id",business_id).order("order_number",{ascending:false}).limit(1).maybeSingle();
   const number=Number(last?.order_number||0)+1;
-  const {data:order,error:oe}=await db.from("orders").insert({business_id,customer_id:saved.id,order_number:number,status:"pending",fulfillment_type,delivery_address:fulfillment_type==="delivery"?String(delivery_address).trim():null,notes:String(notes||"").trim()||null,payment_method:String(payment_method||"Efectivo"),subtotal,delivery_fee:0,total:subtotal}).select("id,created_at").single();
+  const trackingToken=crypto.randomUUID();
+  const {data:order,error:oe}=await db.from("orders").insert({business_id,customer_id:saved.id,order_number:number,status:"pending",tracking_token:trackingToken,fulfillment_type,delivery_address:fulfillment_type==="delivery"?String(delivery_address).trim():null,notes:String(notes||"").trim()||null,payment_method:String(payment_method||"Efectivo"),subtotal,delivery_fee:0,total:subtotal}).select("id,created_at").single();
   if(oe)throw oe;
   const {error:ie}=await db.from("order_items").insert(normalized.map(x=>({...x,order_id:order.id})));
   if(ie){await db.from("orders").delete().eq("id",order.id).eq("business_id",business_id);throw ie;}
-  return reply({order:{id:order.id,business_id,numero:number,customer_id:saved.id,items:normalized.map(x=>({product_id:x.product_id,nombre:x.product_name,precio:x.unit_price,cantidad:x.quantity,variante:x.variant_name,complementos:x.addons_snapshot})),total:subtotal,estado:"pendiente",entrega:fulfillment_type==="delivery"?"domicilio":"recoger",direccion:delivery_address,observaciones:notes||"",metodo_pago:payment_method||"Efectivo",created_at:order.created_at}});
+  return reply({order:{id:order.id,business_id,numero:number,customer_id:saved.id,tracking_token:trackingToken,items:normalized.map(x=>({product_id:x.product_id,nombre:x.product_name,precio:x.unit_price,cantidad:x.quantity,variante:x.variant_name,complementos:x.addons_snapshot})),total:subtotal,estado:"pendiente",entrega:fulfillment_type==="delivery"?"domicilio":"recoger",direccion:delivery_address,observaciones:notes||"",metodo_pago:payment_method||"Efectivo",created_at:order.created_at}});
  }catch(e){console.error("create-store-order",e);return reply({error:"No fue posible registrar el pedido. Intenta nuevamente."},500);}
 });
