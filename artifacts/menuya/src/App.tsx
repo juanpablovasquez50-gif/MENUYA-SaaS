@@ -1,4 +1,5 @@
 import './menuya.css';
+import PlatformAdminCenter from '@/components/PlatformAdminCenter';
 import * as React from 'react';
 import { type FormEvent, type ReactNode, useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -8,7 +9,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import { Link, Route, Switch, Router as WouterRouter, useLocation, useParams } from 'wouter';
 import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BarChart3, Bell, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, ClipboardList, Clock3, CreditCard, ExternalLink, Eye, EyeOff, LayoutDashboard, LogOut, Menu, MoreHorizontal, Package, Pencil, Plus, Search, Settings, ShieldCheck, ShoppingBag, ShoppingCart, Store, Tag, Trash2, TrendingUp, Users, X, Zap } from 'lucide-react';
-import { type AuditLog, type Business, type CatalogEvent, type Category, type Customer, type DemoData, type Order, type OrderStatus, type Plan, type Product, type ProductChoice, repository } from '@/lib/menuya-data';
+import { type AuditLog, type Business, type CatalogEvent, type Category, type Customer, type DemoData, type Order, type OrderStatus, type Plan, type Product, type ProductChoice, type StoreSettings, repository } from '@/lib/menuya-data';
 import { type MenuyaAuthContext, ensureBusinessForCurrentUser, getAuthContext, isSupabaseConfigured, sendPasswordRecovery, preparePasswordRecovery, signInWithEmail, signOut, signUpWithEmail, updatePassword } from '@/lib/menuya-auth';
 import { supabase } from '@/lib/supabase';
 
@@ -537,66 +538,7 @@ function PlatformAdminLogin({ onLogin }: { onLogin: (email: string, password: st
   </main>;
 }
 
-function PlatformAdminPage({ context, onLogout }: { context: MenuyaAuthContext; onLogout: () => void }) {
-  const [rows, setRows] = useState<PlatformBusinessRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [busyId, setBusyId] = useState('');
-  const [filter, setFilter] = useState('pending');
-  const [query, setQuery] = useState('');
-  const [notice, setNotice] = useState('');
-  const load = async () => {
-    setLoading(true); setError('');
-    const { data, error: queryError } = await supabase.rpc('platform_list_businesses');
-    if (queryError) setError(queryError.message);
-    else setRows((data || []) as PlatformBusinessRow[]);
-    setLoading(false);
-  };
-  useEffect(() => { void load(); }, []);
-  const decide = async (row: PlatformBusinessRow, status: 'active' | 'rejected' | 'suspended') => {
-    const verb = status === 'active' ? 'aprobar' : status === 'rejected' ? 'rechazar' : 'suspender';
-    if (!window.confirm(`¿Confirmas ${verb} el comercio “${row.name}”?`)) return;
-    setBusyId(row.id); setError(''); setNotice('');
-    const { error: rpcError } = await supabase.rpc('platform_set_business_status', { p_business_id: row.id, p_status: status, p_note: null });
-    if (rpcError) setError(rpcError.message);
-    else { setNotice(`Comercio ${status === 'active' ? 'aprobado' : status === 'rejected' ? 'rechazado' : 'suspendido'} correctamente.`); await load(); }
-    setBusyId('');
-  };
-  const pending = rows.filter(row=>row.status==='pending').length;
-  const active = rows.filter(row=>row.status==='active').length;
-  const visible = rows.filter(row=>(filter==='all'||row.status===filter) && [row.name,row.email,row.phone,row.slug,row.business_type].filter(Boolean).join(' ').toLowerCase().includes(query.toLowerCase()));
-  const initials = (context.profile?.full_name || context.user.email || 'Admin').split(/[ @]/)[0].slice(0,2).toUpperCase();
-  return <div className="sa-shell">
-    <aside className="sa-sidebar">
-      <div className="sa-logo"><span className="sa-brand-mark">m.</span><span>menuya<small>CONTROL CENTER</small></span></div>
-      <div className="sa-workspace"><span className="sa-workspace-dot"/><span>ATOM LABS<small>Workspace principal</small></span><ChevronDown size={15}/></div>
-      <span className="sa-nav-label">PLATAFORMA</span>
-      <a className="sa-nav-item active" href="#overview"><LayoutDashboard size={17}/> Resumen</a>
-      <a className="sa-nav-item" href="#businesses"><Store size={17}/> Comercios <b>{pending}</b></a>
-      <a className="sa-nav-item" href="#businesses"><ClipboardList size={17}/> Solicitudes</a>
-      <div className="sa-sidebar-bottom"><div className="sa-secure-box"><ShieldCheck size={17}/><b>Entorno protegido</b><span>Las acciones quedan auditadas en Supabase.</span></div><button className="sa-logout" onClick={onLogout}><LogOut size={17}/> Cerrar sesión</button></div>
-    </aside>
-    <main className="sa-main" id="overview">
-      <header className="sa-topbar"><div><span>MENUYA</span><ChevronRight size={14}/><b>Panel de plataforma</b></div><div className="sa-profile"><span className="sa-profile-avatar">{initials}</span><span><b>{context.profile?.full_name || 'Administrador'}</b><small>Superadministrador</small></span><button onClick={onLogout} aria-label="Cerrar sesión"><LogOut size={17}/></button></div></header>
-      <div className="sa-content">
-        <div className="sa-welcome"><div><span className="sa-kicker">CENTRO DE CONTROL · MENUYA</span><h1>Hola, {context.profile?.full_name?.split(' ')[0] || 'administrador'}.</h1><p>Este es el estado general de tu plataforma.</p></div><button className="sa-refresh" onClick={()=>void load()} disabled={loading}><Activity size={16}/> {loading?'Actualizando…':'Actualizar datos'}</button></div>
-        {error && <div className="notice notice-error" role="alert">{error}</div>}{notice && <div className="notice notice-success" role="status">{notice}</div>}
-        <section className="sa-stats">
-          <article className="sa-stat"><span className="sa-stat-icon violet"><Store size={19}/></span><small>Comercios registrados</small><strong>{rows.length}</strong><span>Registros en Menuya</span></article>
-          <article className="sa-stat"><span className="sa-stat-icon amber"><Clock3 size={19}/></span><small>Por revisar</small><strong>{pending}</strong><span>Solicitudes pendientes</span></article>
-          <article className="sa-stat"><span className="sa-stat-icon green"><CheckCircle2 size={19}/></span><small>Comercios activos</small><strong>{active}</strong><span>Con acceso habilitado</span></article>
-          <article className="sa-stat"><span className="sa-stat-icon slate"><ShieldCheck size={19}/></span><small>Restringidos</small><strong>{rows.filter(x=>['suspended','rejected'].includes(x.status)).length}</strong><span>Suspendidos o rechazados</span></article>
-        </section>
-        <section className="sa-panel" id="businesses">
-          <div className="sa-panel-heading"><div><span className="sa-kicker">GESTIÓN DE ACCESOS</span><h2>Directorio de comercios</h2><p>Revisa registros y administra el estado de cada negocio.</p></div><span className="sa-total">{rows.length} registros</span></div>
-          <div className="sa-toolbar"><div className="sa-search"><Search size={17}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar comercio, correo o sector…"/></div><div className="sa-filters"><button className={filter==='pending'?'selected':''} onClick={()=>setFilter('pending')}>Pendientes <b>{pending}</b></button><button className={filter==='active'?'selected':''} onClick={()=>setFilter('active')}>Activos</button><button className={filter==='all'?'selected':''} onClick={()=>setFilter('all')}>Todos</button><button className={filter==='rejected'?'selected':''} onClick={()=>setFilter('rejected')}>Rechazados</button><button className={filter==='suspended'?'selected':''} onClick={()=>setFilter('suspended')}>Suspendidos</button></div></div>
-          {loading ? <div className="sa-empty"><span className="loader-line"/>Cargando directorio…</div> : visible.length===0 ? <div className="sa-empty"><span className="sa-empty-icon"><Store size={22}/></span><b>No encontramos comercios</b><span>Prueba con otro filtro o término de búsqueda.</span></div> : <div className="sa-table-wrap"><table className="sa-table"><thead><tr><th>COMERCIO</th><th>SECTOR</th><th>ESTADO</th><th>FECHA DE REGISTRO</th><th>ACCIONES</th></tr></thead><tbody>{visible.map(row=><tr key={row.id}><td><div className="sa-business"><span>{row.name.slice(0,1).toUpperCase()}</span><div><b>{row.name}</b><small>{row.email || row.phone || row.slug}</small></div></div></td><td>{row.business_type || 'Sin clasificar'}</td><td><span className={`sa-status ${row.status}`}><i/>{({pending:'Pendiente',active:'Activo',rejected:'Rechazado',suspended:'Suspendido'} as Record<string,string>)[row.status] || row.status}</span></td><td>{shortDate(row.created_at)}</td><td><div className="sa-actions">{row.status!=='active' && <button className="approve" disabled={busyId===row.id} onClick={()=>void decide(row,'active')}><Check size={14}/> Aprobar</button>}{row.status!=='rejected' && <button className="reject" disabled={busyId===row.id} onClick={()=>void decide(row,'rejected')}>Rechazar</button>}{row.status==='active' && <button className="reject" disabled={busyId===row.id} onClick={()=>void decide(row,'suspended')}>Suspender</button>}</div></td></tr>)}</tbody></table></div>}
-        </section>
-        <footer className="sa-footer"><span>MENUYA · ATOM LABS</span><span><ShieldCheck size={14}/> Sesión protegida · Acciones auditadas</span></footer>
-      </div>
-    </main>
-  </div>;
-}
+function PlatformAdminPage({ context, onLogout }: { context: MenuyaAuthContext; onLogout: () => void }) { return <PlatformAdminCenter context={context} onLogout={onLogout} />; }
 
 function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; onLogout: () => void }) {
   const membership = context.memberships[0];
@@ -839,7 +781,7 @@ function Router() {
     <Route path="/forgot-password"><AuthPage mode="forgot" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
     <Route path="/reset-password"><AuthPage mode="reset" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
     <Route path="/admin">{authLoading ? <div className="auth-loading"><span className="loader-line" />Comprobando acceso...</div> : remoteContext?.isPlatformAdmin ? <PlatformAdminPage context={remoteContext} onLogout={logout} /> : remoteContext ? <div className="auth-form-wrap"><div className="notice notice-error">Esta cuenta no tiene permisos de Superadmin.</div><Button onClick={logout}>Cerrar sesión</Button></div> : protectedRoute()}</Route>
-    {adminLinks.slice(1).map(([path]) => <Route key={path} path={path}>{protectedRoute()}</Route>)}
+    {adminLinks.slice(1).map(([path]) => <Route key={path} path={path}>{authLoading ? <div className="auth-loading"><span className="loader-line" />Comprobando acceso...</div> : remoteContext?.isPlatformAdmin ? <PlatformAdminPage context={remoteContext} onLogout={logout} /> : remoteContext ? <div className="auth-form-wrap"><div className="notice notice-error">Esta cuenta no tiene permisos de Superadmin.</div><Button onClick={logout}>Cerrar sesión</Button></div> : protectedRoute()}</Route>)}
     <Route path="/app">{protectedRoute()}</Route>
     {shopLinks.slice(1).map(([path]) => <Route key={path} path={path}>{protectedRoute()}</Route>)}
     <Route path="/:slug"><PublicRoute data={data} update={update} /></Route>
