@@ -18,6 +18,7 @@ export default function PlatformAdminCenter({context,onLogout}:{context:MenuyaAu
  const [loading,setLoading]=useState(true); const [error,setError]=useState(''); const [notice,setNotice]=useState(''); const [query,setQuery]=useState(''); const [busy,setBusy]=useState('');
  const [editing,setEditing]=useState<PlanRow|null>(null); const [showPlan,setShowPlan]=useState(false);
  const [subEdit,setSubEdit]=useState<SubscriptionRow|null>(null);
+ const [settings,setSettings]=useState<any[]>([]); const [settingKey,setSettingKey]=useState(''); const [settingValue,setSettingValue]=useState('{}'); const [settingDescription,setSettingDescription]=useState('');
  const section=path==='/admin'?'overview':path.split('/')[2]||'overview';
  const load=async()=>{
   setLoading(true);setError('');
@@ -27,9 +28,23 @@ export default function PlatformAdminCenter({context,onLogout}:{context:MenuyaAu
   const first=b.error||p.error||s.error||u.error;
   if(first)setError(first.message);
   else {setBusinesses((b.data||[]) as BusinessRow[]);setPlans((p.data||[]) as PlanRow[]);setSubs((s.data||[]) as SubscriptionRow[]);setUsers((u.data||[]) as UserRow[]);}
+  if(section==='settings'){const {data,error:settingsError}=await supabase.rpc('platform_list_settings');if(settingsError)setError(settingsError.message);else setSettings(data||[]);}
   setLoading(false);
  };
  useEffect(()=>{void load();},[]);
+ useEffect(()=>{
+  if(section!=='settings')return;
+  let cancelled=false;
+  const loadSettings=async()=>{
+   setLoading(true);setError('');
+   const {data,error:settingsError}=await supabase.rpc('platform_list_settings');
+   if(cancelled)return;
+   if(settingsError)setError(settingsError.message);else setSettings(data||[]);
+   setLoading(false);
+  };
+  void loadSettings();
+  return ()=>{cancelled=true;};
+ },[section]);
  const filtered=(rows:any[],keys:string[])=>rows.filter(r=>keys.map(k=>String(r[k]??'')).join(' ').toLowerCase().includes(query.toLowerCase()));
  const updateBusiness=async(row:BusinessRow,status:'active'|'rejected'|'suspended')=>{
   if(!window.confirm('¿Confirmas '+(status==='active'?'aprobar':status==='rejected'?'rechazar':'suspender')+' '+row.name+'?'))return;
@@ -47,6 +62,7 @@ export default function PlatformAdminCenter({context,onLogout}:{context:MenuyaAu
   const end=String(f.get('ends_at')||'');const {error:e2}=await supabase.rpc('platform_update_subscription',{p_subscription_id:subEdit.id,p_plan_id:String(f.get('plan_id')),p_status:String(f.get('status')),p_ends_at:end?new Date(end+'T23:59:59').toISOString():null,p_note:'Actualización desde Superadmin'});
   if(e2)setError(e2.message);else{setNotice('Suscripción actualizada correctamente.');setSubEdit(null);await load();}setBusy('');
  };
+ const saveSetting=async(ev:FormEvent<HTMLFormElement>)=>{ev.preventDefault();let parsed:any;try{parsed=JSON.parse(settingValue);}catch{setError('El valor debe ser JSON válido.');return;}setBusy('setting');setError('');const {error:saveError}=await supabase.rpc('platform_save_setting',{p_setting_key:settingKey,p_setting_value:parsed,p_description:settingDescription||null});if(saveError)setError(saveError.message);else{setNotice('Ajuste global guardado y registrado en auditoría.');setSettingKey('');setSettingValue('{}');setSettingDescription('');const {data,error:reloadError}=await supabase.rpc('platform_list_settings');if(reloadError)setError(reloadError.message);else setSettings(data||[]);}setBusy('');};
  const pending=businesses.filter(x=>x.status==='pending').length, active=businesses.filter(x=>x.status==='active').length;
  const initials=(context.profile?.full_name||context.user.email||'AD').slice(0,2).toUpperCase();
  const heading=nav.find(n=>n[0]===path)?.[1]||'Resumen';
@@ -65,7 +81,7 @@ export default function PlatformAdminCenter({context,onLogout}:{context:MenuyaAu
     {section==='users'&&<section className="sa-panel"><PanelHead title="Usuarios de la plataforma" subtitle="Cuentas registradas y comercios vinculados." count={users.length}/><SearchBox value={query} change={setQuery}/><DataTable headers={['USUARIO','CORREO','TELÉFONO','COMERCIOS','REGISTRO']} rows={filtered(users,['full_name','email','phone']).map(x=>[<b>{x.full_name||'Sin nombre'}</b>,x.email||'—',x.phone||'—',x.business_count,date(x.created_at)])}/></section>}
     {section==='plans'&&<section className="sa-panel"><PanelHead title="Planes y precios" subtitle="Configura precios, límites y características disponibles." count={plans.length} action={<button className="sa-refresh" onClick={()=>{setEditing(null);setShowPlan(true);}}> <Plus size={15}/> Crear plan</button>}/><DataTable headers={['PLAN','PRECIO','PERIODICIDAD','LÍMITE PRODUCTOS','SUSCRIPCIONES','ESTADO','']} rows={plans.map(x=>[<b>{x.name}<small style={{display:'block'}}>{x.code}</small></b>,cop(x.price),x.billing_period==='year'?'Anual':'Mensual',x.max_products,x.subscription_count,x.is_active?'Activo':'Inactivo',<button className="approve" onClick={()=>{setEditing(x);setShowPlan(true);}}>Editar</button>])}/></section>}
     {section==='subscriptions'&&<section className="sa-panel"><PanelHead title="Suscripciones" subtitle="Administra el plan, estado y fecha de vencimiento de cada comercio." count={subs.length}/><SearchBox value={query} change={setQuery}/><DataTable headers={['COMERCIO','TITULAR','PLAN','PRECIO','ESTADO','VENCE','']} rows={filtered(subs,['business_name','owner_name','owner_email','plan_name','status']).map(x=>[<b>{x.business_name}</b>,<span>{x.owner_name||'—'}<small style={{display:'block'}}>{x.owner_email||''}</small></span>,x.plan_name,cop(x.price),x.status,date(x.ends_at),<button className="approve" onClick={()=>setSubEdit(x)}>Administrar</button>])}/></section>}
-    {section==='settings'&&<section className="sa-panel"><PanelHead title="Ajustes de plataforma" subtitle="Información del entorno administrativo."/><div className="sa-empty"><ShieldCheck size={24}/><b>Entorno conectado a Supabase</b><span>La configuración sensible se administra desde el panel seguro de Supabase. No se exponen claves ni secretos en esta pantalla.</span></div></section>}
+    {section==='settings'&&<><section className="sa-panel"><PanelHead title="Ajustes globales" subtitle="Configuraciones operativas de Menuya. No guardes claves, tokens ni secretos aquí."/><form className="form-stack" onSubmit={saveSetting}><label className="field"><span>Clave (minúsculas, números, punto, guion)</span><input required pattern="[a-z][a-z0-9_.-]{1,79}" value={settingKey} onChange={e=>setSettingKey(e.target.value)} placeholder="platform.maintenance_mode"/></label><label className="field"><span>Valor en JSON</span><textarea required rows={4} value={settingValue} onChange={e=>setSettingValue(e.target.value)} /></label><label className="field"><span>Descripción</span><input value={settingDescription} onChange={e=>setSettingDescription(e.target.value)} placeholder="Descripción del ajuste"/></label><button className="sa-submit" disabled={busy==='setting'||!settingKey.trim()}>{busy==='setting'?'Guardando…':'Guardar ajuste'}</button></form></section><section className="sa-panel"><PanelHead title="Configuraciones guardadas" subtitle="Los cambios quedan registrados en auditoría." count={settings.length}/><DataTable headers={['CLAVE','VALOR','DESCRIPCIÓN','ACTUALIZADO']} rows={settings.map(x=>[<b>{x.setting_key}</b>,<code>{JSON.stringify(x.setting_value)}</code>,x.description||'—',date(x.updated_at)])}/></section></>}
     {section==='audit'&&<section className="sa-panel"><PanelHead title="Auditoría" subtitle="Historial de cambios de estado en comercios."/><AuditList/></section>}
     <footer className="sa-footer"><span>MENUYA · ATOM LABS</span><span><ShieldCheck size={14}/> Sesión protegida · Operaciones verificadas</span></footer>
    </div>
