@@ -440,6 +440,7 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
   const [checkout, setCheckout] = useState(false);
   const [delivery, setDelivery] = useState<'domicilio' | 'recoger'>('domicilio');
   const [success, setSuccess] = useState(false);
+  const [trackingToken, setTrackingToken] = useState('');
   const [error, setError] = useState('');
   const business = data.businesses.find(b => b.slug === slug);
   useEffect(() => {
@@ -505,6 +506,7 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
       if (createError) throw createError;
       if (!created?.order) throw new Error('El servidor no confirmó el registro del pedido.');
       const order = created.order as Order;
+      setTrackingToken(String((created.order as Order & { tracking_token?: string }).tracking_token || ''));
       update(d => ({
         ...d,
         customers: d.customers.some(customer => customer.telefono === telefono && customer.business_id === business.id)
@@ -521,9 +523,9 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
     }
   };
   if (business.estado !== 'activo' || !settings?.publicado) return <div className="store-unavailable"><Brand /><div><span className="eyebrow">VITRINA NO DISPONIBLE</span><h1>Esta tienda está en pausa.</h1><p>Vuelve a visitarla más adelante.</p><Link href="/" className="btn btn-outline">Conocer CLICKOK</Link></div><small>CLICKOK · Catálogos digitales y pedidos</small></div>;
-  return <div className="public-store" style={{ '--store-color': settings.color } as React.CSSProperties}><header className="public-header"><Brand /><span className="public-powered">UNA TIENDA DE <b>CLICKOK</b></span></header><section className="public-hero"><div className="public-cover" style={settings.portada ? { backgroundImage: `linear-gradient(90deg,rgba(22,49,43,.56),rgba(22,49,43,.05)),url("${settings.portada}")` } : undefined}><span className="cover-kicker">CATÁLOGO DIGITAL</span><span className="cover-shop-name">{business.nombre}</span></div><div className="public-store-intro"><div className="public-logo">{settings.logo || business.nombre.charAt(0)}</div><div><h1>{business.nombre}</h1><p>{settings.tagline || 'Una tienda local que te atiende de cerca.'}</p></div><span className="open-label"><i /> Abierto</span></div><div className="public-contact"><span>{business.tipo}</span><span>·</span><span>{settings.contacto || business.telefono}</span><span>·</span><span>{settings.entrega}</span></div></section><main className="public-main"><div className="public-toolbar"><label className="search-field"><Search size={17} /><input placeholder="Busca algo que te guste..." value={search} onChange={e => setSearch(e.target.value)} data-testid="input-store-search" /></label>{cartItems.length > 0 && <button className="cart-button" onClick={() => setCheckout(true)} data-testid="button-open-cart"><ShoppingCart size={17} /><span>{Object.values(cart).reduce((a, n) => a + n, 0)}</span>{money(subtotal)}</button>}</div><div className="public-categories"><button className={category === 'todos' ? 'category-active' : ''} onClick={() => setCategory('todos')}>Todo el catálogo</button>{cats.map(c => <button key={c.id} className={category === c.id ? 'category-active' : ''} onClick={() => setCategory(c.id)}>{c.nombre}</button>)}</div><div className="public-section-title"><span className="eyebrow">{category === 'todos' ? 'HECHO PARA TI' : cats.find(c => c.id === category)?.nombre}</span><h2>{search ? 'Resultados' : category === 'todos' ? 'Lo que se te antoje.' : 'Escoge tu favorito.'}</h2></div>{products.length ? <div className="public-products">{products.map((p, i) => <article className="public-product" key={p.id} data-testid={`card-store-product-${p.id}`}><div className={`public-product-art public-art-${i % 5}`}><span>{p.destacado ? 'FAVORITO' : cats.find(c => c.id === p.category_id)?.nombre}</span><b>{p.nombre.slice(0, 1)}</b><button onClick={() => addItem(p)} aria-label={`Agregar ${p.nombre}`} data-testid={`button-add-${p.id}`}><Plus size={19} /></button></div><div className="public-product-info"><div><h3>{p.nombre}</h3><p>{p.descripcion}</p><b>{money(p.precio)}</b>{p.precio_anterior && <del>{money(p.precio_anterior)}</del>}</div>{cart[p.id] ? <div className="quantity-control"><button onClick={() => setQty(p.id, cart[p.id] - 1)} aria-label="Quitar uno">−</button><b>{cart[p.id]}</b><button onClick={() => addItem(p)} aria-label="Agregar uno más">+</button></div> : <button className="add-mobile" onClick={() => addItem(p)}>Agregar <Plus size={14} /></button>}</div></article>)}</div> : <Empty title="No encontramos eso" text="Prueba con otra palabra o categoría." />}
+  return <div className="public-store" style={{ '--store-color': settings.color } as React.CSSProperties}><header className="public-header"><Brand /><div className="public-header-actions"><Link href="/track" className="public-track-link">Rastrear mi pedido</Link><span className="public-powered">UNA TIENDA DE <b>CLICKOK</b></span></div></header><section className="public-hero"><div className="public-cover" style={settings.portada ? { backgroundImage: `linear-gradient(90deg,rgba(22,49,43,.56),rgba(22,49,43,.05)),url("${settings.portada}")` } : undefined}><span className="cover-kicker">CATÁLOGO DIGITAL</span><span className="cover-shop-name">{business.nombre}</span></div><div className="public-store-intro"><div className="public-logo">{settings.logo || business.nombre.charAt(0)}</div><div><h1>{business.nombre}</h1><p>{settings.tagline || 'Una tienda local que te atiende de cerca.'}</p></div><span className="open-label"><i /> Abierto</span></div><div className="public-contact"><span>{business.tipo}</span><span>·</span><span>{settings.contacto || business.telefono}</span><span>·</span><span>{settings.entrega}</span></div></section><main className="public-main"><div className="public-toolbar"><label className="search-field"><Search size={17} /><input placeholder="Busca algo que te guste..." value={search} onChange={e => setSearch(e.target.value)} data-testid="input-store-search" /></label>{cartItems.length > 0 && <button className="cart-button" onClick={() => setCheckout(true)} data-testid="button-open-cart"><ShoppingCart size={17} /><span>{Object.values(cart).reduce((a, n) => a + n, 0)}</span>{money(subtotal)}</button>}</div><div className="public-categories"><button className={category === 'todos' ? 'category-active' : ''} onClick={() => setCategory('todos')}>Todo el catálogo</button>{cats.map(c => <button key={c.id} className={category === c.id ? 'category-active' : ''} onClick={() => setCategory(c.id)}>{c.nombre}</button>)}</div><div className="public-section-title"><span className="eyebrow">{category === 'todos' ? 'HECHO PARA TI' : cats.find(c => c.id === category)?.nombre}</span><h2>{search ? 'Resultados' : category === 'todos' ? 'Lo que se te antoje.' : 'Escoge tu favorito.'}</h2></div>{products.length ? <div className="public-products">{products.map((p, i) => <article className="public-product" key={p.id} data-testid={`card-store-product-${p.id}`}><div className={`public-product-art public-art-${i % 5}`}><span>{p.destacado ? 'FAVORITO' : cats.find(c => c.id === p.category_id)?.nombre}</span><b>{p.nombre.slice(0, 1)}</b><button onClick={() => addItem(p)} aria-label={`Agregar ${p.nombre}`} data-testid={`button-add-${p.id}`}><Plus size={19} /></button></div><div className="public-product-info"><div><h3>{p.nombre}</h3><p>{p.descripcion}</p><b>{money(p.precio)}</b>{p.precio_anterior && <del>{money(p.precio_anterior)}</del>}</div>{cart[p.id] ? <div className="quantity-control"><button onClick={() => setQty(p.id, cart[p.id] - 1)} aria-label="Quitar uno">−</button><b>{cart[p.id]}</b><button onClick={() => addItem(p)} aria-label="Agregar uno más">+</button></div> : <button className="add-mobile" onClick={() => addItem(p)}>Agregar <Plus size={14} /></button>}</div></article>)}</div> : <Empty title="No encontramos eso" text="Prueba con otra palabra o categoría." />}
     </main><footer className="public-footer"><span>{settings.redes}</span><span>Pedidos directos, cerca de ti.</span><Brand /></footer>
-    {success && <div className="modal-backdrop"><section className="success-modal"><div className="success-icon"><Check size={24} /></div><span className="eyebrow">PEDIDO ENVIADO</span><h2>¡Ya lo tenemos!</h2><p>Tu pedido <b>#{String(Math.max(0, ...data.orders.filter(o => o.business_id === business.id).map(o => o.numero))).padStart(3, '0')}</b> se envió a {business.nombre}. Se pondrán en contacto contigo para confirmar.</p><Button onClick={() => setSuccess(false)}>Seguir mirando <ArrowRight size={15} /></Button></section></div>}
+    {success && <div className="modal-backdrop"><section className="success-modal"><div className="success-icon"><Check size={24} /></div><span className="eyebrow">PEDIDO ENVIADO</span><h2>¡Ya lo tenemos!</h2><p>Tu pedido <b>#{String(Math.max(0, ...data.orders.filter(o => o.business_id === business.id).map(o => o.numero))).padStart(3, '0')}</b> se envió a {business.nombre}. Puedes consultar sus cambios de estado desde aquí.</p>{trackingToken && <div className="tracking-success-actions"><Link className="btn btn-solid" href={`/track/${trackingToken}`}>Rastrear mi pedido <ArrowRight size={15} /></Link><a className="btn btn-outline" href={`https://wa.me/?text=${encodeURIComponent(`Sigue tu pedido en ${business.nombre}: ${window.location.origin}/track/${trackingToken}`)}`} target="_blank" rel="noreferrer">Compartir por WhatsApp</a></div>}<Button kind="ghost" onClick={() => setSuccess(false)}>Seguir mirando <ArrowRight size={15} /></Button></section></div>}
     {configuring && <Modal title={`Personaliza ${configuring.nombre}`} close={() => setConfiguring(null)}>
       <div className="product-config">
         <p className="subtle">{configuring.descripcion}</p>
@@ -849,12 +851,61 @@ function Router() {
     <Route path="/reset-password"><AuthPage mode="reset" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
     <Route path="/admin">{authLoading ? <div className="auth-loading"><span className="loader-line" />Comprobando acceso...</div> : remoteContext?.isPlatformAdmin ? <PlatformAdminPage context={remoteContext} onLogout={logout} /> : remoteContext ? <div className="auth-form-wrap"><div className="notice notice-error">Esta cuenta no tiene permisos de Superadmin.</div><Button onClick={logout}>Cerrar sesión</Button></div> : protectedRoute()}</Route>
     {adminLinks.slice(1).map(([path]) => <Route key={path} path={path}>{authLoading ? <div className="auth-loading"><span className="loader-line" />Comprobando acceso...</div> : remoteContext?.isPlatformAdmin ? <PlatformAdminPage context={remoteContext} onLogout={logout} /> : remoteContext ? <div className="auth-form-wrap"><div className="notice notice-error">Esta cuenta no tiene permisos de Superadmin.</div><Button onClick={logout}>Cerrar sesión</Button></div> : protectedRoute()}</Route>)}
+    <Route path="/track"><TrackingPage /></Route>
+    <Route path="/track/:token"><TrackingRoute /></Route>
     <Route path="/app">{protectedRoute()}</Route>
     {shopLinks.slice(1).map(([path]) => <Route key={path} path={path}>{protectedRoute()}</Route>)}
     <Route path="/:slug"><PublicRoute data={data} update={update} /></Route>
     <Route component={NotFound} />
   </Switch>{toast && <div className="toast-message" role="status" data-testid="status-toast"><CheckCircle2 size={17} />{toast}</div>}</RoutedErrorBoundary>;
 }
+function TrackingRoute() {
+  const params = useParams<{ token: string }>();
+  return <TrackingPage initialToken={params.token || ''} />;
+}
+function TrackingPage({ initialToken = '' }: { initialToken?: string }) {
+  const [token, setToken] = useState(initialToken);
+  const [order, setOrder] = useState<{ order_number: number; status: string; business_name: string; updated_at: string; created_at: string } | null>(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const lookup = async (value: string) => {
+    const clean = value.trim();
+    if (!clean) { setError('Ingresa el enlace o código de seguimiento.'); return; }
+    setLoading(true); setError('');
+    try {
+      const { data, error: invokeError } = await supabase.functions.invoke('get-order-tracking', { body: { token: clean } });
+      if (invokeError) throw invokeError;
+      if (!data?.order) throw new Error('No encontramos un pedido con ese código.');
+      setOrder(data.order);
+    } catch (e) {
+      setOrder(null);
+      setError(e instanceof Error ? e.message : 'No fue posible consultar el pedido.');
+    } finally { setLoading(false); }
+  };
+  useEffect(() => {
+    if (!initialToken) return;
+    setToken(initialToken);
+    void lookup(initialToken);
+    const timer = window.setInterval(() => { void lookup(initialToken); }, 12000);
+    return () => window.clearInterval(timer);
+  }, [initialToken]);
+  const steps = [
+    ['pending', 'Pedido recibido'], ['confirmed', 'Pedido confirmado'],
+    ['preparing', 'En preparación'], ['ready', 'Listo para despacho'],
+    ['out_for_delivery', 'En camino'], ['delivered', 'Entregado']
+  ];
+  const current = order ? steps.findIndex(([key]) => key === order.status) : -1;
+  return <main className="tracking-page"><div className="tracking-card"><Brand /><span className="eyebrow">CLICKOK · SEGUIMIENTO</span><h1>Rastrea tu pedido</h1><p className="subtle">Consulta el estado actualizado de tu compra sin crear una cuenta.</p>
+    {!initialToken && <form className="tracking-form" onSubmit={e => { e.preventDefault(); void lookup(token); }}><label className="field"><span>Código o enlace de seguimiento</span><input value={token} onChange={e => setToken(e.target.value)} placeholder="Pega aquí tu código" /></label><Button type="submit" disabled={loading}>{loading ? 'Consultando…' : 'Consultar pedido'}</Button></form>}
+    {error && <div className="notice notice-error" role="alert">{error}</div>}
+    {order && <section className="tracking-result"><span className="eyebrow">{order.business_name}</span><h2>Pedido #{String(order.order_number).padStart(3, '0')}</h2>
+      {order.status === 'cancelled' ? <div className="notice notice-error">Este pedido fue cancelado.</div> : <ol className="tracking-steps">{steps.map(([key,label],i) => <li key={key} className={i <= current ? 'tracking-step-done' : ''}><span className="tracking-step-dot">{i < current ? '✓' : i+1}</span><span>{label}</span></li>)}</ol>}
+      <small>Última actualización: {new Date(order.updated_at || order.created_at).toLocaleString('es-CO',{dateStyle:'medium',timeStyle:'short'})}</small>
+    </section>}
+    <Link href="/" className="tracking-back">Volver a la tienda</Link>
+  </div></main>;
+}
+
 function RedirectToLogin({ setLocation }: { setLocation: (path: string) => void }) {
   useEffect(() => { setLocation('/login'); }, [setLocation]);
   return <div className="auth-loading"><span className="loader-line" />Redirigiendo a tu acceso...</div>;
