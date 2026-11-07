@@ -282,3 +282,104 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .sa-login{min-height:100vh;background:radial-gradient(ellipse at 15% 15%,#2e2854 0,transparent 35%),radial-gradient(ellipse at 90% 90%,#22284a 0,transparent 38%),#141426;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:35px 18px;color:white;font-family:'DM Sans',sans-serif}.sa-login-brand{display:flex;align-items:center;gap:11px;margin-bottom:27px;font-size:16px;font-weight:800;letter-spacing:1px}.sa-login-brand>span:last-child{display:flex;flex-direction:column}.sa-login-brand small{font-size:8px;color:#a4a2c2;letter-spacing:2px;margin-top:3px}.sa-login-card{width:min(100%,440px);background:#fff;color:#26263b;border-radius:22px;padding:36px 38px;box-shadow:0 30px 100px #0005}.sa-login-icon{width:48px;height:48px;background:#f0edff;color:#7659dd;border-radius:15px;display:grid;place-items:center;margin-bottom:23px}.sa-login-card h1{font-family:Manrope,sans-serif;font-size:29px;letter-spacing:-1.1px;line-height:1.15;margin:9px 0}.sa-login-card h1 em{font-style:normal;color:#795fdd}.sa-login-card>p{font-size:12px;color:#85869a;line-height:1.6;margin:0 0 22px}.sa-field{display:block;margin:15px 0}.sa-field>span{display:block;font-size:10px;font-weight:700;color:#4b4d62;margin-bottom:7px}.sa-field input{width:100%;height:45px;border:1px solid #e2e3ed;border-radius:9px;padding:0 13px;font:inherit;font-size:12px;outline:none}.sa-field input:focus{border-color:#8871e6;box-shadow:0 0 0 3px #8871e61a}.sa-password{position:relative}.sa-password input{padding-right:45px}.sa-password button{position:absolute;right:8px;top:8px;width:29px;height:29px;border:0;background:transparent;color:#8d8fa2;cursor:pointer}.sa-submit{margin-top:10px;width:100%;height:46px;border:0;border-radius:10px;background:linear-gradient(100deg,#795fdf,#5d49bd);color:white;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer}.sa-submit:disabled{opacity:.6}.sa-login-secure{display:flex;align-items:center;justify-content:center;gap:7px;color:#9a9bad;font-size:9px;margin-top:20px}.sa-login-footer{margin-top:25px;color:#8585a3;font-size:8px;letter-spacing:1.3px}.sa-login-footer span{padding:0 7px;color:#7d68d5}
 @media(max-width:1000px){.sa-sidebar{width:215px;flex-basis:215px}.sa-content{padding:28px 24px}.sa-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.sa-toolbar{align-items:flex-start;flex-direction:column}.sa-search{max-width:none;width:100%}}
 @media(max-width:680px){.sa-sidebar{width:62px;flex-basis:62px;padding:18px 8px}.sa-logo{padding:0 4px 25px}.sa-logo>span:last-child,.sa-workspace,.sa-nav-label,.sa-nav-item:not(.active),.sa-nav-item.active{font-size:0}.sa-nav-item{justify-content:center;padding:13px 5px}.sa-nav-item b,.sa-sidebar-bottom .sa-secure-box,.sa-logout{display:none}.sa-topbar{height:58px;padding:0 13px}.sa-topbar>div:first-child{font-size:9px}.sa-profile>span:nth-child(2){display:none}.sa-content{padding:22px 13px}.sa-welcome{align-items:flex-start;gap:10px;flex-direction:column}.sa-welcome h1{font-size:25px}.sa-stats{gap:9px}.sa-stat{padding:13px}.sa-stat strong{font-size:23px}.sa-stat small{font-size:9px}.sa-panel-heading{padding:18px 15px}.sa-toolbar{padding:0 14px 13px}.sa-filters{gap:2px}.sa-filters button{padding:7px 8px;font-size:8px}.sa-footer{font-size:7px}.sa-login-card{padding:29px 23px}.sa-login-card h1{font-size:26px}}
+
+
+/* CLICKOK merchant workspace — visual language shared with Superadmin */
+.merchant-dashboard {
+  --merchant-purple: #795fdf;
+  --merchant-purple-deep: #5d49bd;
+  --merchant-purple-soft: #f0edff;
+  --merchant-ink: #25263b;
+  --merchant-muted: #85879a;
+  background: #f5f6fb;
+}
+.merchant-dashboard .sidebar {
+  background: radial-gradient(ellipse at 12% 0%, #302852 0, transparent 48%), linear-gradient(160deg, #1b1930 0%, #17172a 72%, #20203b 100%);
+  color: #f8f8ff;
+}
+.merchant-dashboard .side-caption,
+.merchant-dashboard .business-select small,
+.merchant-dashboard .local-note,
+.merchant-dashboard .user-meta small { color: #a5a1c4; }
+.merchant-dashboard .business-select {
+  background: #292541;
+  border-color: #40395f;
+}
+.merchant-dashboard .business-initial {
+  background: linear-gradient(135deg, #8b6cf6, #5a45c8);
+  color: #fff;
+}
+.merchant-dashboard .side-link { color: #c7c3dc; }
+.merchant-dashboard .side-link:hover { background: #ffffff12; color: #fff; }
+.merchant-dashboard .side-link-active {
+  background: linear-gradient(100deg, #493b78, #342b58);
+  color: #fff;
+  box-shadow: inset 3px 0 #a995ff, 0 5px 18px #09081730;
+}
+.merchant-dashboard .side-link-active svg { color: #c0adff; }
+.merchant-dashboard .nav-count {
+  background: linear-gradient(100deg, #8b6cf6, #5d49bd);
+  color: #fff;
+}
+.merchant-dashboard .store-link:hover,
+.merchant-dashboard .logout-btn:hover { color: #c0adff; }
+.merchant-dashboard .user-avatar {
+  background: #eee9ff;
+  color: #654bd2;
+}
+.merchant-dashboard .workspace-top {
+  background: #fff;
+  border-bottom-color: #e9eaf1;
+}
+.merchant-dashboard .page-content { color: var(--merchant-ink); }
+.merchant-dashboard .eyebrow { color: #8b72e8; }
+.merchant-dashboard .btn-solid,
+.merchant-dashboard .btn:not(.btn-ghost):not(.btn-light) {
+  background: linear-gradient(100deg, #795fdf, #5d49bd);
+  border-color: transparent;
+  color: #fff;
+}
+.merchant-dashboard .metric,
+.merchant-dashboard .panel,
+.merchant-dashboard .managed-product {
+  background: #fff;
+  border-color: #e8e9f0;
+  box-shadow: 0 5px 22px #28234a08;
+}
+.merchant-dashboard .metric-top svg,
+.merchant-dashboard .panel-head > svg { color: #8b72e8; }
+.merchant-dashboard .quick-icon {
+  background: #f0edff;
+  color: #7659dc;
+}
+.merchant-dashboard .quick-icon.coral {
+  background: #f0edff;
+  color: #7659dc;
+}
+.merchant-dashboard .quick-icon.sand {
+  background: #f0edff;
+  color: #7659dc;
+}
+.merchant-dashboard .setup-progress i,
+.merchant-dashboard .bar-column i {
+  background: linear-gradient(0deg, #5d49bd, #9b82ff);
+}
+.merchant-dashboard .status {
+  border-radius: 20px;
+}
+.merchant-dashboard .catalog-banner {
+  background: linear-gradient(110deg, #f0edff, #f8f6ff);
+  border-color: #e5defe;
+}
+.merchant-dashboard .catalog-monogram {
+  background: linear-gradient(135deg, #8b6cf6, #5a45c8);
+  color: #fff;
+}
+.merchant-dashboard .color-field:focus-within,
+.merchant-dashboard input:focus,
+.merchant-dashboard select:focus,
+.merchant-dashboard textarea:focus {
+  border-color: #8871e6;
+  box-shadow: 0 0 0 3px #8871e61a;
+  outline: none;
+}
