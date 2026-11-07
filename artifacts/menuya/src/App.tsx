@@ -552,13 +552,15 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
   const loadRemoteData = async () => {
     if (!business?.id) return;
     setLoading(true); setLoadError('');
-    const [categoryResult, productResult, settingsResult, subscriptionResult] = await Promise.all([
+    const [categoryResult, productResult, settingsResult, subscriptionResult, orderResult, customerResult] = await Promise.all([
       supabase.from('categories').select('id,business_id,name,sort_order,is_active').eq('business_id',business.id).order('sort_order'),
       supabase.from('products').select('id,business_id,category_id,name,description,price,previous_price,image_url,is_active,is_available,is_featured,stock').eq('business_id',business.id).order('created_at',{ascending:false}),
       supabase.from('store_settings').select('business_id,cover_url,logo_url,brand_color,font_family,contact_text,social_links,payment_methods,delivery_info,is_published,tagline').eq('business_id',business.id).maybeSingle(),
       supabase.from('subscriptions').select('id,business_id,plan_id,status,starts_at,ends_at,plans(id,name,price,billing_period,max_products,features,is_active)').eq('business_id',business.id).maybeSingle(),
+      supabase.from('orders').select('id,business_id,customer_id,order_number,status,fulfillment_type,delivery_address,notes,payment_method,total,created_at,customers(name,phone),order_items(product_id,product_name,unit_price,quantity,variant_name,addons_snapshot)').eq('business_id',business.id).order('created_at',{ascending:false}),
+      supabase.from('customers').select('id,business_id,name,phone,total_orders,total_spent,last_order_at').eq('business_id',business.id).order('last_order_at',{ascending:false}),
     ]);
-    const firstError = categoryResult.error || productResult.error || settingsResult.error || subscriptionResult.error;
+    const firstError = categoryResult.error || productResult.error || settingsResult.error || subscriptionResult.error || orderResult.error || customerResult.error;
     if (firstError) { setLoadError(firstError.message); setLoading(false); return; }
     const profileName = context.profile?.full_name || String(context.user.user_metadata?.full_name || context.user.email || 'Comercio');
     const biz = {
@@ -580,7 +582,15 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
     const plan: Plan = planRow ? {id:planRow.id,nombre:planRow.name,precio:Number(planRow.price),periodicidad:planRow.billing_period,max_productos:planRow.max_products,funciones:planRow.features || [],activo:planRow.is_active} : {id:'default',nombre:'Plan inicial',precio:0,periodicidad:'mes',max_productos:15,funciones:[],activo:true};
     const data: DemoData = {
       users:[{id:context.user.id,nombre:profileName,email:context.user.email || '',password:'',role:'owner',business_ids:[business.id]}],
-      businesses:[biz],categories,products,customers:[],orders:[],plans:[plan],
+      businesses:[biz],categories,products,
+      customers:(customerResult.data || []).map(c => ({id:c.id,business_id:c.business_id,nombre:c.name,telefono:c.phone || '',total_pedidos:c.total_orders || 0,total_compras:Number(c.total_spent || 0),ultimo_pedido:c.last_order_at || ''})),
+      orders:(orderResult.data || []).map(o => ({
+        id:o.id,business_id:o.business_id,numero:Number(o.order_number || 0),customer_id:o.customer_id,
+        items:(o.order_items || []).map(item => ({product_id:item.product_id || '',nombre:item.product_name,precio:Number(item.unit_price || 0),cantidad:item.quantity, variante:item.variant_name || undefined,complementos:Array.isArray(item.addons_snapshot) ? item.addons_snapshot : []})),
+        total:Number(o.total || 0),estado:({new:'pendiente',pending:'pendiente',confirmed:'confirmado',preparing:'preparando',ready:'listo',out_for_delivery:'en_camino',delivered:'entregado',cancelled:'cancelado'} as Record<string, OrderStatus>)[o.status] || 'pendiente',
+        entrega:o.fulfillment_type === 'delivery' ? 'domicilio' : 'recoger',direccion:o.delivery_address || '',observaciones:o.notes || '',metodo_pago:o.payment_method || '—',created_at:o.created_at,
+      })),
+      plans:[plan],
       subscriptions:sub ? [{id:sub.id,business_id:sub.business_id,plan_id:sub.plan_id,estado:sub.status,inicio:sub.starts_at || '',vencimiento:sub.ends_at || ''}] : [],
       settings:[settings],audit:[],catalog_events:[],platform:{name:'MENUYA',approval:'manual',default_plan:plan.id},
     };
