@@ -513,6 +513,7 @@ function PlatformAdminLogin({ onLogin }: { onLogin: (email: string, password: st
         <label className="sa-field"><span>Contraseña</span><div className="sa-password"><input name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="Tu contraseña" required/><button type="button" onClick={()=>setShowPassword(v=>!v)} aria-label="Mostrar contraseña">{showPassword ? <EyeOff size={17}/> : <Eye size={17}/>}</button></div></label>
         <button className="sa-submit" type="submit" disabled={busy}>{busy ? 'Verificando acceso…' : 'Entrar al panel'} <ArrowRight size={17}/></button>
       </form>
+      <div className="sa-login-recovery"><a href="/forgot-password">¿Olvidaste tu contraseña? Recuperar acceso</a></div>
       <div className="sa-login-secure"><ShieldCheck size={14}/> Acceso verificado por Supabase · Solo personal autorizado</div>
     </section>
     <footer className="sa-login-footer">MENUYA <span>•</span> ATOM LABS <span>•</span> ADMINISTRACIÓN SEGURA</footer>
