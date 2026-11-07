@@ -177,8 +177,7 @@ function FormModal({ title, fields, close, submit, submitText = 'Guardar' }: { t
 
 function MerchantPage({ path, data, business, update }: { path: string; data: DemoData; business: Business; update: (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => void }) {
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState('todos');
-  const [categoryFilter, setCategoryFilter] = useState('todos');
+  const [filter, setFilter] = useState('todos');  const [categoryFilter, setCategoryFilter] = useState('todos');
   const [orderFrom, setOrderFrom] = useState('');
   const [orderTo, setOrderTo] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -357,8 +356,7 @@ function AdminPage({ path, data, update }: { path: string; data: DemoData; updat
     { name: 'funciones', label: 'Funciones (separadas por coma)', value: initial?.funciones.join(', ') }, { name: 'activo', label: 'Plan activo', type: 'checkbox', value: initial?.activo ?? true },
   ], v => {
     const item: Plan = { id: initial?.id || repository.id(), nombre: String(v.nombre), precio: Number(v.precio), periodicidad: 'mes', max_productos: Number(v.max_productos), funciones: String(v.funciones || '').split(',').map(x => x.trim()).filter(Boolean), activo: Boolean(v.activo) };
-    update(d => ({ ...d, plans: initial ? d.plans.map(p => p.id === initial.id ? item : p) : [...d.plans, item] }), initial ? 'Plan actualizado' : 'Plan creado', item.nombre); setModal(null);
-  });
+    update(d => ({ ...d, plans: initial ? d.plans.map(p => p.id === initial.id ? item : p) : [...d.plans, item] }), initial ? 'Plan actualizado' : 'Plan creado', item.nombre); setModal(null);  });
   const deletePlan = (plan: Plan) => {
     const replacement = data.plans.find(item => item.id !== plan.id);
     if (!replacement) return;
@@ -519,15 +517,15 @@ function PlatformAdminLogin({ onLogin }: { onLogin: (email: string, password: st
     finally { setBusy(false); }
   };
   return <main className="sa-login">
-    <div className="sa-login-brand"><span className="sa-brand-mark">m.</span><span>MENUYA <small>CONTROL CENTER</small></span></div>
+    <div className="sa-login-brand"><img src="/brand-clickok-dark.svg" alt="CLICKOK" style={{width:188,height:'auto',display:'block'}} /><span className="sr-only">CLICKOK CONTROL CENTER</span></div>
     <section className="sa-login-card">
       <div className="sa-login-icon"><ShieldCheck size={25}/></div>
       <span className="sa-kicker">ÁREA RESTRINGIDA · ATOM LABS</span>
       <h1>Administración<br/><em>de plataforma.</em></h1>
-      <p>Ingresa con tus credenciales autorizadas para gestionar Menuya.</p>
+      <p>Ingresa con tus credenciales autorizadas para gestionar CLICKOK.</p>
       {error && <div className="notice notice-error" role="alert">{error}</div>}
       <form onSubmit={submit}>
-        <label className="sa-field"><span>Correo administrador</span><input name="email" type="email" autoComplete="username" placeholder="admin@menuya.co" required/></label>
+        <label className="sa-field"><span>Correo administrador</span><input name="email" type="email" autoComplete="username" placeholder="Correo autorizado" required/></label>
         <label className="sa-field"><span>Contraseña</span><div className="sa-password"><input name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="Tu contraseña" required/><button type="button" onClick={()=>setShowPassword(v=>!v)} aria-label="Mostrar contraseña">{showPassword ? <EyeOff size={17}/> : <Eye size={17}/>}</button></div></label>
         <button className="sa-submit" type="submit" disabled={busy}>{busy ? 'Verificando acceso…' : 'Entrar al panel'} <ArrowRight size={17}/></button>
       </form>
@@ -537,7 +535,6 @@ function PlatformAdminLogin({ onLogin }: { onLogin: (email: string, password: st
     <footer className="sa-login-footer">MENUYA <span>•</span> ATOM LABS <span>•</span> ADMINISTRACIÓN SEGURA</footer>
   </main>;
 }
-
 function PlatformAdminPage({ context, onLogout }: { context: MenuyaAuthContext; onLogout: () => void }) { return <PlatformAdminCenter context={context} onLogout={onLogout} />; }
 
 function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; onLogout: () => void }) {
@@ -758,102 +755,3 @@ function Router() {
   };
 
   const logout = async () => {
-    try { if (isSupabaseConfigured) await signOut(); } finally {
-      setRemoteContext(null);
-
-      setLocation('/login');
-    }
-  };
-
-  const protectedRoute = () => authLoading
-    ? <div className="auth-loading"><span className="loader-line" />Comprobando tu sesión...</div>
-    : authInitError
-      ? <div className="auth-form-wrap"><div className="notice notice-error">{authInitError}</div><Link href="/login" className="text-link">Volver al acceso</Link></div>
-      : remoteContext
-        ? <RemoteAccessGate context={remoteContext} onLogout={logout} />
-        : <RedirectToLogin setLocation={setLocation} />;
-
-  return <RoutedErrorBoundary><Switch>
-    <Route path="/"><Landing data={data} /></Route>
-    <Route path="/admin/login"><PlatformAdminLogin onLogin={login} /></Route>
-    <Route path="/login"><AuthPage mode="login" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
-    <Route path="/register"><AuthPage mode="register" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
-    <Route path="/forgot-password"><AuthPage mode="forgot" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
-    <Route path="/reset-password"><AuthPage mode="reset" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
-    <Route path="/admin">{authLoading ? <div className="auth-loading"><span className="loader-line" />Comprobando acceso...</div> : remoteContext?.isPlatformAdmin ? <PlatformAdminPage context={remoteContext} onLogout={logout} /> : remoteContext ? <div className="auth-form-wrap"><div className="notice notice-error">Esta cuenta no tiene permisos de Superadmin.</div><Button onClick={logout}>Cerrar sesión</Button></div> : protectedRoute()}</Route>
-    {adminLinks.slice(1).map(([path]) => <Route key={path} path={path}>{authLoading ? <div className="auth-loading"><span className="loader-line" />Comprobando acceso...</div> : remoteContext?.isPlatformAdmin ? <PlatformAdminPage context={remoteContext} onLogout={logout} /> : remoteContext ? <div className="auth-form-wrap"><div className="notice notice-error">Esta cuenta no tiene permisos de Superadmin.</div><Button onClick={logout}>Cerrar sesión</Button></div> : protectedRoute()}</Route>)}
-    <Route path="/app">{protectedRoute()}</Route>
-    {shopLinks.slice(1).map(([path]) => <Route key={path} path={path}>{protectedRoute()}</Route>)}
-    <Route path="/:slug"><PublicRoute data={data} update={update} /></Route>
-    <Route component={NotFound} />
-  </Switch>{toast && <div className="toast-message" role="status" data-testid="status-toast"><CheckCircle2 size={17} />{toast}</div>}</RoutedErrorBoundary>;
-}
-function RedirectToLogin({ setLocation }: { setLocation: (path: string) => void }) {
-  useEffect(() => { setLocation('/login'); }, [setLocation]);
-  return <div className="auth-loading"><span className="loader-line" />Redirigiendo a tu acceso...</div>;
-}
-function PublicRoute({ data, update }: { data: DemoData; update: (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => void }) {
-  const params = useParams<{ slug: string }>();
-  const slug = params.slug || '';
-  const [storeData, setStoreData] = useState<DemoData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
-  useEffect(() => {
-    let active = true;
-    const load = async () => {
-      setLoading(true); setLoadError('');
-      try {
-        const { data: businessRow, error: businessError } = await supabase
-          .from('businesses')
-          .select('id,name,slug,business_type,status,is_published')
-          .eq('slug', slug).maybeSingle();
-        if (businessError) throw businessError;
-        if (!businessRow || !businessRow.is_published) {
-          if (active) { setStoreData(null); setLoading(false); }
-          return;
-        }
-        const [categoryResult, productResult, settingsResult] = await Promise.all([
-          supabase.from('categories').select('id,business_id,name,sort_order,is_active').eq('business_id',businessRow.id).eq('is_active',true).order('sort_order'),
-          supabase.from('products').select('id,business_id,category_id,name,description,price,previous_price,image_url,is_active,is_available,is_featured,stock').eq('business_id',businessRow.id).eq('is_active',true).eq('is_available',true).order('created_at',{ascending:false}),
-          supabase.from('store_settings').select('business_id,cover_url,logo_url,brand_color,font_family,contact_text,social_links,payment_methods,delivery_info,is_published,tagline').eq('business_id',businessRow.id).maybeSingle(),
-        ]);
-        const queryError = categoryResult.error || productResult.error || settingsResult.error;
-        if (queryError) throw queryError;
-        if (!settingsResult.data?.is_published) {
-          if (active) { setStoreData(null); setLoading(false); }
-          return;
-        }
-        const profile = {
-          id:businessRow.id, owner_id:'', nombre:businessRow.name, slug:businessRow.slug,
-          tipo:businessRow.business_type || 'Comercio', telefono:'', estado:businessRow.status === 'active' ? 'activo' as const : 'pendiente' as const,
-          created_at:new Date().toISOString(),
-        };
-        const row = settingsResult.data;
-        const settings = {
-          business_id:businessRow.id, portada:row.cover_url || '', logo:row.logo_url || '',
-          color:row.brand_color || '#252525', fuente:row.font_family || 'Manrope',
-          contacto:row.contact_text || '', redes:typeof row.social_links === 'string' ? row.social_links : JSON.stringify(row.social_links || {}),
-          pagos:Array.isArray(row.payment_methods) ? row.payment_methods.join(', ') : 'Efectivo',
-          entrega:row.delivery_info || '', publicado:true, tagline:row.tagline || '',
-        };
-        const categories = (categoryResult.data || []).map(c=>({id:c.id,business_id:c.business_id,nombre:c.name,orden:c.sort_order,activo:c.is_active}));
-        const products = (productResult.data || []).map(p=>({id:p.id,business_id:p.business_id,category_id:p.category_id || '',nombre:p.name,descripcion:p.description || '',precio:Number(p.price),precio_anterior:p.previous_price ? Number(p.previous_price) : undefined,imagen:p.image_url || undefined,activo:p.is_active,disponible:p.is_available,destacado:p.is_featured,stock:p.stock ?? 0,variantes:[],complementos:[]}));
-        const remote: DemoData = {...data,users:[],businesses:[profile],categories,products,customers:[],orders:[],settings:[settings],subscriptions:[],audit:[],catalog_events:[]};
-        if (active) { setStoreData(remote); setLoading(false); }
-      } catch (error) {
-        if (active) { setLoadError(error instanceof Error ? error.message : 'No fue posible cargar la tienda.'); setLoading(false); }
-      }
-    };
-    if (slug && isSupabaseConfigured) void load();
-    else { setLoadError('La tienda pública no está configurada.'); setLoading(false); }
-    return () => { active = false; };
-  }, [slug]);
-  if (loading) return <div className="auth-loading"><span className="loader-line" />Cargando tienda...</div>;
-  if (loadError) return <div className="store-unavailable"><Brand /><div><span className="eyebrow">NO PUDIMOS CARGAR LA TIENDA</span><h1>Intenta nuevamente.</h1><p>{loadError}</p><Link href="/" className="btn btn-outline">Volver al inicio</Link></div></div>;
-  if (!storeData) return <NotFound />;
-  return <PublicStore data={storeData} slug={slug} update={update} />;
-}
-function App() {
-  return <QueryClientProvider client={queryClient}><TooltipProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter><Toaster /></TooltipProvider></QueryClientProvider>;
-}
-export default App;
