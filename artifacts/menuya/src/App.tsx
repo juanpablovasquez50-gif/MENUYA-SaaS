@@ -665,9 +665,34 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
     setSavingError('');
     saveQueueRef.current = saveQueueRef.current.catch(() => undefined).then(async () => {
       try {
+        const oldOrders = new Map(previous.orders.map(order => [order.id, order]));
+        const nextOrders = new Map(next.orders.map(order => [order.id, order]));
+        const statusToDatabase: Record<OrderStatus, string> = {
+          pendiente: 'pending',
+          confirmado: 'confirmed',
+          preparando: 'preparing',
+          listo: 'ready',
+          en_camino: 'out_for_delivery',
+          entregado: 'delivered',
+          cancelado: 'cancelled',
+        };
+        for (const [id, order] of nextOrders) {
+          const before = oldOrders.get(id);
+          if (!before || before.estado === order.estado) continue;
+          const result = await supabase.from('orders')
+            .update({ status: statusToDatabase[order.estado], updated_at: new Date().toISOString() })
+            .eq('id', id)
+            .eq('business_id', business.id)
+            .select('id,status')
+            .maybeSingle();
+          if (result.error) throw result.error;
+          if (!result.data) throw new Error('No se pudo actualizar el pedido. Verifica los permisos de la cuenta del comercio.');
+        }
         const oldCats = new Map(previous.categories.map(x=>[x.id,x]));
         const newCats = new Map(next.categories.map(x=>[x.id,x]));
         for (const [id, item] of newCats) {
+          const before = oldCats.get(id);
+          if (before === item) continue;
           const payload = {business_id:business.id,name:item.nombre,sort_order:item.orden,is_active:item.activo};
           const result = oldCats.has(id)
             ? await supabase.from('categories').update(payload).eq('id',id).eq('business_id',business.id)
@@ -681,6 +706,8 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
         const oldProducts = new Map(previous.products.map(x=>[x.id,x]));
         const newProducts = new Map(next.products.map(x=>[x.id,x]));
         for (const [id, item] of newProducts) {
+          const before = oldProducts.get(id);
+          if (before === item) continue;
           const payload = {business_id:business.id,category_id:item.category_id || null,name:item.nombre,description:item.descripcion,price:item.precio,previous_price:item.precio_anterior ?? null,image_url:item.imagen ?? null,is_active:item.activo,is_available:item.disponible,is_featured:item.destacado,stock:item.stock ?? 0};
           const result = oldProducts.has(id)
             ? await supabase.from('products').update(payload).eq('id',id).eq('business_id',business.id)
@@ -720,29 +747,6 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
             const result = await supabase.from('businesses').update({name:nextBusiness.nombre}).eq('id',business.id);
             if (result.error) throw result.error;
           }
-        }
-        const oldOrders = new Map(previous.orders.map(order => [order.id, order]));
-        const nextOrders = new Map(next.orders.map(order => [order.id, order]));
-        const statusToDatabase: Record<OrderStatus, string> = {
-          pendiente: 'pending',
-          confirmado: 'confirmed',
-          preparando: 'preparing',
-          listo: 'ready',
-          en_camino: 'out_for_delivery',
-          entregado: 'delivered',
-          cancelado: 'cancelled',
-        };
-        for (const [id, order] of nextOrders) {
-          const before = oldOrders.get(id);
-          if (!before || before.estado === order.estado) continue;
-          const result = await supabase.from('orders')
-            .update({ status: statusToDatabase[order.estado] })
-            .eq('id', id)
-            .eq('business_id', business.id)
-            .select('id,status')
-            .maybeSingle();
-          if (result.error) throw result.error;
-          if (!result.data) throw new Error('No se pudo actualizar el pedido. Verifica los permisos de la cuenta del comercio.');
         }
         // No recargar tras cada guardado: una respuesta antigua podía sobrescribir cambios recientes.
       } catch (error) {
