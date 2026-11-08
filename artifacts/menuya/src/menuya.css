@@ -1216,8 +1216,9 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 
 
 /* Landing: protagonismo para CLICKOK Studio */
-.studio-feature-landing{position:relative;isolation:isolate;overflow:hidden;display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:center;gap:clamp(34px,6vw,86px);padding:clamp(64px,8vw,112px) clamp(22px,7vw,110px);background:#182331;color:#f5f7fb}
-.studio-feature-landing:before{content:"";position:absolute;z-index:-1;width:620px;height:620px;right:-130px;top:-190px;border-radius:50%;background:radial-gradient(circle,#635bff38 0,transparent 68%)}
+.studio-feature-landing{position:relative;isolation:isolate;overflow:hidden;display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:center;gap:clamp(34px,6vw,86px);padding:clamp(64px,8vw,112px) clamp(22px,7vw,110px);background:#17152b;color:#f5f4ff}
+.studio-feature-landing:before{content:"";position:absolute;z-index:-1;inset:0;background:radial-gradient(ellipse at 78% 18%,#744cff30 0,transparent 42%),radial-gradient(ellipse at 92% 78%,#ff4b8b20 0,transparent 34%),radial-gradient(ellipse at 12% 92%,#356cff20 0,transparent 38%);pointer-events:none}
+.studio-feature-landing:after{content:"";position:absolute;z-index:-1;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,#7545ff,#356dff,#d52b9b,#ff792f)}
 .studio-feature-copy{max-width:530px}
 .studio-feature-copy>.eyebrow{color:#aaa5ff;font-weight:800;letter-spacing:.13em}
 .studio-feature-copy h2{font-size:clamp(36px,5vw,64px);line-height:1.02;letter-spacing:-.055em;margin:18px 0}
@@ -1226,7 +1227,7 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .studio-feature-copy ul{list-style:none;padding:0;margin:26px 0 32px;display:grid;gap:13px}
 .studio-feature-copy li{display:flex;align-items:center;gap:10px;color:#e5e6ed;font-size:14px}
 .studio-feature-copy li svg{color:#9e98ff;flex:0 0 auto}
-.studio-feature-copy .btn{box-shadow:0 12px 34px #635bff35}
+.studio-feature-copy .btn{background:linear-gradient(105deg,#7545ff 0%,#356dff 34%,#d52b9b 70%,#ff792f 100%);border:0;box-shadow:0 12px 34px #7545ff35}
 .studio-feature-visual{position:relative;min-width:0;padding:20px 0 35px}
 .studio-feature-window{border:1px solid #ffffff25;border-radius:17px;overflow:hidden;background:#f5f6fa;box-shadow:0 32px 90px #0008;transform:perspective(1200px) rotateY(-5deg) rotateX(2deg)}
 .studio-feature-top{height:38px;background:#242638;display:flex;align-items:center;gap:6px;padding:0 13px}
