@@ -1009,3 +1009,13 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .live-preview.public-buttons-square .live-category span{border-radius:4px}
 .live-preview-details{display:grid;gap:4px;margin-top:14px;padding-top:10px;border-top:1px solid #edf0f4;color:#788496;font-size:8px}
 .live-preview-details span:empty{display:none}
+
+
+/* Fix font selector: propagate the selected family to every storefront element */
+.live-preview,
+.live-preview *,
+.public-store,
+.public-store *{
+  font-family:inherit!important;
+}
+.live-preview svg,.public-store svg{font-family:initial!important}
