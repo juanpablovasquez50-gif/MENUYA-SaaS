@@ -23,7 +23,7 @@ const adminLinks = [['/admin', 'Resumen', LayoutDashboard], ['/admin/businesses'
 const shopLinks = [['/app', 'Inicio', LayoutDashboard], ['/app/catalog', 'Catálogo', ShoppingBag], ['/app/products', 'Productos', Package], ['/app/categories', 'Categorías', Tag], ['/app/orders', 'Pedidos', ClipboardList], ['/app/customers', 'Clientes', Users], ['/app/editor', 'CLICKOK Studio', Pencil], ['/app/analytics', 'Analítica', BarChart3], ['/app/settings', 'Ajustes', Settings], ['/app/subscription', 'Mi plan', CreditCard]] as const;
 type Session = { userId: string; role: 'admin' | 'owner' } | null;
 type FormField = { name: string; label: string; type?: string; value?: string | number | boolean; options?: string[]; required?: boolean };
-type CartLine = { key: string; productId: string; cantidad: number; variante?: ProductChoice; complementos: ProductChoice[] };
+type CartLine = { key: string; productId: string; cantidad: number; variantes?: { choice: ProductChoice; cantidad: number }[]; complementos: ProductChoice[] };
 const choiceText = (choices: ProductChoice[] = []) => choices.map(choice => `${choice.nombre}|${choice.precio_extra}`).join('\n');
 const isFoodBusiness = (type: string) => /restaurante|panader[ií]a|cafeter[ií]a|comida|reposter[ií]a|pasteler[ií]a|bar\b/i.test(type.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase());
 const optionLabelForBusiness = (type: string) => { const t=type.toLowerCase(); if(/ropa|calzado|zapater|moda/.test(t)) return 'Tallas y colores'; if(/tecnolog|electr[oó]nic|comput/.test(t)) return 'Modelos y especificaciones'; if(/barber|belleza|peluquer/.test(t)) return 'Servicios y modalidades'; return 'Variantes y opciones'; };
@@ -552,7 +552,7 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('todos');
   const [cart, setCart] = useState<Record<string, number>>({});
-  const [cartChoices, setCartChoices] = useState<Record<string, { variante?: ProductChoice; complementos: ProductChoice[] }>>({});
+  const [cartChoices, setCartChoices] = useState<Record<string, { variantes?: { choice: ProductChoice; cantidad: number }[]; complementos: ProductChoice[] }>>({});
   const [configuring, setConfiguring] = useState<Product | null>(null);
   const [variantQuantities, setVariantQuantities] = useState<Record<string, number>>({});
   const [addonQuantities, setAddonQuantities] = useState<Record<string, number>>({});
@@ -571,8 +571,8 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
   const settings = data.settings.find(s => s.business_id === business.id);
   const cats = data.categories.filter(c => c.business_id === business.id && c.activo).sort((a, b) => a.orden - b.orden);
   const products = data.products.filter(p => p.business_id === business.id && p.activo && p.disponible && (category === 'todos' || p.category_id === category) && `${p.nombre} ${p.descripcion}`.toLowerCase().includes(search.toLowerCase()));
-  const cartItems = Object.entries(cart).map(([key, cantidad]) => { const [id, variantKey] = key.split('::'); return { key, p: data.products.find(p => p.id === id)!, cantidad, variante: cartChoices[key]?.variante, complementos: cartChoices[key]?.complementos || [] }; }).filter(x => x.p);
-  const itemUnitPrice = (item: (typeof cartItems)[number]) => item.p.precio + (item.variante?.precio_extra || 0) + item.complementos.reduce((sum, choice) => sum + choice.precio_extra, 0);
+  const cartItems = Object.entries(cart).map(([key, cantidad]) => { const id = key.split('::')[0]; return { key, p: data.products.find(p => p.id === id)!, cantidad, variantes: cartChoices[key]?.variantes || [], complementos: cartChoices[key]?.complementos || [] }; }).filter(x => x.p);
+  const itemUnitPrice = (item: (typeof cartItems)[number]) => item.p.precio + item.variantes.reduce((sum, selected) => sum + selected.choice.precio_extra * selected.cantidad, 0) + item.complementos.reduce((sum, choice) => sum + choice.precio_extra, 0);
   const subtotal = cartItems.reduce((a, x) => a + itemUnitPrice(x) * x.cantidad, 0);
   const openProduct = (product: Product) => {
     void supabase.from('catalog_events').insert({ business_id: business.id, product_id: product.id, event_type: 'inquiry' }).then(({ error }) => { if (error) console.warn('No se pudo registrar la consulta del producto:', error.message); });
@@ -591,17 +591,10 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
     const selectedVariants = (product.variantes || []).filter(choice => (variantQuantities[choice.id] || 0) > 0);
     const complementos = (product.complementos || []).flatMap(choice => Array.from({ length: addonQuantities[choice.id] || 0 }, () => choice));
     if (product.variantes?.length && !selectedVariants.length) { setError('Selecciona al menos una unidad de una variante.'); return; }
-    if (selectedVariants.length) {
-      for (const variant of selectedVariants) {
-        const key = `${product.id}::${variant.id}`;
-        const quantity = variantQuantities[variant.id] || 0;
-        setCart(current => ({ ...current, [key]: (current[key] || 0) + quantity }));
-        setCartChoices(current => ({ ...current, [key]: { variante: variant, complementos } }));
-      }
-    } else {
-      setCart(current => ({ ...current, [product.id]: (current[product.id] || 0) + 1 }));
-      setCartChoices(current => ({ ...current, [product.id]: { complementos } }));
-    }
+    const key = selectedVariants.length || complementos.length ? `${product.id}::`${crypto.randomUUID()}` : product.id;
+    const variantes = selectedVariants.map(choice => ({ choice, cantidad: variantQuantities[choice.id] || 0 }));
+    setCart(current => ({ ...current, [key]: (current[key] || 0) + 1 }));
+    setCartChoices(current => ({ ...current, [key]: { variantes, complementos } }));
     setError('');
     setConfiguring(null);
   };
@@ -626,7 +619,7 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
           items: cartItems.map(x => ({
             product_id: x.p.id,
             quantity: x.cantidad,
-            variant_value_id: x.variante?.id || null,
+            variant_selections: x.variantes.map(selected => ({ value_id: selected.choice.id, quantity: selected.cantidad })),
             addon_value_ids: x.complementos.map(choice => choice.id)
           }))
         }
@@ -665,7 +658,7 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
       </div>
     </Modal>}
     {checkout && <Modal title="Tu pedido" close={() => setCheckout(false)}><form className="checkout-form" onSubmit={submitOrder}>
-      <div className="checkout-items">{cartItems.map(x => <div key={x.key}><span><b>{x.cantidad} × {x.p.nombre}</b><small>{[x.variante?.nombre, ...x.complementos.map(choice => `+ ${choice.nombre}`)].filter(Boolean).join(' · ') || 'Sin opciones'} · {money(itemUnitPrice(x))} c/u</small></span><div className="quantity-control"><button type="button" onClick={() => setQty(x.key, x.cantidad - 1)}>−</button><b>{x.cantidad}</b><button type="button" onClick={() => setQty(x.key, x.cantidad + 1)}>+</button></div><strong>{money(itemUnitPrice(x) * x.cantidad)}</strong></div>)}</div>
+      <div className="checkout-items">{cartItems.map(x => <div key={x.key}><span><b>{x.cantidad} × {x.p.nombre}</b><small>{[...x.variantes.map(selected => `${selected.choice.nombre} ×${selected.cantidad}`), ...x.complementos.map(choice => `+ ${choice.nombre}`)].filter(Boolean).join(' · ') || 'Sin opciones'} · {money(itemUnitPrice(x))} c/u</small></span><div className="quantity-control"><button type="button" onClick={() => setQty(x.key, x.cantidad - 1)}>−</button><b>{x.cantidad}</b><button type="button" onClick={() => setQty(x.key, x.cantidad + 1)}>+</button></div><strong>{money(itemUnitPrice(x) * x.cantidad)}</strong></div>)}</div>
       <div className="checkout-total"><span>Total</span><b>{money(subtotal)}</b></div>{error && <div className="notice notice-error">{error}</div>}
       <div className="form-grid">
         <label className="field"><span>Tu nombre *</span><input required name="nombre" autoComplete="name" data-testid="input-checkout-name" /></label>
