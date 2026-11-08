@@ -47,7 +47,7 @@ export default function RestaurantOperations({businessId}:{businessId:string}) {
     e.preventDefault();if(!email.trim())return;
     setBusy(true);setError('');setNotice('');
     const {data,error}=await supabase.functions.invoke('invite-restaurant-waiter',{body:{business_id:businessId,email:email.trim().toLowerCase()}});
-    if(error)setError(error.message);else if(data?.error)setError(data.error);else{setEmail('');setNotice('Invitación enviada. El mesero debe aceptar el correo para activar su acceso.');await refresh();}
+    if(error)setError(error.message);else if(data?.error)setError(data.error);else{setEmail('');setNotice(data?.existing_user?'La cuenta existente fue vinculada como mesero. Puede ingresar con sus credenciales habituales.':'Invitación enviada. El mesero debe aceptar el correo para activar su acceso.');await refresh();}
     setBusy(false);
   };
 
