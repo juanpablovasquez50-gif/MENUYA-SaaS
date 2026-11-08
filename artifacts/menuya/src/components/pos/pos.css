@@ -10,3 +10,5 @@
 .pos-option-group label span{flex:1}
 .pos-option-group label b{font-size:12px;color:var(--muted,#777)}
 .pos-option-group input{accent-color:#6849db;width:17px;height:17px}
+
+.pos-option-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.pos-option-actions .pos-checkout{margin-top:0}.pos-add-base{width:100%;border:1px solid var(--border,#ddd);border-radius:10px;background:var(--panel,#fff);color:inherit;font-weight:700;padding:13px 15px;cursor:pointer}.pos-add-base:hover{border-color:#8d75e8;background:rgba(104,73,219,.05)}@media(max-width:560px){.pos-option-actions{grid-template-columns:1fr}}
