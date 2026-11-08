@@ -1106,3 +1106,58 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
  .public-products-list .public-product-info{gap:6px}
  .public-products-list .add-mobile{padding:7px}
 }
+
+
+/* Ajuste de jerarquía, espacios y alineación de la vitrina */
+.public-store,.public-store *{box-sizing:border-box}
+.public-hero{padding-bottom:20px}
+.public-cover{min-height:clamp(155px,22vw,220px);padding:clamp(20px,4vw,38px)}
+.public-store-intro{margin:-30px auto 0;min-height:82px;align-items:center;gap:16px}
+.public-logo{position:relative;z-index:2;margin:0;width:76px;height:76px;flex:0 0 76px}
+.public-store-intro>div:nth-child(2){min-width:0;flex:1;padding:8px 0 0}
+.public-store-intro h1{margin:0 0 5px;line-height:1.18;overflow-wrap:anywhere}
+.public-store-intro p{margin:0;line-height:1.45;overflow-wrap:anywhere}
+.public-store-intro .open-label{flex:0 0 auto;margin:8px 0 0;white-space:nowrap}
+.public-contact{display:flex;align-items:center;gap:7px 9px;line-height:1.5;margin-top:8px}
+.public-main{width:100%;max-width:1240px;margin:0 auto;padding-top:22px}
+.public-toolbar{display:flex;align-items:center;gap:12px}
+.public-categories{align-items:center;min-height:48px;padding:5px 0 15px}
+.public-section-title{margin:18px 0 18px}
+.public-section-title h2{line-height:1.2;margin:6px 0 0}
+.public-products{width:100%;min-width:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));align-items:stretch;gap:18px}
+.public-products-grid .public-product{min-width:0;width:100%;height:100%;display:flex;flex-direction:column}
+.public-products-grid .public-product-art{width:100%;aspect-ratio:1.35/1;min-height:0;flex:0 0 auto;position:relative}
+.public-products-grid .public-product-info{width:100%;min-width:0;flex:1;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:14px}
+.public-products-grid .public-product-info>div:first-child{min-width:0;flex:1}
+.public-products-grid .product-title-button{max-width:100%;line-height:1.3;overflow-wrap:anywhere}
+.public-products-grid .public-product-info p{line-height:1.45;margin:6px 0 10px;overflow-wrap:anywhere}
+.public-products-grid .public-product-info b{display:inline-block;line-height:1.3}
+.public-products-grid .public-product-info del{margin-left:7px;white-space:nowrap}
+.public-products-grid .add-mobile{flex:0 0 auto;align-self:flex-end;white-space:nowrap}
+.public-products-list .public-product-info{min-width:0}
+.public-products-list .public-product-info>div:first-child{min-width:0;flex:1}
+.public-products-list .product-title-button{line-height:1.3;overflow-wrap:anywhere}
+.public-products-list .public-product-info p{line-height:1.45;overflow-wrap:anywhere}
+@media(min-width:900px){.public-products{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(min-width:621px) and (max-width:899px){.public-products{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){
+ .public-hero{padding-bottom:16px}
+ .public-store-intro{margin:-25px auto 0;min-height:70px;gap:10px}
+ .public-logo{width:62px;height:62px;flex-basis:62px}
+ .public-store-intro>div:nth-child(2){padding-top:7px}
+ .public-store-intro h1{font-size:19px;line-height:1.2}
+ .public-store-intro p{font-size:11px;line-height:1.4}
+ .public-store-intro .open-label{margin-top:7px}
+ .public-contact{margin-top:7px}
+ .public-section-title{margin:14px 0}
+ .public-products{grid-template-columns:1fr;gap:12px}
+ .public-products-grid .public-product-art{aspect-ratio:1.55/1}
+ .public-products-grid .public-product-info{padding:11px 12px;gap:8px}
+}
+@media(max-width:390px){
+ .public-store-intro{gap:8px}
+ .public-logo{width:56px;height:56px;flex-basis:56px}
+ .public-store-intro h1{font-size:17px}
+ .public-store-intro p{font-size:10px}
+ .public-store-intro .open-label{font-size:9px;padding:5px 7px}
+}
