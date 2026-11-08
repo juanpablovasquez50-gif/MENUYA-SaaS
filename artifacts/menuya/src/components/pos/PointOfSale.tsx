@@ -8,6 +8,7 @@ type PosProduct = Pick<Product, 'id'|'nombre'|'precio'|'imagen'|'stock'|'activo'
 type CashSession = { id:string; opening_amount:number; status:string; opened_at:string; branch_id:string|null };
 type Sale = { id:string; total:number; subtotal:number; discount:number; payment_method:string; created_at:string };
 type CashMovement = { total:number; payment_method:string };
+type CashHistory = {id:string;opening_amount:number;closing_amount:number|null;expected_amount:number|null;cash_sales_amount:number|null;transfer_sales_amount:number|null;card_sales_amount:number|null;other_sales_amount:number|null;cash_difference:number|null;opened_at:string;closed_at:string|null};
 type PosOption = {id:string;product_id:string;name:string;option_type:string;is_required:boolean;values:{id:string;name:string;extra_price:number}[]};
 type CartLine = {key:string;product:PosProduct;quantity:number;selections:{option_id:string;value_id:string}[];extrasTotal:number};
 
@@ -19,12 +20,13 @@ export default function PointOfSale({businessId}:{businessId:string}) {
   const [session,setSession]=useState<CashSession|null>(null);
   const [sales,setSales]=useState<Sale[]>([]);
   const [cashMovements,setCashMovements]=useState<CashMovement[]>([]);
+  const [cashHistory,setCashHistory]=useState<CashHistory[]>([]);
   const [cart,setCart]=useState<CartLine[]>([]);
   const [productOptions,setProductOptions]=useState<PosOption[]>([]);
   const [configuring,setConfiguring]=useState<PosProduct|null>(null);
   const [optionSelections,setOptionSelections]=useState<Record<string,string[]>>({});
   const [search,setSearch]=useState('');
-  const [tab,setTab]=useState<'sale'|'history'|'cash'>('sale');
+  const [tab,setTab]=useState<'sale'|'history'|'cash'|'cash-history'>('sale');
   const [opening,setOpening]=useState('0');
   const [closing,setClosing]=useState('');
   const [payment,setPayment]=useState('cash');
@@ -34,18 +36,20 @@ export default function PointOfSale({businessId}:{businessId:string}) {
   const [error,setError]=useState('');
 
   const load=useCallback(async()=>{
-    const [p,c,s,o,v]=await Promise.all([
+    const [p,c,s,o,v,ch]=await Promise.all([
       supabase.from('products').select('id,name,price,image_url,stock,is_active,is_available').eq('business_id',businessId).eq('is_active',true).eq('is_available',true).order('name'),
       supabase.from('cash_sessions').select('id,opening_amount,status,opened_at,branch_id').eq('business_id',businessId).eq('status','open').order('opened_at',{ascending:false}).limit(1).maybeSingle(),
       supabase.from('sales').select('id,total,subtotal,discount,payment_method,created_at').eq('business_id',businessId).order('created_at',{ascending:false}).limit(50),
       supabase.from('product_options').select('id,product_id,name,option_type,is_required').eq('business_id',businessId).order('sort_order'),
-      supabase.from('product_option_values').select('id,option_id,name,extra_price').eq('business_id',businessId).eq('is_active',true).order('sort_order')
+      supabase.from('product_option_values').select('id,option_id,name,extra_price').eq('business_id',businessId).eq('is_active',true).order('sort_order'),
+      supabase.from('cash_sessions').select('id,opening_amount,closing_amount,expected_amount,cash_sales_amount,transfer_sales_amount,card_sales_amount,other_sales_amount,cash_difference,opened_at,closed_at').eq('business_id',businessId).eq('status','closed').order('closed_at',{ascending:false}).limit(50)
     ]);
-    if(p.error||c.error||s.error||o.error||v.error) throw p.error||c.error||s.error||o.error||v.error;
+    if(p.error||c.error||s.error||o.error||v.error||ch.error) throw p.error||c.error||s.error||o.error||v.error||ch.error;
     setProductOptions((o.data||[]).map(option=>({...option,values:(v.data||[]).filter(value=>value.option_id===option.id).map(value=>({...value,extra_price:Number(value.extra_price||0)}))})));
     setProducts((p.data||[]).map(x=>({id:x.id,nombre:x.name,precio:Number(x.price),imagen:x.image_url||undefined,stock:x.stock===null?undefined:Number(x.stock),activo:x.is_active,disponible:x.is_available})));
     setSession(c.data?{...c.data,opening_amount:Number(c.data.opening_amount)}:null);
     setSales((s.data||[]).map(x=>({...x,total:Number(x.total),subtotal:Number(x.subtotal),discount:Number(x.discount)})));
+    setCashHistory((ch.data||[]).map(x=>({...x,opening_amount:Number(x.opening_amount||0),closing_amount:x.closing_amount===null?null:Number(x.closing_amount),expected_amount:x.expected_amount===null?null:Number(x.expected_amount),cash_sales_amount:x.cash_sales_amount===null?null:Number(x.cash_sales_amount),transfer_sales_amount:x.transfer_sales_amount===null?null:Number(x.transfer_sales_amount),card_sales_amount:x.card_sales_amount===null?null:Number(x.card_sales_amount),other_sales_amount:x.other_sales_amount===null?null:Number(x.other_sales_amount),cash_difference:x.cash_difference===null?null:Number(x.cash_difference)})));
     if(c.data){const {data:movements,error:movementError}=await supabase.from('sales').select('total,payment_method').eq('business_id',businessId).eq('cash_session_id',c.data.id);if(movementError)throw movementError;setCashMovements((movements||[]).map(x=>({total:Number(x.total||0),payment_method:x.payment_method||''})));}else setCashMovements([]);
   },[businessId]);
 
@@ -104,6 +108,7 @@ export default function PointOfSale({businessId}:{businessId:string}) {
       <button className={tab==='sale'?'active':''} onClick={()=>setTab('sale')}><ShoppingCart size={16}/> Nueva venta</button>
       <button className={tab==='history'?'active':''} onClick={()=>setTab('history')}><Receipt size={16}/> Historial</button>
       <button className={tab==='cash'?'active':''} onClick={()=>setTab('cash')}><Wallet size={16}/> Caja</button>
+      <button className={tab==='cash-history'?'active':''} onClick={()=>setTab('cash-history')}><Clock3 size={16}/> Arqueos</button>
     </nav>
     {notice&&<div className="pos-notice"><CheckCircle2 size={16}/>{notice}</div>}
     {error&&<div className="pos-error"><AlertCircle size={16}/>{error}</div>}
@@ -123,6 +128,7 @@ export default function PointOfSale({businessId}:{businessId:string}) {
       </aside>
     </div>}
     {tab==='history'&&<section className="panel pos-history"><div className="pos-section-head"><div><h2>Ventas recientes</h2><small>Últimos 50 movimientos</small></div><button className="pos-refresh" onClick={()=>void load()}>Actualizar</button></div>{sales.length?sales.map(s=><div className="pos-sale-row" key={s.id}><span className="pos-sale-icon"><Receipt size={17}/></span><div><b>{money(s.total)}</b><small>{dateTime(s.created_at)} · {s.payment_method}</small></div><strong>{s.id.slice(0,8).toUpperCase()}</strong></div>):<div className="pos-empty">Todavía no hay ventas de mostrador.</div>}</section>}
+    {tab==='cash-history'&&<section className="panel pos-cash-history"><div className="pos-section-head"><div><h2>Historial de arqueos</h2><small>Últimos 50 cierres de caja</small></div><button className="pos-refresh" onClick={()=>void load()}>Actualizar</button></div>{cashHistory.length?cashHistory.map(item=><article className="pos-cash-history-row" key={item.id}><div className="pos-cash-history-head"><div><b>Cierre de caja</b><small>Abrió: {dateTime(item.opened_at)}</small><small>Cerró: {item.closed_at?dateTime(item.closed_at):'Sin hora de cierre'}</small></div><strong>{money(item.closing_amount??0)}</strong></div><div className="pos-cash-history-grid"><div><small>Base inicial</small><b>{money(item.opening_amount)}</b></div><div><small>Efectivo esperado</small><b>{money(item.expected_amount??0)}</b></div><div><small>Ventas en efectivo</small><b>{money(item.cash_sales_amount??0)}</b></div><div><small>Transferencias</small><b>{money(item.transfer_sales_amount??0)}</b></div><div><small>Tarjetas</small><b>{money(item.card_sales_amount??0)}</b></div><div><small>Otros medios</small><b>{money(item.other_sales_amount??0)}</b></div><div><small>Diferencia</small><b className={(item.cash_difference??0)<0?'is-negative':(item.cash_difference??0)>0?'is-positive':''}>{money(item.cash_difference??0)}</b></div></div></article>):<div className="pos-empty">Todavía no hay arqueos cerrados.</div>}</section>}
     {tab==='cash'&&<section className="panel pos-cash-panel"><span className="eyebrow">CONTROL DE CAJA</span><h2>{session?'Tu caja está abierta':'Abre una caja para comenzar'}</h2>{session?<><div className="pos-cash-summary"><div><small>Base inicial</small><b>{money(session.opening_amount)}</b></div><div><small>Abierta desde</small><b>{dateTime(session.opened_at)}</b></div></div><div className="pos-cash-summary"><div><small>Ventas en efectivo</small><b>{money(paymentTotals.cash)}</b></div><div><small>Efectivo esperado</small><b>{money(expectedCash)}</b></div><div><small>Transferencias / Nequi</small><b>{money(paymentTotals.transfer)}</b></div><div><small>Tarjetas</small><b>{money(paymentTotals.card)}</b></div><div><small>Otros medios</small><b>{money(paymentTotals.other)}</b></div><div><small>Total vendido</small><b>{money(paymentTotals.cash+paymentTotals.transfer+paymentTotals.card+paymentTotals.other)}</b></div></div><label className="pos-field">Dinero contado físicamente<input type="number" min="0" value={closing} onChange={e=>setClosing(e.target.value)} placeholder="Total de efectivo en caja"/></label>{closing!==''&&<div className="pos-cash-summary"><div><small>Diferencia de efectivo</small><b>{money(cashDifference)}</b></div><div><small>Transferencias registradas</small><b>{money(paymentTotals.transfer)}</b></div></div>}<p className="pos-cash-hint">Las transferencias y pagos digitales se muestran aparte; no se suman al efectivo físico.</p><button className="pos-checkout" disabled={busy||closing==='' } onClick={()=>void closeCash()}>{busy?'Procesando…':'Cerrar caja y guardar arqueo'}</button></>:<><p>Registra el dinero inicial disponible en el cajón.</p><label className="pos-field">Base inicial en efectivo<input type="number" min="0" value={opening} onChange={e=>setOpening(e.target.value)}/></label><button className="pos-checkout" disabled={busy} onClick={()=>void openCash()}>{busy?'Abriendo…':'Abrir caja'} <Banknote size={17}/></button></>}</section>}
   </section>;
 }
