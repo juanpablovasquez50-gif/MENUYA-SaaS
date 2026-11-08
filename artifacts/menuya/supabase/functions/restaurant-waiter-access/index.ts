@@ -59,8 +59,16 @@ Deno.serve(async(req:Request)=>{
         if(error){console.error("waiter_tables query failed",error.message,error.code);return reply({error:"Mesas: "+error.message},500);}return reply({tables:data||[]});
       }
       if(action==="waiter_orders"){
-        const {data,error}=await admin.from("orders").select("id,order_number,status,total,created_at,table_id,restaurant_tables(name),order_items(product_name,quantity,line_total)").eq("business_id",session.business_id).eq("restaurant_waiter_id",waiter.id).in("status",["pending","confirmed","preparing","ready"]).order("created_at",{ascending:false}).limit(50);
-        if(error){console.error("waiter_orders query failed",error.message,error.code);return reply({error:"Pedidos: "+error.message},500);}return reply({orders:data||[]});
+        const {data:orders,error:ordersError}=await admin.from("orders").select("id,order_number,status,total,created_at,table_id,restaurant_tables(name)").eq("business_id",session.business_id).eq("restaurant_waiter_id",waiter.id).in("status",["pending","confirmed","preparing","ready"]).order("created_at",{ascending:false}).limit(50);
+        if(ordersError){console.error("waiter_orders query failed",ordersError.message,ordersError.code);return reply({error:"Pedidos: "+ordersError.message},500);}
+        const orderIds=(orders||[]).map((order:any)=>order.id);
+        let itemsByOrder:Record<string,any[]>={};
+        if(orderIds.length){
+          const {data:items,error:itemsError}=await admin.from("order_items").select("order_id,product_name,quantity,line_total").in("order_id",orderIds);
+          if(itemsError){console.error("waiter_order_items query failed",itemsError.message,itemsError.code);return reply({error:"Productos de pedidos: "+itemsError.message},500);}
+          for(const item of items||[]){(itemsByOrder[item.order_id] ||= []).push(item);}
+        }
+        return reply({orders:(orders||[]).map((order:any)=>({...order,order_items:itemsByOrder[order.id]||[]}))});
       }
       if(action==="create_order"){
         const tableId=String(body.table_id||""),items=Array.isArray(body.items)?body.items:[];
