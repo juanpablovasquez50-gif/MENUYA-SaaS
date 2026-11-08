@@ -1272,3 +1272,5 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 
 /* Landing CLICKOK: todo el contenido textual en mayúsculas */
 .clickok-world{ text-transform:uppercase; }
+
+.clickok-world .atomlabs-credit .atomlabs-symbol{width:22px;height:22px;display:block;flex:0 0 22px;overflow:visible}
