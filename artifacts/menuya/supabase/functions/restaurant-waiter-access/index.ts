@@ -79,12 +79,12 @@ Deno.serve(async(req:Request)=>{
   const {data:membership,error:memberError}=await admin.from("business_memberships").select("role,status").eq("business_id",businessId).eq("user_id",auth.user.id).eq("status","active").maybeSingle();
   if(memberError)return reply({error:"No fue posible validar permisos."},500);
   if(!membership||!["owner","admin"].includes(membership.role))return reply({error:"No tienes permisos para administrar meseros."},403);
-  const {data:business}=await admin.from("businesses").select("id,business_type").eq("id",businessId).maybeSingle();
+  const {data:business}=await admin.from("businesses").select("id,business_type,slug").eq("id",businessId).maybeSingle();
   if(!business||!/restaurante/i.test(business.business_type))return reply({error:"Este módulo solo está disponible para restaurantes."},403);
   if(action==="list"){
     const {data,error}=await admin.from("restaurant_waiters").select("id,display_name,waiter_code,is_active,created_at").eq("business_id",businessId).order("created_at",{ascending:false});
     if(error)return reply({error:"No fue posible cargar los meseros."},500);
-    return reply({waiters:data||[]});
+    return reply({waiters:data||[],business_slug:business.slug});
   }
   const {data:subs,error:subError}=await admin.from("subscriptions").select("plan_id,ends_at").eq("business_id",businessId).eq("status","active").order("created_at",{ascending:false}).limit(10);
   if(subError)return reply({error:"No fue posible consultar el plan."},500);
