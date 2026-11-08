@@ -813,3 +813,18 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 /* Ajustes del modal de personalización en móvil */
 .product-detail-image{max-height:180px;object-fit:contain;background:var(--surface-soft,#f4f5f8);}
 @media(max-width:700px){.product-detail-image{max-height:150px;margin-bottom:10px}.product-config{padding:14px 14px 16px}}
+
+/* CLICKOK: adiciones compactas con controles +/- visibles */
+.product-extras-compact{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:8px;margin-top:8px}
+.product-extra-compact{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;padding:9px 10px;border:1px solid var(--border,#e1e5ec);border-radius:10px;background:var(--surface,#fff)}
+.product-extra-compact.is-selected{border-color:var(--primary,#2563eb);background:var(--surface-muted,#f1f5f9)}
+.product-extra-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:2px}
+.product-extra-copy b{font-size:12px;line-height:1.25;overflow-wrap:anywhere}
+.product-extra-copy small{font-size:10px;color:var(--muted,#748094)}
+.product-extra-copy .product-extra-subtotal{font-weight:800;color:var(--primary,#2563eb)}
+.product-extra-controls{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.product-extra-controls button{display:grid;place-items:center;width:27px;height:27px;padding:0;border:0;border-radius:7px;background:var(--surface-strong,#e5e7eb);color:var(--ink,#263247);font-size:18px;font-weight:800;line-height:1;cursor:pointer}
+.product-extra-controls button:last-child{background:var(--primary,#2563eb);color:#fff}
+.product-extra-controls button:disabled{opacity:.35;cursor:not-allowed}
+.product-extra-controls b{min-width:15px;text-align:center;font-size:12px}
+@media(max-width:520px){.product-extras-compact{grid-template-columns:1fr}.product-extra-compact{padding:8px 9px}}
