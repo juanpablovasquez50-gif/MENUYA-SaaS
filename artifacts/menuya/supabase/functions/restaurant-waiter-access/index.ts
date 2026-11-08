@@ -52,15 +52,15 @@ Deno.serve(async(req:Request)=>{
       if(!waiter?.is_active)return reply({error:"El acceso de este mesero está suspendido."},403);
       if(action==="waiter_catalog"){
         const {data,error}=await admin.from("products").select("id,name,price,image_url").eq("business_id",session.business_id).eq("is_active",true).eq("is_available",true).order("name").limit(300);
-        if(error)return reply({error:"No fue posible cargar el catálogo."},500);return reply({products:data||[]});
+        if(error){console.error("waiter_catalog query failed",error.message,error.code);return reply({error:"Catálogo: "+error.message},500);}return reply({products:data||[]});
       }
       if(action==="waiter_tables"){
         const {data,error}=await admin.from("restaurant_tables").select("id,name,capacity,status").eq("business_id",session.business_id).neq("status","inactive").order("name");
-        if(error)return reply({error:"No fue posible cargar las mesas."},500);return reply({tables:data||[]});
+        if(error){console.error("waiter_tables query failed",error.message,error.code);return reply({error:"Mesas: "+error.message},500);}return reply({tables:data||[]});
       }
       if(action==="waiter_orders"){
         const {data,error}=await admin.from("orders").select("id,order_number,status,total,created_at,table_id,restaurant_tables(name),order_items(product_name,quantity,line_total)").eq("business_id",session.business_id).eq("restaurant_waiter_id",waiter.id).in("status",["pending","confirmed","preparing","ready"]).order("created_at",{ascending:false}).limit(50);
-        if(error)return reply({error:"No fue posible cargar tus pedidos."},500);return reply({orders:data||[]});
+        if(error){console.error("waiter_orders query failed",error.message,error.code);return reply({error:"Pedidos: "+error.message},500);}return reply({orders:data||[]});
       }
       if(action==="create_order"){
         const tableId=String(body.table_id||""),items=Array.isArray(body.items)?body.items:[];
