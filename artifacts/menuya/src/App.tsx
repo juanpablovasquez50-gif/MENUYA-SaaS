@@ -441,6 +441,7 @@ function ProductGrid({ products, cats }: { products: Product[]; cats: Category[]
   return <div className="managed-product-grid">{products.map((p, i) => <article key={p.id} className="managed-product"><div className={`managed-art managed-art-${i % 5}`}><span>{cats.find(c => c.id === p.category_id)?.nombre}</span><b>{p.nombre.charAt(0)}</b></div><div className="managed-product-info"><h3>{p.nombre}</h3><p>{p.descripcion}</p><b>{money(p.precio)}</b></div></article>)}</div>;
 }
 function OrderModal({ order, data, close, update }: { order: Order; data: DemoData; close: () => void; update: (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => void }) {
+  const order = data.orders.find(item => item.id === order.id) || order;
   const customer = data.customers.find(c => c.id === order.customer_id);
   const statuses: OrderStatus[] = ['pendiente', 'confirmado', 'preparando', 'listo', 'en_camino', 'entregado', 'cancelado'];
   return <Modal title={`Pedido #${String(order.numero).padStart(3, '0')}`} close={close}><div className="order-detail"><div className="detail-customer"><span className="customer-avatar">{customer?.nombre.slice(0, 1)}</span><span><b>{customer?.nombre || 'Cliente'}</b><small>{customer?.telefono}</small></span><Status value={order.estado} /></div><div className="detail-items">{order.items.map((item, i) => <div key={`${item.product_id}-${i}`}><span>{item.cantidad} × {item.nombre}{(item.variante || item.complementos?.length) && <small className="item-options">{[item.variante, ...(item.complementos || []).map(choice => `+ ${choice.nombre}`)].filter(Boolean).join(' · ')}</small>}</span><b>{money(item.precio * item.cantidad)}</b></div>)}</div><div className="detail-total"><span>Total del pedido</span><b>{money(order.total)}</b></div><div className="detail-meta"><span>Entrega<b>{order.entrega === 'domicilio' ? 'Domicilio' : 'Recoger en tienda'}</b></span>{order.direccion && <span>Dirección<b>{order.direccion}</b></span>}<span>Pago<b>{order.metodo_pago}</b></span><span>Fecha<b>{shortDate(order.created_at)}</b></span></div>{order.observaciones && <div className="order-note"><small>OBSERVACIONES</small><p>{order.observaciones}</p></div>}<label className="field"><span>Estado del pedido</span><select value={order.estado} onChange={e => update(d => ({ ...d, orders: d.orders.map(o => o.id === order.id ? { ...o, estado: e.target.value as OrderStatus } : o) }), `Pedido actualizado: ${statusLabel[e.target.value]}`, `Pedido #${order.numero}`)} data-testid="select-order-status">{statuses.map(s => <option key={s} value={s}>{statusLabel[s]}</option>)}</select></label><div className="modal-actions"><Button kind="ghost" onClick={close}>Cerrar</Button><Button onClick={close}>Listo <Check size={15} /></Button></div></div></Modal>;
@@ -1064,6 +1065,7 @@ function TrackingPage({ initialToken = '' }: { initialToken?: string }) {
   const [order, setOrder] = useState<{ order_number: number; status: string; business_name: string; updated_at: string; created_at: string } | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [trackingActive, setTrackingActive] = useState(false);
   const lookup = async (value: string) => {
     const clean = value.trim();
     if (!clean) { setError('Ingresa el enlace o código de seguimiento.'); return; }
@@ -1073,7 +1075,9 @@ function TrackingPage({ initialToken = '' }: { initialToken?: string }) {
       if (invokeError) throw invokeError;
       if (!data?.order) throw new Error('No encontramos un pedido con ese código.');
       setOrder(data.order);
+      setTrackingActive(true);
     } catch (e) {
+      setTrackingActive(false);
       setOrder(null);
       setError(e instanceof Error ? e.message : 'No fue posible consultar el pedido.');
     } finally { setLoading(false); }
@@ -1082,9 +1086,12 @@ function TrackingPage({ initialToken = '' }: { initialToken?: string }) {
     if (!initialToken) return;
     setToken(initialToken);
     void lookup(initialToken);
-    const timer = window.setInterval(() => { void lookup(initialToken); }, 12000);
-    return () => window.clearInterval(timer);
   }, [initialToken]);
+  useEffect(() => {
+    if (!trackingActive || !token.trim()) return;
+    const timer = window.setInterval(() => { void lookup(token); }, 8000);
+    return () => window.clearInterval(timer);
+  }, [trackingActive, token]);
   const steps = [
     ['pending', 'Pedido recibido'], ['confirmed', 'Pedido confirmado'],
     ['preparing', 'En preparación'], ['ready', 'Listo para despacho'],
@@ -1092,7 +1099,7 @@ function TrackingPage({ initialToken = '' }: { initialToken?: string }) {
   ];
   const current = order ? steps.findIndex(([key]) => key === order.status) : -1;
   return <main className="tracking-page"><div className="tracking-card"><Brand /><span className="eyebrow">CLICKOK · SEGUIMIENTO</span><h1>Rastrea tu pedido</h1><p className="subtle">Consulta el estado actualizado de tu compra sin crear una cuenta.</p>
-    {!initialToken && <form className="tracking-form" onSubmit={e => { e.preventDefault(); void lookup(token); }}><label className="field"><span>Código o enlace de seguimiento</span><input value={token} onChange={e => setToken(e.target.value)} placeholder="Pega aquí tu código" /></label><Button type="submit" disabled={loading}>{loading ? 'Consultando…' : 'Consultar pedido'}</Button></form>}
+    {!initialToken && <form className="tracking-form" onSubmit={e => { e.preventDefault(); void lookup(token); }}><label className="field"><span>Código o enlace de seguimiento</span><input value={token} onChange={e => { setToken(e.target.value); setTrackingActive(false); }} placeholder="Pega aquí tu código" /></label><Button type="submit" disabled={loading}>{loading ? 'Consultando…' : 'Consultar pedido'}</Button></form>}
     {error && <div className="notice notice-error" role="alert">{error}</div>}
     {order && <section className="tracking-result"><span className="eyebrow">{order.business_name}</span><h2>Pedido #{String(order.order_number).padStart(3, '0')}</h2>
       {order.status === 'cancelled' ? <div className="notice notice-error">Este pedido fue cancelado.</div> : <ol className="tracking-steps">{steps.map(([key,label],i) => <li key={key} className={i <= current ? 'tracking-step-done' : ''}><span className="tracking-step-dot">{i < current ? '✓' : i+1}</span><span>{label}</span></li>)}</ol>}
