@@ -79,7 +79,13 @@ begin
   end if;
 
   -- Validate and lock all requested products before changing stock.
-  for v_item in select value from jsonb_array_elements(p_items)
+  for v_item in
+    select jsonb_build_object('product_id', grouped.product_id, 'quantity', grouped.quantity)
+      from (
+        select value->>'product_id' as product_id, sum((value->>'quantity')::integer)::integer as quantity
+          from jsonb_array_elements(p_items)
+         group by value->>'product_id'
+      ) grouped
   loop
     v_quantity := (v_item->>'quantity')::integer;
     if v_quantity is null or v_quantity < 1 then
