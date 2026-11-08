@@ -554,7 +554,7 @@ function BusinessServicesPage({ businessId }: { businessId: string }) {
     else { setNotice(service.is_active ? 'Servicio ocultado de la vitrina.' : 'Servicio publicado en la vitrina.'); await load(); }
   };
   return <>
-    <PageTitle eyebrow="SERVICIOS DE TU NEGOCIO" title="Servicios" description="Administra lo que ofreces. Los servicios activos aparecen en tu vitrina y las solicitudes llegan al punto de venta." action={<Link href={`/${services.length ? '' : ''}`} className="btn btn-outline" style={{display:'none'}}> </Link>} />
+    <PageTitle eyebrow="SERVICIOS DE TU NEGOCIO" title="Servicios" description="Administra lo que ofreces. Los servicios activos aparecen en tu vitrina y las solicitudes llegan al punto de venta." />
     <section className="panel setting-section" style={{ marginBottom: 20 }}>
       <div className="panel-head"><div><span className="eyebrow">{editingId ? 'EDITAR SERVICIO' : 'NUEVO SERVICIO'}</span><h2>{editingId ? 'Actualiza los datos' : 'Agrega un servicio a tu vitrina'}</h2></div><CalendarDays size={20}/></div>
       <form className="form-stack" onSubmit={save}>
