@@ -777,3 +777,11 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .image-spin{animation:clickok-image-spin 1s linear infinite}
 @keyframes clickok-image-spin{to{transform:rotate(360deg)}}
 @media(max-width:560px){.image-upload-control{align-items:flex-start;gap:11px;padding:10px}.image-upload-preview,.image-upload-placeholder{width:88px;height:88px;flex-basis:88px}.image-upload-actions small{font-size:10px}}
+
+
+/* Acceso destacado a CLICKOK Studio en la navegación */
+.side-link.studio-nav-link{position:relative;isolation:isolate;margin:5px 0;padding:0 11px;min-height:42px;color:#fff;font-weight:800;letter-spacing:.1px;background:linear-gradient(105deg,#7c3aed 0%,#2563eb 34%,#db2777 68%,#f97316 100%);box-shadow:0 5px 16px #0003,inset 0 1px #ffffff45;border:1px solid #ffffff35;}
+.side-link.studio-nav-link svg{color:#fff;filter:drop-shadow(0 1px 2px #0004)}
+.side-link.studio-nav-link:hover{color:#fff;background:linear-gradient(105deg,#8b5cf6 0%,#3b82f6 34%,#ec4899 68%,#fb923c 100%);transform:translateY(-1px);box-shadow:0 7px 20px #0004,inset 0 1px #ffffff55;}
+.side-link.studio-nav-link.side-link-active{color:#fff;background:linear-gradient(105deg,#7c3aed 0%,#2563eb 34%,#db2777 68%,#f97316 100%);box-shadow:0 0 0 2px #ffffff22,0 6px 18px #0004,inset 0 1px #ffffff55;}
+.side-link.studio-nav-link.side-link-active svg{color:#fff}
