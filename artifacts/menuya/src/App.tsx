@@ -1182,6 +1182,7 @@ function Router() {
     <Route path="/app">{protectedRoute()}</Route>
     {shopLinks.slice(1).map(([path]) => <Route key={path} path={path}>{protectedRoute()}</Route>)}
     <Route path="/app/pos">{protectedRoute()}</Route>
+    <Route path="/app/veterinary">{protectedRoute()}</Route>
     <Route path="/:slug"><PublicRoute data={data} update={update} /></Route>
     <Route component={NotFound} />
   </Switch>{toast && <div className="toast-message" role="status" data-testid="status-toast"><CheckCircle2 size={17} />{toast}</div>}</RoutedErrorBoundary>;
