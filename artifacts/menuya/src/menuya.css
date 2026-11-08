@@ -1033,3 +1033,76 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .studio-template-art b{position:absolute;right:10px;top:23px;width:24px;height:5px;border-radius:5px;background:var(--template-color)}
 .studio-template-hint{margin:10px 0 0;color:var(--muted,#748094);font-size:10px;line-height:1.5}
 @media(max-width:420px){.studio-template-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.studio-template-card{padding:7px}.studio-template-art{height:62px}}
+
+
+/* Vitrina CLICKOK — dirección visual inspirada en catálogos móviles modernos */
+.public-store{--store-color:var(--store-color,#d94f45);background:#f7f7f5;color:#20242b;min-height:100vh}
+.public-header{height:64px;padding:0 clamp(16px,4vw,52px);background:#fff;border-bottom:1px solid #eceef1;position:sticky;top:0;z-index:30}
+.public-header .brand img{max-height:29px;width:auto}
+.public-header-actions{gap:16px}
+.public-track-link{font-weight:650}
+.public-hero{background:#fff;padding-bottom:15px}
+.public-cover{min-height:clamp(145px,24vw,245px);background-color:#e9e9e5;background-position:center;background-size:cover;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(18px,4vw,38px);position:relative;isolation:isolate}
+.public-cover:before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,rgba(13,20,29,.62),rgba(13,20,29,.02) 75%)}
+.cover-kicker{font-size:10px;letter-spacing:.16em;font-weight:800;color:#fff}
+.cover-shop-name{font-size:clamp(25px,4vw,42px);font-weight:800;letter-spacing:-.045em;color:#fff;margin-top:5px}
+.public-store-intro{max-width:1120px;margin:-27px auto 0;position:relative;padding:0 22px;display:flex;align-items:center;gap:13px}
+.public-logo{width:70px;height:70px;flex:0 0 70px;border:4px solid #fff;border-radius:13px;background:#fff;box-shadow:0 3px 14px #17223518;overflow:hidden;display:grid;place-items:center;font-size:28px;font-weight:800;color:var(--store-color)}
+.public-logo img{width:100%;height:100%;object-fit:cover}
+.public-store-intro h1{font-size:clamp(20px,2.5vw,27px);letter-spacing:-.04em;margin:22px 0 2px}
+.public-store-intro p{margin:0;color:#737b86;font-size:13px}
+.open-label{margin-left:auto;align-self:center;margin-top:20px;border:1px solid #dfeee4;border-radius:30px;padding:7px 11px;background:#f5fbf6;color:#287448;font-size:11px;font-weight:700}
+.public-contact{max-width:1120px;margin:10px auto 0;padding:0 22px;color:#777f89;font-size:11px;gap:8px}
+.public-main{max-width:1120px;padding:18px 22px 52px}
+.public-toolbar{gap:12px;margin-bottom:15px}
+.public-toolbar .search-field{background:#fff;border:1px solid #e8e9ec;border-radius:11px;min-height:43px}
+.public-categories{display:flex;gap:8px;overflow-x:auto;padding:2px 0 13px;scrollbar-width:none;white-space:nowrap}
+.public-categories::-webkit-scrollbar{display:none}
+.public-categories button{flex:0 0 auto;border:1px solid #e8e9ec;border-radius:8px;background:#fff;padding:9px 13px;color:#555e69;font-size:12px;font-weight:650}
+.public-categories button.category-active{border-color:var(--store-color);background:color-mix(in srgb,var(--store-color) 7%,white);color:var(--store-color);box-shadow:inset 0 0 0 1px var(--store-color)}
+.public-section-title{margin:12px 0 15px}
+.public-section-title .eyebrow{color:var(--store-color);font-weight:800;letter-spacing:.12em}
+.public-section-title h2{font-size:clamp(20px,2.5vw,27px);letter-spacing:-.04em;margin:5px 0}
+.public-products-list{display:grid;grid-template-columns:1fr;gap:0;border-top:1px solid #e8e9ec}
+.public-products-list .public-product{display:grid;grid-template-columns:126px minmax(0,1fr);gap:15px;padding:14px 0;border-bottom:1px solid #e8e9ec;background:transparent;border-radius:0;box-shadow:none;min-width:0}
+.public-products-list .public-product-art{height:116px;min-height:116px;border-radius:9px;overflow:hidden;background:#eceeea}
+.public-products-list .public-product-art>img{width:100%;height:100%;object-fit:cover}
+.public-products-list .public-product-art>span{font-size:9px;left:7px;top:7px}
+.public-products-list .public-product-art>button{width:34px;height:34px;right:7px;bottom:7px;border-radius:9px;background:var(--store-color);color:white;box-shadow:0 3px 9px #0002}
+.public-products-list .public-product-info{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:2px 0}
+.public-products-list .public-product-info>div:first-child{min-width:0}
+.public-products-list .product-title-button{font-size:15px;font-weight:750;text-align:left;color:#252a31;line-height:1.25}
+.public-products-list .public-product-info p{font-size:12px;line-height:1.4;color:#7b828c;margin:4px 0 8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.public-products-list .public-product-info b{font-size:15px;color:var(--store-color);font-weight:800}
+.public-products-list .public-product-info del{font-size:11px;color:#a1a6ad;margin-left:7px}
+.public-products-list .add-mobile{border:0;border-radius:8px;background:var(--store-color);color:#fff;font-size:11px;font-weight:750;padding:9px 11px;white-space:nowrap}
+.public-products-grid{gap:14px}
+.public-products-grid .public-product{border:1px solid #eceef0;border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 3px 12px #17223508}
+.public-products-grid .public-product-info{padding:10px 12px 13px}
+.public-products-grid .public-product-art{border-radius:0}
+.public-footer{border-top:1px solid #e8e9ec;background:#fff}
+@media(max-width:620px){
+ .public-header{height:56px;padding:0 14px}
+ .public-header-actions{gap:10px}
+ .public-powered{display:none}
+ .public-cover{min-height:155px;padding:18px}
+ .public-store-intro{padding:0 14px;gap:10px}
+ .public-logo{width:62px;height:62px;flex-basis:62px}
+ .public-store-intro h1{font-size:19px;margin-top:20px}
+ .public-store-intro p{font-size:11px}
+ .open-label{font-size:10px;padding:6px 8px}
+ .public-contact{padding:0 14px;font-size:10px;flex-wrap:wrap}
+ .public-main{padding:14px 14px 38px}
+ .public-products-list .public-product{grid-template-columns:104px minmax(0,1fr);gap:11px;padding:12px 0}
+ .public-products-list .public-product-art{height:102px;min-height:102px}
+ .public-products-list .product-title-button{font-size:13px}
+ .public-products-list .public-product-info p{font-size:11px;-webkit-line-clamp:2}
+ .public-products-list .public-product-info b{font-size:13px}
+ .public-products-list .add-mobile{padding:8px 9px;font-size:10px}
+}
+@media(max-width:380px){
+ .public-products-list .public-product{grid-template-columns:88px minmax(0,1fr);gap:9px}
+ .public-products-list .public-product-art{height:92px;min-height:92px}
+ .public-products-list .public-product-info{gap:6px}
+ .public-products-list .add-mobile{padding:7px}
+}
