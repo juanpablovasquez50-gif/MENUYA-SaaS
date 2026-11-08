@@ -793,7 +793,10 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
             payment_methods:nextSettings.pagos ? nextSettings.pagos.split(',').map(x=>x.trim()).filter(Boolean) : [],
             delivery_info:nextSettings.entrega || null,
             is_published:nextSettings.publicado,
-            tagline:nextSettings.tagline || null,\n            storefront_layout:nextSettings.layout,\n            product_card_style:nextSettings.card_style,\n            button_style:nextSettings.button_style,
+            tagline:nextSettings.tagline || null,
+            storefront_layout:nextSettings.layout,
+            product_card_style:nextSettings.card_style,
+            button_style:nextSettings.button_style,
           }, {onConflict:'business_id'});
           if (result.error) throw result.error;
           const businessUpdate = await supabase.from('businesses')
@@ -1021,7 +1024,7 @@ function PublicRoute({ data, update }: { data: DemoData; update: (fn: (d: DemoDa
         const [categoryResult, productResult, settingsResult] = await Promise.all([
           supabase.from('categories').select('id,business_id,name,sort_order,is_active').eq('business_id',businessRow.id).eq('is_active',true).order('sort_order'),
           supabase.from('products').select('id,business_id,category_id,name,description,price,previous_price,image_url,is_active,is_available,is_featured,stock').eq('business_id',businessRow.id).eq('is_active',true).eq('is_available',true).order('created_at',{ascending:false}),
-          supabase.from('store_settings').select('business_id,cover_url,logo_url,brand_color,font_family,contact_text,social_links,payment_methods,delivery_info,is_published,tagline').eq('business_id',businessRow.id).maybeSingle(),
+          supabase.from('store_settings').select('business_id,cover_url,logo_url,brand_color,font_family,contact_text,social_links,payment_methods,delivery_info,is_published,tagline,storefront_layout,product_card_style,button_style').eq('business_id',businessRow.id).maybeSingle(),
         ]);
         const queryError = categoryResult.error || productResult.error || settingsResult.error;
         if (queryError) throw queryError;
@@ -1041,6 +1044,7 @@ function PublicRoute({ data, update }: { data: DemoData; update: (fn: (d: DemoDa
           contacto:row.contact_text || '', redes:typeof row.social_links === 'string' ? row.social_links : JSON.stringify(row.social_links || {}),
           pagos:Array.isArray(row.payment_methods) ? row.payment_methods.join(', ') : 'Efectivo',
           entrega:row.delivery_info || '', publicado:true, tagline:row.tagline || '',
+          layout:row.storefront_layout || 'grid', card_style:row.product_card_style || 'classic', button_style:row.button_style || 'rounded',
         };
         const categories = (categoryResult.data || []).map(c=>({id:c.id,business_id:c.business_id,nombre:c.name,orden:c.sort_order,activo:c.is_active}));
         const products = (productResult.data || []).map(p=>({id:p.id,business_id:p.business_id,category_id:p.category_id || '',nombre:p.name,descripcion:p.description || '',precio:Number(p.price),precio_anterior:p.previous_price ? Number(p.previous_price) : undefined,imagen:p.image_url || undefined,activo:p.is_active,disponible:p.is_available,destacado:p.is_featured,stock:p.stock ?? 0,variantes:[],complementos:[]}));
