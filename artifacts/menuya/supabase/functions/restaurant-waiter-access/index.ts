@@ -43,6 +43,7 @@ Deno.serve(async(req:Request)=>{
     if(sessionError)return reply({error:"No fue posible iniciar la sesión."},500);
     return reply({ok:true,token,waiter:{id:w.id,name:w.display_name},business_id:w.business_id,expires_in:43200});
   }
+  const authorization=req.headers.get("Authorization");
   if(authorization?.startsWith("Bearer ")){
     const token=authorization.slice(7),tokenHash=await hashToken(token);
     const {data:session}=await admin.from("restaurant_waiter_sessions").select("id,waiter_id,business_id,expires_at").eq("token_hash",tokenHash).gt("expires_at",new Date().toISOString()).maybeSingle();
@@ -70,7 +71,6 @@ Deno.serve(async(req:Request)=>{
       return reply({error:"Acción de mesero no reconocida."},400);
     }
   }
-  const authorization=req.headers.get("Authorization");
   if(!authorization?.startsWith("Bearer "))return reply({error:"Debes iniciar sesión como propietario."},401);
   const userClient=createClient(url,anon,{global:{headers:{Authorization:authorization}},auth:{persistSession:false,autoRefreshToken:false}});
   const {data:auth,error:authError}=await userClient.auth.getUser();
