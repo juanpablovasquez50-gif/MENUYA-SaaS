@@ -932,3 +932,38 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
  .wompi-promo-dot{width:5px;height:18px}
  .wompi-promo-dot:nth-child(2){height:22px}
 }
+
+
+/* Wompi banner: hard bounds prevent oversized/clipped rendering */
+.landing .wompi-promo{
+  display:flex!important;
+  box-sizing:border-box!important;
+  position:relative;
+  width:min(1040px,calc(100% - 72px))!important;
+  height:58px!important;
+  min-height:58px!important;
+  max-height:58px!important;
+  margin:14px auto 0!important;
+  padding:0 24px!important;
+  overflow:hidden!important;
+  flex:0 1 auto!important;
+  flex-wrap:nowrap!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:22px!important;
+}
+.landing .wompi-promo p,
+.landing .wompi-promo > img,
+.landing .wompi-promo-mark{position:relative;z-index:1;flex:0 0 auto}
+.landing .wompi-promo p{margin:0!important;line-height:1.2!important}
+.landing .wompi-promo > img{width:96px!important;height:auto!important;max-height:31px!important;object-fit:contain}
+.landing .wompi-promo::before{pointer-events:none}
+.landing .wompi-promo::after{pointer-events:none}
+@media(max-width:800px){
+ .landing .wompi-promo{width:calc(100% - 48px)!important;height:54px!important;min-height:54px!important;max-height:54px!important;padding:0 17px!important;gap:14px!important}
+}
+@media(max-width:560px){
+ .landing .wompi-promo{width:calc(100% - 32px)!important;height:50px!important;min-height:50px!important;max-height:50px!important;padding:0 11px!important;gap:9px!important}
+ .landing .wompi-promo p{font-size:12px!important}
+ .landing .wompi-promo > img{width:70px!important;max-height:24px!important}
+}
