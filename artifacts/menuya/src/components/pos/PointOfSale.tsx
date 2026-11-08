@@ -8,6 +8,8 @@ type PosProduct = Pick<Product, 'id'|'nombre'|'precio'|'imagen'|'stock'|'activo'
 type CashSession = { id:string; opening_amount:number; status:string; opened_at:string; branch_id:string|null };
 type Sale = { id:string; total:number; subtotal:number; discount:number; payment_method:string; created_at:string };
 type CashMovement = { total:number; payment_method:string };
+type PosOption = {id:string;product_id:string;name:string;option_type:string;is_required:boolean;values:{id:string;name:string;extra_price:number}[]};
+type CartLine = {key:string;product:PosProduct;quantity:number;selections:{option_id:string;value_id:string}[];extrasTotal:number};
 
 const money=(n:number)=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(n);
 const dateTime=(s:string)=>new Intl.DateTimeFormat('es-CO',{dateStyle:'short',timeStyle:'short'}).format(new Date(s));
@@ -17,7 +19,10 @@ export default function PointOfSale({businessId}:{businessId:string}) {
   const [session,setSession]=useState<CashSession|null>(null);
   const [sales,setSales]=useState<Sale[]>([]);
   const [cashMovements,setCashMovements]=useState<CashMovement[]>([]);
-  const [cart,setCart]=useState<Record<string,number>>({});
+  const [cart,setCart]=useState<CartLine[]>([]);
+  const [productOptions,setProductOptions]=useState<PosOption[]>([]);
+  const [configuring,setConfiguring]=useState<PosProduct|null>(null);
+  const [optionSelections,setOptionSelections]=useState<Record<string,string[]>>({});
   const [search,setSearch]=useState('');
   const [tab,setTab]=useState<'sale'|'history'|'cash'>('sale');
   const [opening,setOpening]=useState('0');
@@ -29,12 +34,15 @@ export default function PointOfSale({businessId}:{businessId:string}) {
   const [error,setError]=useState('');
 
   const load=useCallback(async()=>{
-    const [p,c,s]=await Promise.all([
+    const [p,c,s,o,v]=await Promise.all([
       supabase.from('products').select('id,name,price,image_url,stock,is_active,is_available').eq('business_id',businessId).eq('is_active',true).eq('is_available',true).order('name'),
       supabase.from('cash_sessions').select('id,opening_amount,status,opened_at,branch_id').eq('business_id',businessId).eq('status','open').order('opened_at',{ascending:false}).limit(1).maybeSingle(),
-      supabase.from('sales').select('id,total,subtotal,discount,payment_method,created_at').eq('business_id',businessId).order('created_at',{ascending:false}).limit(50)
+      supabase.from('sales').select('id,total,subtotal,discount,payment_method,created_at').eq('business_id',businessId).order('created_at',{ascending:false}).limit(50),
+      supabase.from('product_options').select('id,product_id,name,option_type,is_required').eq('business_id',businessId).order('sort_order'),
+      supabase.from('product_option_values').select('id,option_id,name,extra_price').eq('business_id',businessId).eq('is_active',true).order('sort_order')
     ]);
-    if(p.error||c.error||s.error) throw p.error||c.error||s.error;
+    if(p.error||c.error||s.error||o.error||v.error) throw p.error||c.error||s.error||o.error||v.error;
+    setProductOptions((o.data||[]).map(option=>({...option,values:(v.data||[]).filter(value=>value.option_id===option.id).map(value=>({...value,extra_price:Number(value.extra_price||0)}))})));
     setProducts((p.data||[]).map(x=>({id:x.id,nombre:x.name,precio:Number(x.price),imagen:x.image_url||undefined,stock:x.stock===null?undefined:Number(x.stock),activo:x.is_active,disponible:x.is_available})));
     setSession(c.data?{...c.data,opening_amount:Number(c.data.opening_amount)}:null);
     setSales((s.data||[]).map(x=>({...x,total:Number(x.total),subtotal:Number(x.subtotal),discount:Number(x.discount)})));
@@ -42,8 +50,8 @@ export default function PointOfSale({businessId}:{businessId:string}) {
   },[businessId]);
 
   useEffect(()=>{load().catch(e=>setError(e.message||'No se pudo cargar el punto de venta.'));},[load]);
-  const cartLines=useMemo(()=>products.filter(p=>(cart[p.id]||0)>0).map(p=>({...p,quantity:cart[p.id]})),[products,cart]);
-  const subtotal=cartLines.reduce((sum,p)=>sum+p.precio*p.quantity,0);
+  const cartLines=cart;
+  const subtotal=cartLines.reduce((sum,line)=>sum+(line.product.precio+line.extrasTotal)*line.quantity,0);
   const discountValue=Math.max(0,Math.min(subtotal,Number(discount)||0));
   const total=subtotal-discountValue;
   const filtered=products.filter(p=>p.nombre.toLowerCase().includes(search.toLowerCase()));
@@ -52,10 +60,10 @@ export default function PointOfSale({businessId}:{businessId:string}) {
   const countedCash=Math.max(0,Number(closing)||0);
   const cashDifference=countedCash-expectedCash;
 
-  const changeQty=(id:string,delta:number)=>{
-    const product=products.find(p=>p.id===id); if(!product)return;
-    setCart(prev=>{const next=(prev[id]||0)+delta;if(next<=0){const copy={...prev};delete copy[id];return copy;}if(product.stock!==undefined&&next>product.stock)return prev;return {...prev,[id]:next};});
-  };
+  const addConfiguredProduct=(product:PosProduct)=>{const options=productOptions.filter(option=>option.product_id===product.id&&option.values.length>0);if(options.length){setConfiguring(product);setOptionSelections({});return;}addCartLine(product,[]);};
+  const addCartLine=(product:PosProduct,selections:{option_id:string;value_id:string}[])=>{const extrasTotal=selections.reduce((sum,selection)=>{const option=productOptions.find(item=>item.id===selection.option_id);const value=option?.values.find(item=>item.id===selection.value_id);return sum+(value?.extra_price||0);},0);const key=product.id+':'+selections.map(item=>item.option_id+'='+item.value_id).sort().join(',');setCart(prev=>{const existing=prev.find(line=>line.key===key);const quantity=(existing?.quantity||0)+1;const productQty=prev.filter(line=>line.product.id===product.id).reduce((n,line)=>n+line.quantity,0);if(product.stock!==undefined&&productQty+1>product.stock)return prev;if(existing)return prev.map(line=>line.key===key?{...line,quantity}:line);return [...prev,{key,product,quantity:1,selections,extrasTotal}];});};
+  const confirmOptions=()=>{if(!configuring)return;const options=productOptions.filter(option=>option.product_id===configuring.id&&option.values.length>0);for(const option of options){if(option.is_required&&!(optionSelections[option.id]||[]).length){setError('Selecciona una opción obligatoria: '+option.name);return;}}const selections=options.flatMap(option=>(optionSelections[option.id]||[]).map(value_id=>({option_id:option.id,value_id})));addCartLine(configuring,selections);setConfiguring(null);setOptionSelections({});setError('');};
+  const changeQty=(key:string,delta:number)=>{setCart(prev=>prev.flatMap(line=>{if(line.key!==key)return [line];const next=line.quantity+delta;if(next<=0)return [];const productQty=prev.filter(item=>item.product.id===line.product.id).reduce((n,item)=>n+item.quantity,0);if(delta>0&&line.product.stock!==undefined&&productQty>=line.product.stock)return [line];return [{...line,quantity:next}];}));};
   const openCash=async()=>{
     setBusy(true);setError('');setNotice('');
     try{
@@ -71,9 +79,9 @@ export default function PointOfSale({businessId}:{businessId:string}) {
     if(!cartLines.length){setError('Agrega productos a la venta.');return;}
     setBusy(true);setError('');setNotice('');
     try{
-      const {data,error}=await supabase.rpc('pos_register_sale',{p_business_id:businessId,p_cash_session_id:session.id,p_payment_method:payment,p_discount:discountValue,p_items:cartLines.map(p=>({product_id:p.id,quantity:p.quantity})),p_branch_id:session.branch_id});
+      const {data,error}=await supabase.rpc('pos_register_sale',{p_business_id:businessId,p_cash_session_id:session.id,p_payment_method:payment,p_discount:discountValue,p_items:cartLines.map(line=>({product_id:line.product.id,quantity:line.quantity,selected_options:line.selections})),p_branch_id:session.branch_id});
       if(error)throw error;
-      setCart({});setDiscount('0');setNotice('Venta registrada. Inventario actualizado.');await load();
+      setCart([]);setDiscount('0');setNotice('Venta registrada. Inventario actualizado.');await load();
     }catch(e){setError(e instanceof Error?e.message:'No fue posible registrar la venta.');}
     finally{setBusy(false);}
   };
@@ -97,15 +105,16 @@ export default function PointOfSale({businessId}:{businessId:string}) {
       <button className={tab==='history'?'active':''} onClick={()=>setTab('history')}><Receipt size={16}/> Historial</button>
       <button className={tab==='cash'?'active':''} onClick={()=>setTab('cash')}><Wallet size={16}/> Caja</button>
     </nav>
+    {configuring&&<div className="pos-option-overlay"><div className="pos-option-modal"><div className="pos-section-head"><div><h2>{configuring.nombre}</h2><small>Personaliza este producto</small></div><button className="pos-refresh" onClick={()=>setConfiguring(null)}>Cancelar</button></div>{productOptions.filter(option=>option.product_id===configuring.id&&option.values.length>0).map(option=><fieldset className="pos-option-group" key={option.id}><legend>{option.name} {option.is_required?"· Obligatorio":"· Opcional"}</legend>{option.values.map(value=><label key={value.id}><input type={option.option_type==="multiple"?"checkbox":"radio"} name={option.id} checked={(optionSelections[option.id]||[]).includes(value.id)} onChange={event=>setOptionSelections(prev=>({...prev,[option.id]:event.target.checked?(option.option_type==="multiple"?[...(prev[option.id]||[]),value.id]:[value.id]):(prev[option.id]||[]).filter(id=>id!==value.id)}))}/><span>{value.name}</span><b>{value.extra_price>0?"+"+money(value.extra_price):"Incluido"}</b></label>)}</fieldset>)}<button className="pos-checkout" onClick={confirmOptions}>Agregar al carrito</button></div></div>}
     {notice&&<div className="pos-notice"><CheckCircle2 size={16}/>{notice}</div>}
     {error&&<div className="pos-error"><AlertCircle size={16}/>{error}</div>}
     {tab==='sale'&&<div className="pos-layout">
       <div className="pos-catalog panel"><div className="pos-catalog-head"><div><h2>Productos</h2><small>Selecciona para agregar a la venta</small></div><label className="pos-search"><Search size={16}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar producto"/></label></div>
-        <div className="pos-products">{filtered.map(p=><button className="pos-product" key={p.id} onClick={()=>changeQty(p.id,1)} disabled={p.stock!==undefined&&p.stock<=0}><span className="pos-product-image">{p.imagen?<img src={p.imagen} alt=""/>:<ShoppingCart size={22}/>}</span><b>{p.nombre}</b><strong>{money(p.precio)}</strong><small>{p.stock===undefined?'Stock no controlado':`${p.stock} disponibles`}</small></button>)}</div>
+        <div className="pos-products">{filtered.map(p=><button className="pos-product" key={p.id} onClick={()=>addConfiguredProduct(p)} disabled={p.stock!==undefined&&p.stock<=0}><span className="pos-product-image">{p.imagen?<img src={p.imagen} alt=""/>:<ShoppingCart size={22}/>}</span><b>{p.nombre}</b><strong>{money(p.precio)}</strong><small>{p.stock===undefined?'Stock no controlado':`${p.stock} disponibles`}</small></button>)}</div>
       </div>
-      <aside className="pos-cart panel"><div className="pos-cart-title"><div><h2>Venta actual</h2><small>{cartLines.reduce((n,p)=>n+p.quantity,0)} unidades</small></div><ShoppingCart size={19}/></div>
+      <aside className="pos-cart panel"><div className="pos-cart-title"><div><h2>Venta actual</h2><small>{cartLines.reduce((n,line)=>n+line.quantity,0)} unidades</small></div><ShoppingCart size={19}/></div>
         {!session&&<div className="pos-callout"><AlertCircle size={17}/> Debes abrir la caja para cobrar.</div>}
-        <div className="pos-cart-lines">{cartLines.map(p=><div className="pos-cart-line" key={p.id}><div><b>{p.nombre}</b><small>{money(p.precio)} c/u</small></div><div className="pos-qty"><button onClick={()=>changeQty(p.id,-1)} aria-label="Restar"><Minus size={13}/></button><b>{p.quantity}</b><button onClick={()=>changeQty(p.id,1)} aria-label="Sumar"><Plus size={13}/></button></div><strong>{money(p.precio*p.quantity)}</strong></div>)}
+        <div className="pos-cart-lines">{cartLines.map(line=><div className="pos-cart-line" key={line.key}><div><b>{line.product.nombre}</b><small>{money(line.product.precio+line.extrasTotal)} c/u{line.selections.length?" · Extras: "+line.selections.map(selection=>{const option=productOptions.find(item=>item.id===selection.option_id);return option?.values.find(value=>value.id===selection.value_id)?.name;}).filter(Boolean).join(", "):""}</small></div><div className="pos-qty"><button onClick={()=>changeQty(line.key,-1)} aria-label="Restar"><Minus size={13}/></button><b>{line.quantity}</b><button onClick={()=>changeQty(line.key,1)} aria-label="Sumar"><Plus size={13}/></button></div><strong>{money((line.product.precio+line.extrasTotal)*line.quantity)}</strong></div>)}
         {!cartLines.length&&<div className="pos-empty">Aún no agregas productos.</div>}</div>
         <label className="pos-field">Descuento en pesos<input type="number" min="0" max={subtotal} value={discount} onChange={e=>setDiscount(e.target.value)}/></label>
         <label className="pos-field">Método de pago<select value={payment} onChange={e=>setPayment(e.target.value)}><option value="cash">Efectivo</option><option value="transfer">Transferencia</option><option value="card">Tarjeta</option><option value="nequi">Nequi</option><option value="other">Otro</option></select></label>
