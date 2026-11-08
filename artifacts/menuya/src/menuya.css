@@ -576,3 +576,35 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
   .stripe-inspired .landing-nav nav{display:none}
   .stripe-inspired .landing-actions{margin-left:auto}
 }
+
+
+/* CLICKOK — navegación tablet: jerarquía clara en dos niveles */
+@media (min-width:621px) and (max-width:1100px){
+  .stripe-inspired .landing-nav{
+    height:auto;min-height:104px;padding:12px 34px 10px;
+    display:grid;grid-template-columns:1fr auto;
+    grid-template-rows:42px 30px;column-gap:24px;row-gap:5px;
+    align-content:center;justify-content:initial;
+  }
+  .stripe-inspired .landing-nav>.brand{grid-column:1;grid-row:1;align-self:center}
+  .stripe-inspired .landing-nav>.brand img{height:34px;width:auto}
+  .stripe-inspired .landing-nav nav{
+    grid-column:1 / -1;grid-row:2;display:flex;justify-content:center;
+    align-items:center;gap:clamp(28px,5vw,58px);width:100%;padding:0;
+  }
+  .stripe-inspired .landing-nav nav a{
+    font-size:12px;line-height:1;white-space:nowrap;letter-spacing:.01em;
+  }
+  .stripe-inspired .landing-actions{
+    grid-column:2;grid-row:1;justify-self:end;align-self:center;
+    display:flex;align-items:center;gap:22px;margin:0;
+  }
+  .stripe-inspired .nav-login{font-size:12px;white-space:nowrap}
+  .stripe-inspired .landing-nav .btn{min-height:40px;padding:0 20px;font-size:12px}
+}
+@media (min-width:621px) and (max-width:760px){
+  .stripe-inspired .landing-nav{padding-inline:20px}
+  .stripe-inspired .landing-nav nav{gap:clamp(16px,3vw,26px)}
+  .stripe-inspired .landing-nav nav a{font-size:11px}
+  .stripe-inspired .landing-actions{gap:14px}
+}
