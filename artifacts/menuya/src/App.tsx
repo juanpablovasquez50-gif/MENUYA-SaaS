@@ -591,7 +591,6 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
   const confirmConfiguredItem = (product: Product) => {
     const selectedVariants = (product.variantes || []).filter(choice => (variantQuantities[choice.id] || 0) > 0);
     const complementos = (product.complementos || []).flatMap(choice => Array.from({ length: addonQuantities[choice.id] || 0 }, () => choice));
-    if (product.variantes?.length && !selectedVariants.length) { setError('Selecciona al menos una unidad de una variante.'); return; }
     const key = selectedVariants.length || complementos.length ? product.id + '::' + crypto.randomUUID() : product.id;
     const variantes = selectedVariants.map(choice => ({ choice, cantidad: variantQuantities[choice.id] || 0 }));
     setCart(current => ({ ...current, [key]: (current[key] || 0) + 1 }));
