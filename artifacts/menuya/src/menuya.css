@@ -1216,9 +1216,8 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 
 
 /* Landing: protagonismo para CLICKOK Studio */
-.studio-feature-landing{position:relative;isolation:isolate;overflow:hidden;display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:center;gap:clamp(34px,6vw,86px);padding:clamp(64px,8vw,112px) clamp(22px,7vw,110px);background:#17152b;color:#f5f4ff}
-.studio-feature-landing:before{content:"";position:absolute;z-index:-1;inset:0;background:radial-gradient(ellipse at 78% 18%,#744cff30 0,transparent 42%),radial-gradient(ellipse at 92% 78%,#ff4b8b20 0,transparent 34%),radial-gradient(ellipse at 12% 92%,#356cff20 0,transparent 38%);pointer-events:none}
-.studio-feature-landing:after{content:"";position:absolute;z-index:-1;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,#7545ff,#356dff,#d52b9b,#ff792f)}
+.studio-feature-landing{position:relative;isolation:isolate;overflow:hidden;display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:center;gap:clamp(34px,6vw,86px);padding:clamp(64px,8vw,112px) clamp(22px,7vw,110px);background:linear-gradient(118deg,#17152b 0%,#292052 27%,#1d3562 52%,#49204f 76%,#582d35 100%);color:#f5f4ff}
+.studio-feature-landing:before{content:"";position:absolute;z-index:-1;inset:0;background:radial-gradient(ellipse at 12% 18%,#7545ff66 0,transparent 38%),radial-gradient(ellipse at 48% 95%,#356dff55 0,transparent 42%),radial-gradient(ellipse at 82% 22%,#d52b9b55 0,transparent 38%),radial-gradient(ellipse at 100% 88%,#ff792f55 0,transparent 34%);pointer-events:none}
 .studio-feature-copy{max-width:530px}
 .studio-feature-copy>.eyebrow{color:#aaa5ff;font-weight:800;letter-spacing:.13em}
 .studio-feature-copy h2{font-size:clamp(36px,5vw,64px);line-height:1.02;letter-spacing:-.055em;margin:18px 0}
