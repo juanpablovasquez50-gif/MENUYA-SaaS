@@ -78,18 +78,59 @@ Deno.serve(async (req: Request) => {
     return json({ error: "Se alcanzó el límite de meseros del plan.", current: count, limit: limitRow.max_waiters }, 409);
   }
 
-  const { data: invited, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-    data: { full_name: fullName, invited_business_id: businessId, invited_role: "waiter" },
-  });
-  if (inviteError || !invited.user) return json({ error: inviteError?.message || "No fue posible enviar la invitación." }, 400);
+  // Reuse an existing Menuya account instead of trying to create it again.
+  let targetUser: { id: string } | null = null;
+  let existingUser = false;
+  for (let page = 1; page <= 20 && !targetUser; page++) {
+    const { data: usersPage, error: usersError } = await adminClient.auth.admin.listUsers({ page, perPage: 1000 });
+    if (usersError) return json({ error: "No fue posible comprobar si el correo ya tiene cuenta." }, 500);
+    const match = usersPage.users.find((user) => user.email?.toLowerCase() === email);
+    if (match) {
+      targetUser = { id: match.id };
+      existingUser = true;
+    }
+    if (usersPage.users.length < 1000) break;
+  }
+
+  let invitationSent = false;
+  if (!targetUser) {
+    const { data: invited, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
+      data: { full_name: fullName, invited_business_id: businessId, invited_role: "waiter" },
+    });
+    if (inviteError || !invited.user) return json({ error: inviteError?.message || "No fue posible enviar la invitación." }, 400);
+    targetUser = { id: invited.user.id };
+    invitationSent = true;
+  }
+
+  const { data: currentMembership, error: existingMembershipError } = await adminClient
+    .from("business_memberships").select("id,role,status")
+    .eq("business_id", businessId).eq("user_id", targetUser.id).maybeSingle();
+  if (existingMembershipError) return json({ error: "No fue posible verificar la membresía existente." }, 500);
+  if (currentMembership) {
+    return json({ error: currentMembership.role === "waiter"
+      ? "Este usuario ya está registrado como mesero en este restaurante."
+      : "Este correo ya pertenece a un usuario de este restaurante con otro rol." }, 409);
+  }
 
   const { error: insertError } = await adminClient.from("business_memberships").insert({
-    business_id: businessId, user_id: invited.user.id, role: "waiter", status: "invited",
+    business_id: businessId,
+    user_id: targetUser.id,
+    role: "waiter",
+    status: existingUser ? "active" : "invited",
   });
   if (insertError) return json({
-    error: "La invitación se envió, pero no se pudo registrar la membresía. Contacta soporte.",
-    invitation_sent: true,
+    error: invitationSent
+      ? "La invitación se envió, pero no se pudo registrar la membresía. Contacta soporte."
+      : "La cuenta existe, pero no se pudo vincular como mesero. Contacta soporte.",
+    invitation_sent: invitationSent,
   }, 500);
 
-  return json({ ok: true, invitation_sent: true, email, current: (count ?? 0) + 1, limit: limitRow.max_waiters });
+  return json({
+    ok: true,
+    invitation_sent: invitationSent,
+    existing_user: existingUser,
+    email,
+    current: (count ?? 0) + 1,
+    limit: limitRow.max_waiters,
+  });
 });
