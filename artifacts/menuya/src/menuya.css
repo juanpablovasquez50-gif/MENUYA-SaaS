@@ -902,3 +902,33 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
  .wompi-promo-dot{width:6px;height:20px}
  .wompi-promo-dot:nth-child(2){height:25px}
 }
+
+
+/* Wompi: franja más fina, centrada y proporcionada */
+.wompi-promo{
+  width:min(1040px,calc(100% - 72px));
+  min-height:58px;
+  margin:14px auto 0;
+  padding:9px 24px;
+  gap:22px;
+  border-radius:15px;
+  box-shadow:0 6px 18px rgba(39,74,57,.075),0 1px 3px rgba(39,74,57,.05),inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 3px rgba(0,100,65,.07);
+}
+.wompi-promo::before{width:170px;height:95px;top:-67px}
+.wompi-promo::after{width:145px;height:145px;bottom:-78px;right:10%}
+.wompi-promo p{font-size:clamp(14px,1.35vw,17px);line-height:1.2}
+.wompi-promo > img{width:96px;max-height:31px}
+.wompi-promo-mark{gap:4px}
+.wompi-promo-dot{width:7px;height:22px}
+.wompi-promo-dot:nth-child(2){height:28px}
+@media(max-width:800px){
+ .wompi-promo{width:calc(100% - 48px);min-height:54px;margin-top:12px;padding:8px 17px;gap:14px}
+ .wompi-promo > img{width:84px;max-height:28px}
+}
+@media(max-width:560px){
+ .wompi-promo{width:calc(100% - 32px);min-height:50px;margin-top:10px;padding:7px 11px;gap:9px;border-radius:12px}
+ .wompi-promo p{font-size:12px;line-height:1.2;letter-spacing:-.2px}
+ .wompi-promo > img{width:70px;max-height:24px}
+ .wompi-promo-dot{width:5px;height:18px}
+ .wompi-promo-dot:nth-child(2){height:22px}
+}
