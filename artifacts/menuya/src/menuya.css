@@ -1216,7 +1216,7 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 
 
 /* Landing: protagonismo para CLICKOK Studio */
-.studio-feature-landing{position:relative;isolation:isolate;overflow:hidden;display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:center;gap:clamp(34px,6vw,86px);padding:clamp(64px,8vw,112px) clamp(22px,7vw,110px);background:#101321;color:#fff}
+.studio-feature-landing{position:relative;isolation:isolate;overflow:hidden;display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:center;gap:clamp(34px,6vw,86px);padding:clamp(64px,8vw,112px) clamp(22px,7vw,110px);background:#182331;color:#f5f7fb}
 .studio-feature-landing:before{content:"";position:absolute;z-index:-1;width:620px;height:620px;right:-130px;top:-190px;border-radius:50%;background:radial-gradient(circle,#635bff38 0,transparent 68%)}
 .studio-feature-copy{max-width:530px}
 .studio-feature-copy>.eyebrow{color:#aaa5ff;font-weight:800;letter-spacing:.13em}
