@@ -99,7 +99,7 @@ export default function PointOfSale({businessId}:{businessId:string}) {
         : await supabase.rpc('pos_register_sale',{p_business_id:businessId,p_cash_session_id:session.id,p_payment_method:payment,p_discount:discountValue,p_items:cartLines.map(line=>({product_id:line.product.id,quantity:line.quantity,selected_options:line.selections})),p_branch_id:session.branch_id});
       if(error)throw error;
       setCart([]);setSelectedOrderId(null);setDiscount('0');setNotice('Venta registrada. Inventario actualizado.');await load();
-    }catch(e){setError(e instanceof Error?e.message:'No fue posible registrar la venta.');}
+    }catch(e){const detail=e as {message?:string;details?:string;hint?:string;code?:string};setError([detail?.message,detail?.details,detail?.hint].filter(Boolean).join(' · ')||'No fue posible registrar la venta.');}
     finally{setBusy(false);}
   };
   const closeCash=async()=>{
