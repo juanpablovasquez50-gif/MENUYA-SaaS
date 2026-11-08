@@ -75,7 +75,12 @@ export default function PointOfSale({businessId}:{businessId:string}) {
     setBusy(true);setError('');setNotice('');
     try{
       const amount=Math.max(0,Number(closing)||0);
-      const {error}=await supabase.from('cash_sessions').update({status:'closed',closed_at:new Date().toISOString(),closed_by:(await supabase.auth.getUser()).data.user?.id,closing_amount:amount,expected_amount:amount}).eq('id',session.id).eq('business_id',businessId);
+      const {data:cashSales,error:salesError}=await supabase.from('sales').select('total,payment_method').eq('business_id',businessId).eq('cash_session_id',session.id);
+      if(salesError)throw salesError;
+      const cashCollected=(cashSales||[]).filter(s=>['cash','efectivo'].includes(String(s.payment_method).toLowerCase())).reduce((sum,s)=>sum+Number(s.total||0),0);
+      const expected=session.opening_amount+cashCollected;
+      const {data:userResult,error:userError}=await supabase.auth.getUser();if(userError)throw userError;
+      const {error}=await supabase.from('cash_sessions').update({status:'closed',closed_at:new Date().toISOString(),closed_by:userResult.user?.id,closing_amount:amount,expected_amount:expected}).eq('id',session.id).eq('business_id',businessId);
       if(error)throw error;setSession(null);setClosing('');setNotice('Caja cerrada correctamente.');await load();
     }catch(e){setError(e instanceof Error?e.message:'No fue posible cerrar la caja.');}
     finally{setBusy(false);}
