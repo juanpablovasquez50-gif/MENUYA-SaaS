@@ -795,7 +795,7 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
         total:Number(o.total || 0),estado:({new:'pendiente',pending:'pendiente',confirmed:'confirmado',preparing:'preparando',ready:'listo',out_for_delivery:'en_camino',delivered:'entregado',cancelled:'cancelado'} as Record<string, OrderStatus>)[o.status] || 'pendiente',
         entrega:o.fulfillment_type === 'delivery' ? 'domicilio' : 'recoger',direccion:o.delivery_address || '',observaciones:o.notes || '',metodo_pago:o.payment_method || '—',created_at:o.created_at,
       })),
-      plans:allPlans.length ? allPlans : [plan],
+      plans:allPlans.some(item => item.id === plan.id) ? allPlans : [...allPlans, plan],
       subscriptions:sub ? [{id:sub.id,business_id:sub.business_id,plan_id:sub.plan_id,estado:sub.status,inicio:sub.starts_at || '',vencimiento:sub.ends_at || ''}] : [],
       settings:[settings],audit:[],catalog_events:(catalogEventResult.data || []).map(event => ({id:event.id,business_id:event.business_id,product_id:event.product_id || undefined,tipo:event.event_type === 'visit' ? 'visita' as const : 'consulta' as const,created_at:event.created_at})),platform:{name:'MENUYA',approval:'manual',default_plan:plan.id},
     };
