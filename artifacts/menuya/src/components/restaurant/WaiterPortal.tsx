@@ -20,8 +20,8 @@ export default function WaiterPortal(){
  const load=useCallback(async()=>{
   const [p,t,o]=await Promise.all([call('waiter_catalog'),call('waiter_tables'),call('waiter_orders')]);
   setProducts(p.products||[]);setTables(t.tables||[]);setOrders(o.orders||[]);
-  if(!tableId&&t.tables?.length)setTableId(t.tables.find((x:Table)=>x.status==='available')?.id||t.tables[0].id);
- },[call,tableId]);
+  setTableId(current=>current||(t.tables?.find((x:Table)=>x.status==='available')?.id||t.tables?.[0]?.id||''));
+ },[call]);
  useEffect(()=>{if(!token)return;void load().catch(e=>{setError(e.message);sessionStorage.removeItem('menuya-waiter-token');setToken('');});},[token,load]);
  const login=async(e:React.FormEvent)=>{e.preventDefault();setBusy(true);setError('');try{
   const {data,error}=await supabase.functions.invoke('restaurant-waiter-access',{body:{action:'login',business_slug:slug,waiter_code:code,pin}});
