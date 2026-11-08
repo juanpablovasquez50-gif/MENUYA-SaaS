@@ -518,3 +518,61 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .stripe-inspired .ck-footer{background:#fff;border-top:1px solid #e6eaf0;color:#425466}
 @media(max-width:900px){.stripe-inspired .stripe-hero{grid-template-columns:1fr;padding-top:70px}.stripe-inspired .stripe-gradient-art{right:-35%;top:-25%;width:120%;height:75%}.stripe-inspired .stripe-hero:after{background:linear-gradient(180deg,#ffffffeb 0%,#ffffffd9 42%,transparent 90%)}.stripe-inspired .stripe-stage{width:min(100%,620px);justify-self:center;min-height:460px}.stripe-inspired .stripe-bento-main{grid-column:span 6}.stripe-inspired .stripe-bento-orders{grid-column:span 6;min-height:340px}.stripe-inspired .stripe-bento-catalog,.stripe-inspired .stripe-bento-analytics,.stripe-inspired .stripe-bento-share{grid-column:span 3}}
 @media(max-width:620px){.stripe-inspired .landing-nav{height:68px;padding:0 16px}.stripe-inspired .landing-nav nav{display:none}.stripe-inspired .landing-actions{gap:12px}.stripe-inspired .landing-actions .btn{padding:11px 16px;font-size:11px}.stripe-inspired .stripe-hero{padding:55px 21px 45px;gap:12px}.stripe-inspired .ck-copy h1{font-size:clamp(48px,13vw,66px);letter-spacing:-.06em}.stripe-inspired .ck-copy>p{font-size:15px}.stripe-inspired .stripe-stage{min-height:345px;margin:0 -8px}.stripe-inspired .stripe-ui-window{width:100%;transform:rotate(-1deg)}.stripe-inspired .stripe-store-ui{grid-template-columns:38px 1fr;min-height:280px}.stripe-inspired .stripe-store-ui>aside{padding:12px 8px;gap:18px}.stripe-inspired .stripe-store-ui>main{padding:14px 12px}.stripe-inspired .stripe-ui-welcome{margin:18px 0 12px}.stripe-inspired .stripe-ui-welcome strong{font-size:16px}.stripe-inspired .stripe-ui-metrics{gap:7px}.stripe-inspired .stripe-ui-metrics>div{padding:9px}.stripe-inspired .stripe-ui-metrics b{font-size:14px}.stripe-inspired .stripe-ui-chart svg{height:52px}.stripe-inspired .stripe-floating-order{right:-2%;bottom:4%;padding:8px}.stripe-inspired .stripe-floating-order>strong{display:none}.stripe-inspired .stripe-floating-pill{right:0;top:3%;font-size:7px}.stripe-inspired .stripe-trust{padding:25px 18px}.stripe-inspired .stripe-trust>div{gap:15px 22px}.stripe-inspired .stripe-trust b{font-size:9px}.stripe-inspired .stripe-solutions{padding:70px 18px}.stripe-inspired .stripe-section-intro h2{font-size:37px;letter-spacing:-1.8px}.stripe-inspired .stripe-section-intro p{font-size:14px}.stripe-inspired .stripe-bento{gap:11px}.stripe-inspired .stripe-bento-card{padding:18px;min-height:270px}.stripe-inspired .stripe-bento-main,.stripe-inspired .stripe-bento-orders{grid-column:span 6}.stripe-inspired .stripe-bento-catalog,.stripe-inspired .stripe-bento-analytics,.stripe-inspired .stripe-bento-share{grid-column:span 6;min-height:280px}.stripe-inspired .stripe-mini-browser{left:18px;right:18px}.stripe-inspired .stripe-how,.stripe-inspired .ck-ecosystem{padding:68px 21px}.stripe-inspired .stripe-how .how-grid{grid-template-columns:1fr;gap:25px}.stripe-inspired .stripe-how .how-grid h2{font-size:43px}.stripe-inspired .stripe-closing{padding:70px 22px;min-height:370px}.stripe-inspired .stripe-closing h2{font-size:46px;letter-spacing:-2px}.stripe-inspired .ck-footer{gap:14px 18px;padding:22px 18px}}
+
+
+/* CLICKOK — ajuste de navegación y acabado liquid glass */
+.stripe-inspired .landing-nav{
+  position:relative;z-index:20;min-height:78px;height:auto;
+  display:flex;align-items:center;gap:clamp(16px,2.2vw,30px);
+  padding:14px clamp(22px,4.5vw,64px);
+  background:rgba(255,255,255,.76);
+  border-bottom:1px solid rgba(218,226,239,.72);
+  -webkit-backdrop-filter:blur(22px) saturate(165%);
+  backdrop-filter:blur(22px) saturate(165%);
+  box-shadow:0 8px 28px rgba(31,52,84,.045);
+}
+.stripe-inspired .landing-nav>.brand{flex:0 0 auto}
+.stripe-inspired .landing-nav nav{flex:1;min-width:0;justify-content:center;gap:clamp(14px,2.1vw,30px)}
+.stripe-inspired .landing-nav nav a,.stripe-inspired .nav-login{white-space:nowrap}
+.stripe-inspired .landing-actions{flex:0 0 auto;gap:clamp(12px,1.8vw,22px)}
+.stripe-inspired .landing-nav nav a{font-size:clamp(11px,1.1vw,13px)}
+.stripe-inspired .landing-nav .btn{min-height:46px;padding-inline:22px}
+.stripe-inspired .stripe-gradient-art{
+  filter:blur(1px) saturate(112%);
+  background:
+    radial-gradient(ellipse at 28% 24%,rgba(255,255,255,.8),transparent 25%),
+    radial-gradient(ellipse at 68% 76%,rgba(255,255,255,.28),transparent 34%),
+    linear-gradient(118deg,#ff9a4d 0%,#ff5f9e 31%,#7a73ff 65%,#11c9dc 100%);
+}
+.stripe-inspired .stripe-ui-window{
+  background:rgba(255,255,255,.86);
+  border:1px solid rgba(255,255,255,.82);
+  box-shadow:0 30px 90px rgba(10,37,64,.16),inset 0 1px 0 rgba(255,255,255,.95);
+}
+.stripe-inspired .stripe-window-bar{background:rgba(250,252,255,.82)}
+.stripe-inspired .stripe-floating-order,.stripe-inspired .stripe-floating-pill{
+  background:rgba(255,255,255,.68);
+  border:1px solid rgba(255,255,255,.9);
+  -webkit-backdrop-filter:blur(18px) saturate(160%);
+  backdrop-filter:blur(18px) saturate(160%);
+  box-shadow:0 16px 38px rgba(10,37,64,.13),inset 0 1px 0 rgba(255,255,255,.9);
+}
+.stripe-inspired .stripe-floating-order{border-radius:14px}
+.stripe-inspired .stripe-floating-pill{border-radius:999px}
+@media(max-width:1100px) and (min-width:621px){
+  .stripe-inspired .landing-nav{padding-inline:24px;gap:15px}
+  .stripe-inspired .landing-nav nav{gap:15px}
+  .stripe-inspired .landing-nav nav a,.stripe-inspired .nav-login{font-size:11px}
+  .stripe-inspired .landing-nav .brand img{height:31px}
+  .stripe-inspired .landing-actions{gap:12px}
+  .stripe-inspired .landing-nav .btn{padding-inline:17px}
+}
+@media(max-width:900px) and (min-width:621px){
+  .stripe-inspired .landing-nav{min-height:72px;flex-wrap:wrap;row-gap:10px}
+  .stripe-inspired .landing-nav nav{order:3;flex-basis:100%;justify-content:center;padding:4px 0 2px}
+}
+@media(max-width:620px){
+  .stripe-inspired .landing-nav{min-height:68px;height:68px;flex-wrap:nowrap;gap:10px;padding:0 16px}
+  .stripe-inspired .landing-nav nav{display:none}
+  .stripe-inspired .landing-actions{margin-left:auto}
+}
