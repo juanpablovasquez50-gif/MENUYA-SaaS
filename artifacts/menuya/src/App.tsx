@@ -9,7 +9,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import { Link, Route, Switch, Router as WouterRouter, useLocation, useParams } from 'wouter';
-import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BarChart3, Bell, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, ClipboardList, Clock3, CreditCard, ExternalLink, Eye, EyeOff, LayoutDashboard, LogOut, Menu, MoreHorizontal, Package, Pencil, Plus, Search, Settings, ShieldCheck, ShoppingBag, ShoppingCart, Store, Tag, Trash2, TrendingUp, Users, X, Zap } from 'lucide-react';
+import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BarChart3, Bell, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, ClipboardList, Clock3, CreditCard, ExternalLink, Eye, EyeOff, ImagePlus, LayoutDashboard, Loader2, LogOut, Menu, MoreHorizontal, Package, Pencil, Plus, Search, Settings, ShieldCheck, ShoppingBag, ShoppingCart, Store, Tag, Trash2, TrendingUp, Upload, Users, X, Zap } from 'lucide-react';
 import { type AuditLog, type Business, type CatalogEvent, type Category, type Customer, type DemoData, type Order, type OrderStatus, type Plan, type Product, type ProductChoice, type StoreSettings, repository } from '@/lib/menuya-data';
 import { type MenuyaAuthContext, ensureBusinessForCurrentUser, getAuthContext, isSupabaseConfigured, sendPasswordRecovery, preparePasswordRecovery, signInWithEmail, signOut, signUpWithEmail, updatePassword } from '@/lib/menuya-auth';
 import { supabase } from '@/lib/supabase';
@@ -40,7 +40,73 @@ function Brand({ inverse = false }: { inverse?: boolean }) {
 function Button({ children, onClick, kind = 'solid', className = '', type = 'button', disabled = false, testId }: { children: ReactNode; onClick?: () => void; kind?: string; className?: string; type?: 'button' | 'submit'; disabled?: boolean; testId?: string }) {
   return <button type={type} onClick={onClick} disabled={disabled} data-testid={testId} className={`btn btn-${kind} ${className}`}>{children}</button>;
 }
-function Field({ field, onChange }: { field: FormField; onChange: (name: string, value: string | boolean) => void }) {
+async function optimizeStoreImage(file: File) {
+  if (!file.type.startsWith('image/')) throw new Error('Selecciona un archivo de imagen.');
+  if (file.size > 15 * 1024 * 1024) throw new Error('La imagen supera 15 MB. Elige una foto más liviana.');
+  let bitmap: ImageBitmap | null = null;
+  let source: CanvasImageSource;
+  let width = 0;
+  let height = 0;
+  try {
+    bitmap = await createImageBitmap(file);
+    source = bitmap; width = bitmap.width; height = bitmap.height;
+  } catch {
+    const url = URL.createObjectURL(file);
+    try {
+      const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const element = new Image(); element.onload = () => resolve(element); element.onerror = () => reject(new Error('Este formato no se puede abrir. Prueba con JPG o PNG.')); element.src = url;
+      });
+      source = image; width = image.naturalWidth; height = image.naturalHeight;
+    } finally { URL.revokeObjectURL(url); }
+  }
+  const scale = Math.min(1, 1400 / Math.max(width, height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(width * scale));
+  canvas.height = Math.max(1, Math.round(height * scale));
+  const context = canvas.getContext('2d');
+  if (!context) { bitmap?.close(); throw new Error('No fue posible procesar la imagen.'); }
+  context.drawImage(source, 0, 0, canvas.width, canvas.height);
+  bitmap?.close();
+  const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(value => value ? resolve(value) : reject(new Error('No fue posible convertir la imagen.')), 'image/webp', 0.82));
+  return new File([blob], `clickok-${Date.now()}.webp`, { type: 'image/webp' });
+}
+function ImageUploadField({ field, value, businessId, onChange }: { field: FormField; value: string; businessId?: string; onChange: (name: string, value: string) => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [stats, setStats] = useState('');
+  const upload = async (file?: File) => {
+    if (!file) return;
+    if (!businessId) { setError('Inicia sesión en tu comercio para subir imágenes.'); return; }
+    setBusy(true); setError(''); setStats('');
+    try {
+      const optimized = await optimizeStoreImage(file);
+      const path = `${businessId}/products/${crypto.randomUUID()}.webp`;
+      const { error: uploadError } = await supabase.storage.from('clickok-images').upload(path, optimized, { contentType: 'image/webp', cacheControl: '31536000', upsert: false });
+      if (uploadError) throw uploadError;
+      const { data } = supabase.storage.from('clickok-images').getPublicUrl(path);
+      onChange(field.name, data.publicUrl);
+      const saved = Math.max(0, Math.round((1 - optimized.size / file.size) * 100));
+      setStats(`Lista · WebP · ${Math.round(optimized.size / 1024)} KB · ${saved}% menos peso`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No fue posible subir la imagen.');
+    } finally { setBusy(false); }
+  };
+  return <div className="field image-upload-field"><span>{field.label}</span>
+    <div className="image-upload-control">
+      {value ? <img className="image-upload-preview" src={value} alt="Vista previa de la imagen" /> : <div className="image-upload-placeholder"><ImagePlus size={24}/><span>Tu foto aparecerá aquí</span></div>}
+      <div className="image-upload-actions">
+        <label className="btn btn-outline image-upload-button"><Upload size={15}/>{busy ? 'Procesando…' : value ? 'Cambiar imagen' : 'Subir imagen'}<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" disabled={busy} onChange={e => { void upload(e.target.files?.[0]); e.currentTarget.value = ''; }} /></label>
+        {value && <button type="button" className="text-link" onClick={() => { onChange(field.name, ''); setStats(''); }}>Quitar</button>}
+        <small>JPG, PNG o WebP · Máximo 15 MB. CLICKOK la optimiza automáticamente.</small>
+        {busy && <small className="image-upload-status"><Loader2 size={13} className="image-spin"/> Optimizando y subiendo tu imagen…</small>}
+        {stats && <small className="image-upload-success"><CheckCircle2 size={13}/> {stats}</small>}
+        {error && <small className="image-upload-error">{error}</small>}
+      </div>
+    </div>
+  </div>;
+}
+function Field({ field, onChange, businessId }: { field: FormField; onChange: (name: string, value: string | boolean) => void; businessId?: string }) {
+  if (field.type === 'image') return <ImageUploadField field={field} value={String(field.value ?? '')} businessId={businessId} onChange={onChange as (name: string, value: string) => void}/>;
   return <label className="field"><span>{field.label}{field.required ? ' *' : ''}</span>
       {field.options ? <select name={field.name} required={field.required} value={String(field.value ?? '')} onChange={e => onChange(field.name, e.target.value)} data-testid={`select-${field.name}`}>{field.options.map(o => <option key={o} value={o}>{statusLabel[o] || o}</option>)}</select>
       : field.type === 'textarea' ? <textarea name={field.name} required={field.required} defaultValue={String(field.value ?? '')} onChange={e => onChange(field.name, e.target.value)} data-testid={`input-${field.name}`} />
@@ -175,12 +241,12 @@ function Status({ value }: { value: string }) { return <span className={`status 
 function DataTable({ headers, children, empty }: { headers: string[]; children: ReactNode; empty?: string }) {
   return <div className="table-wrap"><table><thead><tr>{headers.map(h => <th key={h}>{h}</th>)}</tr></thead><tbody>{children}</tbody></table>{empty && <div className="table-empty">{empty}</div>}</div>;
 }
-function FormModal({ title, fields, close, submit, submitText = 'Guardar' }: { title: string; fields: FormField[]; close: () => void; submit: (values: Record<string, string | boolean>) => void; submitText?: string }) {
+function FormModal({ title, fields, close, submit, submitText = 'Guardar', businessId }: { title: string; fields: FormField[]; close: () => void; submit: (values: Record<string, string | boolean>) => void; submitText?: string; businessId?: string }) {
   const [values, setValues] = useState<Record<string, string | boolean>>(() => fields.reduce((result, field) => {
     result[field.name] = field.type === 'checkbox' ? Boolean(field.value) : String(field.value ?? field.options?.[0] ?? '');
     return result;
   }, {} as Record<string, string | boolean>));
-  return <Modal title={title} close={close}><form className="modal-form" onSubmit={e => { e.preventDefault(); submit(values); }}><div className="form-grid">{fields.map(f => <Field key={f.name} field={f} onChange={(n, v) => setValues(prev => ({ ...prev, [n]: v }))} />)}</div><div className="modal-actions"><Button kind="ghost" onClick={close}>Cancelar</Button><Button type="submit" testId="button-save-form"><Check size={16} /> {submitText}</Button></div></form></Modal>;
+  return <Modal title={title} close={close}><form className="modal-form" onSubmit={e => { e.preventDefault(); submit(values); }}><div className="form-grid">{fields.map(f => <Field key={f.name} field={{...f, value: values[f.name]}} businessId={businessId} onChange={(n, v) => setValues(prev => ({ ...prev, [n]: v }))} />)}</div><div className="modal-actions"><Button kind="ghost" onClick={close}>Cancelar</Button><Button type="submit" testId="button-save-form"><Check size={16} /> {submitText}</Button></div></form></Modal>;
 }
 
 function MerchantPage({ path, data, business, update }: { path: string; data: DemoData; business: Business; update: (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => void }) {
@@ -229,7 +295,7 @@ function MerchantPage({ path, data, business, update }: { path: string; data: De
     }
     openModal(initial ? 'Editar producto' : 'Nuevo producto', [
     { name: 'nombre', label: 'Nombre', value: initial?.nombre, required: true }, { name: 'precio', label: 'Precio (COP)', type: 'number', value: initial?.precio, required: true },
-    { name: 'descripcion', label: 'Descripción', type: 'textarea', value: initial?.descripcion }, { name: 'imagen', label: 'Imagen (URL opcional)', value: initial?.imagen || '' }, { name: 'category_id', label: 'Categoría', value: initial?.category_id || cats[0]?.id, options: cats.map(c => c.id) },
+    { name: 'descripcion', label: 'Descripción', type: 'textarea', value: initial?.descripcion }, { name: 'imagen', label: 'Fotografía del producto', type: 'image', value: initial?.imagen || '' }, { name: 'category_id', label: 'Categoría', value: initial?.category_id || cats[0]?.id, options: cats.map(c => c.id) },
     { name: 'variantes', label: 'Variantes (una por línea: Nombre|recargo)', type: 'textarea', value: choiceText(initial?.variantes) }, { name: 'complementos', label: 'Complementos (una por línea: Nombre|recargo)', type: 'textarea', value: choiceText(initial?.complementos) },
     { name: 'precio_anterior', label: 'Precio anterior (opcional)', type: 'number', value: initial?.precio_anterior || '' }, { name: 'stock', label: 'Stock', type: 'number', value: initial?.stock || 0 },
     { name: 'disponible', label: 'Disponible', type: 'checkbox', value: initial?.disponible ?? true }, { name: 'destacado', label: 'Destacado', type: 'checkbox', value: initial?.destacado ?? false },
@@ -292,7 +358,7 @@ function MerchantPage({ path, data, business, update }: { path: string; data: De
     </div>
     {filteredProducts.length ? <DataTable headers={['Producto', 'Categoría', 'Precio', 'Estado', 'Acciones']}>{filteredProducts.map(p => <tr key={p.id} data-testid={`row-product-${p.id}`}><td><div className="table-product"><span className="product-thumb">{p.nombre.slice(0, 1)}</span><span><b>{p.nombre}</b><small>{p.destacado ? 'Destacado' : p.descripcion.slice(0, 40)}</small></span></div></td><td>{cats.find(c => c.id === p.category_id)?.nombre || 'Sin categoría'}</td><td><b>{money(p.precio)}</b>{p.precio_anterior && <small className="old-price">{money(p.precio_anterior)}</small>}</td><td><Status value={p.activo && p.disponible ? 'activo' : 'suspendido'} /></td><td><div className="table-actions"><button title="Editar" onClick={() => createProduct(p)} data-testid={`button-edit-product-${p.id}`}><Pencil size={15} /></button><button title={p.activo ? 'Desactivar' : 'Activar'} onClick={() => update(d => ({ ...d, products: d.products.map(x => x.id === p.id ? { ...x, activo: !x.activo } : x) }), 'Estado del producto actualizado', p.nombre)}><Eye size={15} /></button><button title="Duplicar" onClick={() => update(d => ({ ...d, products: [...d.products, { ...p, id: repository.id(), nombre: `${p.nombre} (copia)` }] }), 'Producto duplicado', p.nombre)}><MoreHorizontal size={15} /></button><button title="Eliminar" onClick={() => { if (confirm(`¿Eliminar ${p.nombre}?`)) update(d => ({ ...d, products: d.products.filter(x => x.id !== p.id) }), 'Producto eliminado', p.nombre); }}><Trash2 size={15} /></button></div></td></tr>)}</DataTable> : <Empty title="No hay productos con ese filtro" text="Prueba otra búsqueda o crea tu primer producto." action={<HeaderAction text="Crear producto" onClick={() => createProduct()} />} />}
     <p className="plan-limit"><Package size={15} /> Plan {plan?.nombre}: {products.length} de {productLimitLabel(productLimit)} productos utilizados.</p>
-    {modal && <FormModal {...modal} close={() => setModal(null)} submit={modal.save} />}
+    {modal && <FormModal {...modal} businessId={business.id} close={() => setModal(null)} submit={modal.save} />}
   </>;
   if (path === '/app/categories') return <><PageTitle eyebrow="ORDENA TU VITRINA" title="Categorías" description="Agrupa tus productos para que encontrar lo bueno sea fácil." action={<HeaderAction text="Nueva categoría" onClick={() => addCategory()} />} /><div className="category-manager">{cats.map((c, index) => <div className="category-row" key={c.id} data-testid={`row-category-${c.id}`}><span className="category-order">{String(c.orden).padStart(2, '0')}</span><div className="category-info"><b>{c.nombre}</b><small>{products.filter(p => p.category_id === c.id).length} productos</small></div><Status value={c.activo ? 'activo' : 'suspendido'} /><div className="table-actions"><button title="Subir" disabled={index === 0} onClick={() => update(d => ({ ...d, categories: d.categories.map(x => x.id === c.id ? { ...x, orden: x.orden - 1 } : x) }), 'Orden actualizado', c.nombre)}>↑</button><button title="Bajar" disabled={index === cats.length - 1} onClick={() => update(d => ({ ...d, categories: d.categories.map(x => x.id === c.id ? { ...x, orden: x.orden + 1 } : x) }), 'Orden actualizado', c.nombre)}>↓</button><button title="Editar" onClick={() => addCategory(c)}><Pencil size={15} /></button><button title="Eliminar" onClick={() => { if (confirm(`¿Eliminar la categoría ${c.nombre}?`)) update(d => ({ ...d, categories: d.categories.filter(x => x.id !== c.id) }), 'Categoría eliminada', c.nombre); }}><Trash2 size={15} /></button></div></div>)}{!cats.length && <Empty title="Empieza por una categoría" text="Organiza tus productos por tipo, colección o momento." />}</div>{modal && <FormModal {...modal} close={() => setModal(null)} submit={modal.save} />}</>;
   if (path === '/app/orders') return <>
