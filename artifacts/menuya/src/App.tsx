@@ -5,7 +5,7 @@ import PointOfSale from '@/components/pos/PointOfSale';
 import RestaurantOperations from '@/components/restaurant/RestaurantOperations';
 import WaiterPortal from '@/components/restaurant/WaiterPortal';
 import * as React from 'react';
-import { type FormEvent, type ReactNode, useEffect, useState } from 'react';
+import { type FormEvent, type ReactNode, useCallback, useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
