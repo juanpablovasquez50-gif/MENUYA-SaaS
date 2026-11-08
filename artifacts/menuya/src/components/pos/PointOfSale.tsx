@@ -7,6 +7,7 @@ import './pos.css';
 type PosProduct = Pick<Product, 'id'|'nombre'|'precio'|'imagen'|'stock'|'activo'|'disponible'>;
 type CashSession = { id:string; opening_amount:number; status:string; opened_at:string; branch_id:string|null };
 type Sale = { id:string; total:number; subtotal:number; discount:number; payment_method:string; created_at:string };
+type CashMovement = { total:number; payment_method:string };
 
 const money=(n:number)=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(n);
 const dateTime=(s:string)=>new Intl.DateTimeFormat('es-CO',{dateStyle:'short',timeStyle:'short'}).format(new Date(s));
@@ -15,6 +16,7 @@ export default function PointOfSale({businessId}:{businessId:string}) {
   const [products,setProducts]=useState<PosProduct[]>([]);
   const [session,setSession]=useState<CashSession|null>(null);
   const [sales,setSales]=useState<Sale[]>([]);
+  const [cashMovements,setCashMovements]=useState<CashMovement[]>([]);
   const [cart,setCart]=useState<Record<string,number>>({});
   const [search,setSearch]=useState('');
   const [tab,setTab]=useState<'sale'|'history'|'cash'>('sale');
@@ -36,6 +38,7 @@ export default function PointOfSale({businessId}:{businessId:string}) {
     setProducts((p.data||[]).map(x=>({id:x.id,nombre:x.name,precio:Number(x.price),imagen:x.image_url||undefined,stock:x.stock===null?undefined:Number(x.stock),activo:x.is_active,disponible:x.is_available})));
     setSession(c.data?{...c.data,opening_amount:Number(c.data.opening_amount)}:null);
     setSales((s.data||[]).map(x=>({...x,total:Number(x.total),subtotal:Number(x.subtotal),discount:Number(x.discount)})));
+    if(c.data){const {data:movements,error:movementError}=await supabase.from('sales').select('total,payment_method').eq('business_id',businessId).eq('cash_session_id',c.data.id);if(movementError)throw movementError;setCashMovements((movements||[]).map(x=>({total:Number(x.total||0),payment_method:x.payment_method||''})));}else setCashMovements([]);
   },[businessId]);
 
   useEffect(()=>{load().catch(e=>setError(e.message||'No se pudo cargar el punto de venta.'));},[load]);
@@ -44,6 +47,10 @@ export default function PointOfSale({businessId}:{businessId:string}) {
   const discountValue=Math.max(0,Math.min(subtotal,Number(discount)||0));
   const total=subtotal-discountValue;
   const filtered=products.filter(p=>p.nombre.toLowerCase().includes(search.toLowerCase()));
+  const paymentTotals=useMemo(()=>cashMovements.reduce((acc,sale)=>{const method=String(sale.payment_method||'').toLowerCase();const amount=Number(sale.total||0);if(['cash','efectivo'].includes(method))acc.cash+=amount;else if(['transfer','transferencia','nequi'].includes(method))acc.transfer+=amount;else if(['card','tarjeta'].includes(method))acc.card+=amount;else acc.other+=amount;return acc;},{cash:0,transfer:0,card:0,other:0}),[cashMovements]);
+  const expectedCash=(session?.opening_amount||0)+paymentTotals.cash;
+  const countedCash=Math.max(0,Number(closing)||0);
+  const cashDifference=countedCash-expectedCash;
 
   const changeQty=(id:string,delta:number)=>{
     const product=products.find(p=>p.id===id); if(!product)return;
@@ -75,12 +82,9 @@ export default function PointOfSale({businessId}:{businessId:string}) {
     setBusy(true);setError('');setNotice('');
     try{
       const amount=Math.max(0,Number(closing)||0);
-      const {data:cashSales,error:salesError}=await supabase.from('sales').select('total,payment_method').eq('business_id',businessId).eq('cash_session_id',session.id);
-      if(salesError)throw salesError;
-      const cashCollected=(cashSales||[]).filter(s=>['cash','efectivo'].includes(String(s.payment_method).toLowerCase())).reduce((sum,s)=>sum+Number(s.total||0),0);
-      const expected=session.opening_amount+cashCollected;
+      const expected=expectedCash;
       const {data:userResult,error:userError}=await supabase.auth.getUser();if(userError)throw userError;
-      const {error}=await supabase.from('cash_sessions').update({status:'closed',closed_at:new Date().toISOString(),closed_by:userResult.user?.id,closing_amount:amount,expected_amount:expected}).eq('id',session.id).eq('business_id',businessId);
+      const {error}=await supabase.from('cash_sessions').update({status:'closed',closed_at:new Date().toISOString(),closed_by:userResult.user?.id,closing_amount:amount,expected_amount:expected,cash_sales_amount:paymentTotals.cash,transfer_sales_amount:paymentTotals.transfer,card_sales_amount:paymentTotals.card,other_sales_amount:paymentTotals.other,cash_difference:amount-expected}).eq('id',session.id).eq('business_id',businessId);
       if(error)throw error;setSession(null);setClosing('');setNotice('Caja cerrada correctamente.');await load();
     }catch(e){setError(e instanceof Error?e.message:'No fue posible cerrar la caja.');}
     finally{setBusy(false);}
@@ -110,6 +114,6 @@ export default function PointOfSale({businessId}:{businessId:string}) {
       </aside>
     </div>}
     {tab==='history'&&<section className="panel pos-history"><div className="pos-section-head"><div><h2>Ventas recientes</h2><small>Últimos 50 movimientos</small></div><button className="pos-refresh" onClick={()=>void load()}>Actualizar</button></div>{sales.length?sales.map(s=><div className="pos-sale-row" key={s.id}><span className="pos-sale-icon"><Receipt size={17}/></span><div><b>{money(s.total)}</b><small>{dateTime(s.created_at)} · {s.payment_method}</small></div><strong>{s.id.slice(0,8).toUpperCase()}</strong></div>):<div className="pos-empty">Todavía no hay ventas de mostrador.</div>}</section>}
-    {tab==='cash'&&<section className="panel pos-cash-panel"><span className="eyebrow">CONTROL DE CAJA</span><h2>{session?'Tu caja está abierta':'Abre una caja para comenzar'}</h2>{session?<><div className="pos-cash-summary"><div><small>Base inicial</small><b>{money(session.opening_amount)}</b></div><div><small>Abierta desde</small><b>{dateTime(session.opened_at)}</b></div></div><label className="pos-field">Dinero contado al cierre<input type="number" min="0" value={closing} onChange={e=>setClosing(e.target.value)} placeholder="Total contado en caja"/></label><button className="pos-checkout" disabled={busy||closing==='' } onClick={()=>void closeCash()}>{busy?'Procesando…':'Cerrar caja'}</button></>:<><p>Registra el dinero inicial disponible en el cajón.</p><label className="pos-field">Base inicial en efectivo<input type="number" min="0" value={opening} onChange={e=>setOpening(e.target.value)}/></label><button className="pos-checkout" disabled={busy} onClick={()=>void openCash()}>{busy?'Abriendo…':'Abrir caja'} <Banknote size={17}/></button></>}</section>}
+    {tab==='cash'&&<section className="panel pos-cash-panel"><span className="eyebrow">CONTROL DE CAJA</span><h2>{session?'Tu caja está abierta':'Abre una caja para comenzar'}</h2>{session?<><div className="pos-cash-summary"><div><small>Base inicial</small><b>{money(session.opening_amount)}</b></div><div><small>Abierta desde</small><b>{dateTime(session.opened_at)}</b></div></div><div className="pos-cash-summary"><div><small>Ventas en efectivo</small><b>{money(paymentTotals.cash)}</b></div><div><small>Efectivo esperado</small><b>{money(expectedCash)}</b></div><div><small>Transferencias / Nequi</small><b>{money(paymentTotals.transfer)}</b></div><div><small>Tarjetas</small><b>{money(paymentTotals.card)}</b></div><div><small>Otros medios</small><b>{money(paymentTotals.other)}</b></div><div><small>Total vendido</small><b>{money(paymentTotals.cash+paymentTotals.transfer+paymentTotals.card+paymentTotals.other)}</b></div></div><label className="pos-field">Dinero contado físicamente<input type="number" min="0" value={closing} onChange={e=>setClosing(e.target.value)} placeholder="Total de efectivo en caja"/></label>{closing!==''&&<div className="pos-cash-summary"><div><small>Diferencia de efectivo</small><b>{money(cashDifference)}</b></div><div><small>Transferencias registradas</small><b>{money(paymentTotals.transfer)}</b></div></div>}<p className="pos-cash-hint">Las transferencias y pagos digitales se muestran aparte; no se suman al efectivo físico.</p><button className="pos-checkout" disabled={busy||closing==='' } onClick={()=>void closeCash()}>{busy?'Procesando…':'Cerrar caja y guardar arqueo'}</button></>:<><p>Registra el dinero inicial disponible en el cajón.</p><label className="pos-field">Base inicial en efectivo<input type="number" min="0" value={opening} onChange={e=>setOpening(e.target.value)}/></label><button className="pos-checkout" disabled={busy} onClick={()=>void openCash()}>{busy?'Abriendo…':'Abrir caja'} <Banknote size={17}/></button></>}</section>}
   </section>;
 }
