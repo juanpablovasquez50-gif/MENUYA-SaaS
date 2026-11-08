@@ -45,14 +45,21 @@ export default function PointOfSale({businessId}:{businessId:string}) {
       supabase.from('product_options').select('id,product_id,name,option_type,is_required').eq('business_id',businessId).order('sort_order'),
       supabase.from('product_option_values').select('id,option_id,name,extra_price').eq('business_id',businessId).eq('is_active',true).order('sort_order'),
       supabase.from('cash_sessions').select('id,opening_amount,closing_amount,expected_amount,cash_sales_amount,transfer_sales_amount,card_sales_amount,other_sales_amount,cash_difference,opened_at,closed_at').eq('business_id',businessId).eq('status','closed').order('closed_at',{ascending:false}).limit(50),
-      supabase.from('orders').select('id,order_number,status,total,created_at,table_id,restaurant_tables(name),order_items(product_id,product_name,quantity,unit_price,line_total)').eq('business_id',businessId).not('table_id','is',null).in('status',['pending','confirmed','preparing','ready']).order('created_at',{ascending:true}).limit(100)
+      supabase.from('orders').select('id,order_number,status,total,created_at,table_id,restaurant_tables(name)').eq('business_id',businessId).not('table_id','is',null).in('status',['pending','confirmed','preparing','ready']).order('created_at',{ascending:true}).limit(100)
     ]);
     if(p.error||c.error||s.error||o.error||v.error||ch.error||orders.error) throw p.error||c.error||s.error||o.error||v.error||ch.error||orders.error;
+    const orderIds=(orders.data||[]).map(order=>order.id);
+    let orderItems:any[]=[];
+    if(orderIds.length){
+      const {data:items,error:itemsError}=await supabase.from('order_items').select('order_id,product_id,product_name,quantity,unit_price,line_total').in('order_id',orderIds);
+      if(itemsError) throw itemsError;
+      orderItems=items||[];
+    }
     setProductOptions((o.data||[]).map(option=>({...option,values:(v.data||[]).filter(value=>value.option_id===option.id).map(value=>({...value,extra_price:Number(value.extra_price||0)}))})));
     setProducts((p.data||[]).map(x=>({id:x.id,nombre:x.name,precio:Number(x.price),imagen:x.image_url||undefined,stock:x.stock===null?undefined:Number(x.stock),activo:x.is_active,disponible:x.is_available})));
     setSession(c.data?{...c.data,opening_amount:Number(c.data.opening_amount)}:null);
     setSales((s.data||[]).map(x=>({...x,total:Number(x.total),subtotal:Number(x.subtotal),discount:Number(x.discount)})));
-    setTableOrders(orders.data||[]);
+    setTableOrders((orders.data||[]).map(order=>({...order,order_items:orderItems.filter(item=>item.order_id===order.id)})));
     setCashHistory((ch.data||[]).map(x=>({...x,opening_amount:Number(x.opening_amount||0),closing_amount:x.closing_amount===null?null:Number(x.closing_amount),expected_amount:x.expected_amount===null?null:Number(x.expected_amount),cash_sales_amount:x.cash_sales_amount===null?null:Number(x.cash_sales_amount),transfer_sales_amount:x.transfer_sales_amount===null?null:Number(x.transfer_sales_amount),card_sales_amount:x.card_sales_amount===null?null:Number(x.card_sales_amount),other_sales_amount:x.other_sales_amount===null?null:Number(x.other_sales_amount),cash_difference:x.cash_difference===null?null:Number(x.cash_difference)})));
     if(c.data){const {data:movements,error:movementError}=await supabase.from('sales').select('total,payment_method').eq('business_id',businessId).eq('cash_session_id',c.data.id);if(movementError)throw movementError;setCashMovements((movements||[]).map(x=>({total:Number(x.total||0),payment_method:x.payment_method||''})));}else setCashMovements([]);
   },[businessId]);
