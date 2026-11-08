@@ -32,8 +32,9 @@ Deno.serve(async(req:Request)=>{
   let body:any;try{body=await req.json();}catch{return reply({error:"Solicitud inválida."},400);}
   const action=String(body.action||"");
   if(action==="login"){
-    const businessId=String(body.business_id||""),code=String(body.waiter_code||"").trim().toUpperCase(),pin=String(body.pin||"");
-    if(!businessId||!code||!/^[0-9]{4,8}$/.test(pin))return reply({error:"Ingresa el código del mesero y un PIN de 4 a 8 dígitos."},400);
+    const slug=String(body.business_slug||"").trim().toLowerCase(),businessIdInput=String(body.business_id||""),code=String(body.waiter_code||"").trim().toUpperCase(),pin=String(body.pin||"");
+    if((!businessIdInput&&!slug)||!code||!/^[0-9]{4,8}$/.test(pin))return reply({error:"Ingresa el código del mesero y un PIN de 4 a 8 dígitos."},400);
+    let businessId=businessIdInput;if(!businessId&&slug){const {data:b}=await admin.from("businesses").select("id,business_type").eq("slug",slug).maybeSingle();if(!b||!/restaurante/i.test(b.business_type))return reply({error:"No encontramos ese restaurante."},404);businessId=b.id;}
     const {data:w,error}=await admin.from("restaurant_waiters").select("id,business_id,display_name,pin_hash,is_active").eq("business_id",businessId).eq("waiter_code",code).maybeSingle();
     if(error)return reply({error:"No fue posible validar el acceso."},500);
     if(!w||!w.is_active||!(await verifyPin(pin,w.pin_hash)))return reply({error:"Código o PIN incorrectos."},401);
@@ -41,6 +42,33 @@ Deno.serve(async(req:Request)=>{
     const {error:sessionError}=await admin.from("restaurant_waiter_sessions").insert({waiter_id:w.id,business_id:w.business_id,token_hash:tokenHash,expires_at:new Date(Date.now()+12*60*60*1000).toISOString()});
     if(sessionError)return reply({error:"No fue posible iniciar la sesión."},500);
     return reply({ok:true,token,waiter:{id:w.id,name:w.display_name},business_id:w.business_id,expires_in:43200});
+  }
+  if(authorization?.startsWith("Bearer ")){
+    const token=authorization.slice(7),tokenHash=await hashToken(token);
+    const {data:session}=await admin.from("restaurant_waiter_sessions").select("id,waiter_id,business_id,expires_at").eq("token_hash",tokenHash).gt("expires_at",new Date().toISOString()).maybeSingle();
+    if(session){
+      const {data:waiter}=await admin.from("restaurant_waiters").select("id,display_name,is_active").eq("id",session.waiter_id).eq("business_id",session.business_id).maybeSingle();
+      if(!waiter?.is_active)return reply({error:"El acceso de este mesero está suspendido."},403);
+      if(action==="waiter_catalog"){
+        const {data,error}=await admin.from("products").select("id,name,price,image_url").eq("business_id",session.business_id).eq("is_active",true).eq("is_available",true).order("name").limit(300);
+        if(error)return reply({error:"No fue posible cargar el catálogo."},500);return reply({products:data||[]});
+      }
+      if(action==="waiter_tables"){
+        const {data,error}=await admin.from("restaurant_tables").select("id,name,capacity,status").eq("business_id",session.business_id).neq("status","inactive").order("name");
+        if(error)return reply({error:"No fue posible cargar las mesas."},500);return reply({tables:data||[]});
+      }
+      if(action==="waiter_orders"){
+        const {data,error}=await admin.from("orders").select("id,order_number,status,total,created_at,table_id,restaurant_tables(name),order_items(product_name,quantity,line_total)").eq("business_id",session.business_id).eq("restaurant_waiter_id",waiter.id).in("status",["pending","confirmed","preparing","ready"]).order("created_at",{ascending:false}).limit(50);
+        if(error)return reply({error:"No fue posible cargar tus pedidos."},500);return reply({orders:data||[]});
+      }
+      if(action==="create_order"){
+        const tableId=String(body.table_id||""),items=Array.isArray(body.items)?body.items:[];
+        const {data,error}=await admin.rpc("restaurant_waiter_create_order",{p_business_id:session.business_id,p_waiter_id:waiter.id,p_table_id:tableId,p_items:items,p_notes:String(body.notes||"")});
+        if(error)return reply({error:error.message||"No fue posible enviar el pedido."},400);return reply({ok:true,order:data});
+      }
+      if(action==="logout"){await admin.from("restaurant_waiter_sessions").delete().eq("id",session.id);return reply({ok:true});}
+      return reply({error:"Acción de mesero no reconocida."},400);
+    }
   }
   const authorization=req.headers.get("Authorization");
   if(!authorization?.startsWith("Bearer "))return reply({error:"Debes iniciar sesión como propietario."},401);
