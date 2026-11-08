@@ -3,6 +3,7 @@ import './order-tracking.css';
 import PlatformAdminCenter from '@/components/PlatformAdminCenter';
 import PointOfSale from '@/components/pos/PointOfSale';
 import RestaurantOperations from '@/components/restaurant/RestaurantOperations';
+import WaiterPortal from '@/components/restaurant/WaiterPortal';
 import * as React from 'react';
 import { type FormEvent, type ReactNode, useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -1179,6 +1180,7 @@ function Router() {
     <Route path="/reset-password"><AuthPage mode="reset" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
     <Route path="/admin">{authLoading ? <div className="auth-loading"><span className="loader-line" />Comprobando acceso...</div> : remoteContext?.isPlatformAdmin ? <PlatformAdminPage context={remoteContext} onLogout={logout} /> : remoteContext ? <div className="auth-form-wrap"><div className="notice notice-error">Esta cuenta no tiene permisos de Superadmin.</div><Button onClick={logout}>Cerrar sesión</Button></div> : protectedRoute()}</Route>
     {adminLinks.slice(1).map(([path]) => <Route key={path} path={path}>{authLoading ? <div className="auth-loading"><span className="loader-line" />Comprobando acceso...</div> : remoteContext?.isPlatformAdmin ? <PlatformAdminPage context={remoteContext} onLogout={logout} /> : remoteContext ? <div className="auth-form-wrap"><div className="notice notice-error">Esta cuenta no tiene permisos de Superadmin.</div><Button onClick={logout}>Cerrar sesión</Button></div> : protectedRoute()}</Route>)}
+    <Route path="/waiter/:slug"><WaiterPortal /></Route>
     <Route path="/track"><TrackingPage /></Route>
     <Route path="/track/:token"><TrackingRoute /></Route>
     <Route path="/app">{protectedRoute()}</Route>
