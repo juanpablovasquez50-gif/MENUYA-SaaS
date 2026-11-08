@@ -674,3 +674,38 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .auth-form-wrap .notice{border-radius:10px}.auth-form-wrap .notice-error{background:#fff0f0;color:#a33d4b}.auth-form-wrap .notice-success{background:#ecfaf4;color:#287b60}
 @media(max-width:760px){.auth-layout{min-height:100svh}.auth-main{min-height:100svh;padding:clamp(24px,7vh,62px) 22px;justify-content:center;gap:clamp(28px,5vh,42px)}.auth-mobile-brand{width:min(100%,440px)}.auth-mobile-brand .brand img{width:178px}.auth-form-wrap{width:min(100%,440px);padding:clamp(24px,6vw,34px);border-radius:21px}.auth-form-wrap h2{font-size:clamp(29px,8vw,36px)}.auth-form-wrap>.subtle{font-size:14px;margin-bottom:24px}.auth-form-wrap .field input,.auth-form-wrap .field select{min-height:52px}.auth-form-wrap .full-btn{min-height:54px}}
 @media(max-height:760px) and (max-width:760px){.auth-main{padding-top:22px;padding-bottom:22px;gap:20px}.auth-mobile-brand .brand img{width:150px}.auth-form-wrap{padding:23px}.auth-form-wrap>.subtle{margin-bottom:17px}.auth-form-wrap .form-stack{gap:13px}.auth-form-wrap .security-note{margin-top:17px}}
+
+
+/* CLICKOK — skeleton estructural del panel del comercio */
+.merchant-skeleton{min-height:100vh;display:grid;grid-template-columns:252px minmax(0,1fr);background:#f7f8fc;color:#17243b;overflow:hidden}
+.merchant-skeleton-side{position:relative;display:flex;flex-direction:column;gap:15px;padding:26px 18px;background:#fff;border-right:1px solid #e9edf4}
+.ms-brand{height:42px;display:flex;align-items:center;gap:11px;margin:0 5px 28px}
+.ms-brand i{width:34px;height:34px;border-radius:11px}
+.ms-brand b{width:112px;height:13px}
+.ms-side-label{width:75px;height:8px;margin:0 7px 8px}
+.ms-nav{height:43px;border-radius:10px;display:flex;align-items:center;gap:13px;padding:0 12px}
+.ms-nav i{width:17px;height:17px;border-radius:5px;flex:none}
+.ms-nav span{width:105px;height:9px;border-radius:6px}
+.ms-nav.active{background:#f1efff}
+.ms-side-bottom{margin-top:auto;display:flex;gap:12px;align-items:center;padding:16px 8px;border-top:1px solid #eef0f5}
+.ms-side-bottom i{width:32px;height:32px;border-radius:50%}.ms-side-bottom span{width:95px;height:9px}
+.merchant-skeleton-main{min-width:0;padding:0 clamp(20px,3vw,42px) 38px}
+.ms-topbar{height:78px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e9edf4}
+.ms-topbar>div:first-child{display:flex;gap:10px;align-items:center}.ms-topbar>div:first-child i{width:20px;height:20px;border-radius:6px}.ms-topbar>div:first-child b{width:115px;height:10px}
+.ms-user{display:flex;align-items:center;gap:10px}.ms-user i{width:34px;height:34px;border-radius:50%}.ms-user span{width:88px;height:9px}
+.ms-heading{padding:30px 0 24px;display:grid;gap:12px}.ms-line{height:16px;border-radius:7px}.ms-line.wide{width:210px;height:23px}.ms-line.medium{width:285px;height:10px}
+.ms-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.ms-card{background:#fff;border:1px solid #edf0f5;border-radius:15px;padding:19px;box-shadow:0 3px 14px rgba(30,48,78,.025)}
+.ms-card.stat{min-height:125px;display:flex;flex-direction:column;gap:13px}.ms-card.stat i{width:31px;height:31px;border-radius:9px}.ms-card.stat b{width:92px;height:19px}.ms-card.stat span{width:125px;height:8px}
+.ms-content-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(260px,1fr);gap:16px;margin-top:17px}
+.ms-chart,.ms-activity{min-height:255px}.ms-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:25px}.ms-card-head b{width:130px;height:12px}.ms-card-head i{width:70px;height:25px;border-radius:7px}
+.ms-chart-bars{height:155px;display:flex;align-items:end;justify-content:space-around;gap:12px;padding:0 8px;border-bottom:1px solid #edf0f5}
+.ms-chart-bars i{width:7%;height:var(--bar-height,55%);border-radius:6px 6px 0 0}
+.ms-chart-bars i:nth-child(3n){height:78%}.ms-chart-bars i:nth-child(3n + 1){height:42%}.ms-chart-bars i:nth-child(3n + 2){height:62%}
+.ms-activity-row{height:43px;display:flex;align-items:center;gap:10px;border-top:1px solid #f0f2f6}.ms-activity-row i{width:27px;height:27px;border-radius:50%;flex:none}.ms-activity-row span{width:48%;height:8px}.ms-activity-row b{width:35px;height:8px;margin-left:auto}
+.ms-table{margin-top:17px}.ms-table-row{height:42px;display:flex;align-items:center;gap:18px;border-top:1px solid #f0f2f6}.ms-table-row i{width:28px;height:26px;border-radius:6px}.ms-table-row span{width:20%;height:8px}.ms-table-row b{width:55px;height:19px;border-radius:12px;margin-left:auto}
+.merchant-skeleton :is(.ms-brand i,.ms-brand b,.ms-side-label,.ms-nav i,.ms-nav span,.ms-side-bottom i,.ms-side-bottom span,.ms-topbar i,.ms-topbar b,.ms-user span,.ms-line,.ms-card.stat i,.ms-card.stat b,.ms-card.stat span,.ms-card-head b,.ms-card-head i,.ms-chart-bars i,.ms-activity-row i,.ms-activity-row span,.ms-activity-row b,.ms-table-row i,.ms-table-row span,.ms-table-row b){background:linear-gradient(100deg,#edf0f5 20%,#f8f9fc 38%,#edf0f5 56%);background-size:220% 100%;animation:merchant-shimmer 1.35s ease-in-out infinite}
+@keyframes merchant-shimmer{to{background-position-x:-220%}}
+@media(max-width:900px){.merchant-skeleton{grid-template-columns:76px minmax(0,1fr)}.merchant-skeleton-side{padding:22px 12px;align-items:center}.ms-brand{margin:0 0 25px}.ms-brand b,.ms-side-label,.ms-nav span,.ms-side-bottom span{display:none}.ms-nav{width:48px;justify-content:center;padding:0}.ms-side-bottom{justify-content:center}.ms-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.merchant-skeleton{grid-template-columns:1fr}.merchant-skeleton-side{display:none}.merchant-skeleton-main{padding:0 16px 26px}.ms-topbar{height:62px}.ms-stats{gap:10px}.ms-card.stat{min-height:108px;padding:14px}.ms-content-grid{grid-template-columns:1fr;gap:12px}.ms-chart{min-height:220px}.ms-activity{min-height:205px}.ms-table{padding:14px}.ms-table-row{gap:9px}.ms-table-row span{width:17%}.ms-heading{padding:24px 0 19px}}
+@media(prefers-reduced-motion:reduce){.merchant-skeleton *{animation:none!important}}
