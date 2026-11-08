@@ -7,6 +7,16 @@ type Product={id:string;name:string;price:number;image_url:string|null};
 type Table={id:string;name:string;capacity:number;status:string};
 type Line={product:Product;quantity:number};
 const money=(v:number)=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(v);
+async function functionErrorMessage(error:any,data:any):Promise<string>{
+ if(data?.error)return String(data.error);
+ const response=error?.context;
+ if(response&&typeof response.clone==='function'){
+  try{const payload=await response.clone().json();if(payload?.error)return String(payload.error);if(payload?.message)return String(payload.message);}catch{}
+  try{const raw=await response.clone().text();if(raw)return `Respuesta del servidor (${response.status}): ${raw.slice(0,240)}`;}catch{}
+  if(response.status)return `La función respondió con estado HTTP ${response.status}. Revisa la conexión e inténtalo de nuevo.`;
+ }
+ return error?.message||'No fue posible completar la operación.';
+}
 export default function WaiterPortal(){
  const params=useParams<{slug:string}>(),slug=params.slug||'';
  const [code,setCode]=useState(''),[pin,setPin]=useState(''),[token,setToken]=useState(()=>sessionStorage.getItem('menuya-waiter-token')||'');
@@ -15,7 +25,7 @@ export default function WaiterPortal(){
  const [tab,setTab]=useState<'take'|'orders'>('take'),[search,setSearch]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
  const call=useCallback(async(action:string,body:Record<string,unknown>={})=>{
   const {data,error}=await supabase.functions.invoke('restaurant-waiter-access',{body:{action,...body},headers:token?{Authorization:'Bearer '+token}:{}});
-  if(error)throw new Error(data?.error||error.message);if(data?.error)throw new Error(data.error);return data;
+  if(error)throw new Error(await functionErrorMessage(error,data));if(data?.error)throw new Error(data.error);return data;
  },[token]);
  const load=useCallback(async()=>{
   const [p,t,o]=await Promise.all([call('waiter_catalog'),call('waiter_tables'),call('waiter_orders')]);
@@ -25,7 +35,7 @@ export default function WaiterPortal(){
  useEffect(()=>{if(!token)return;void load().catch(e=>{setError(e.message);sessionStorage.removeItem('menuya-waiter-token');setToken('');});},[token,load]);
  const login=async(e:React.FormEvent)=>{e.preventDefault();setBusy(true);setError('');try{
   const {data,error}=await supabase.functions.invoke('restaurant-waiter-access',{body:{action:'login',business_slug:slug,waiter_code:code,pin}});
-  if(error)throw new Error(data?.error||error.message);if(data?.error)throw new Error(data.error);
+  if(error)throw new Error(await functionErrorMessage(error,data));if(data?.error)throw new Error(data.error);
   sessionStorage.setItem('menuya-waiter-token',data.token);setToken(data.token);setWaiter(data.waiter);setPin('');
  }catch(e){setError(e instanceof Error?e.message:'No fue posible iniciar sesión.');}finally{setBusy(false);}};
  const add=(p:Product)=>setCart(prev=>{const found=prev.find(x=>x.product.id===p.id);return found?prev.map(x=>x.product.id===p.id?{...x,quantity:x.quantity+1}:x):[...prev,{product:p,quantity:1}];});
