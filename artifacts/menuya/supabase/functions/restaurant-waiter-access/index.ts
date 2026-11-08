@@ -68,9 +68,9 @@ Deno.serve(async(req:Request)=>{
     if(name.length<2||name.length>80||!/^[0-9]{4,8}$/.test(pin))return reply({error:"Ingresa un nombre y un PIN de 4 a 8 dígitos."},400);
     const {count,error:countError}=await admin.from("restaurant_waiters").select("id",{count:"exact",head:true}).eq("business_id",businessId);
     if(countError)return reply({error:"No fue posible verificar el cupo."},500);
-    if(!limit||count!==(null as any)&&((count??0)>=limit.max_waiters))return reply({error:"No hay cupos de meseros configurados para tu plan."},409);
+    if(!limit)return reply({error:"No hay cupos de meseros configurados para tu plan."},409);
     if((count??0)>=limit.max_waiters)return reply({error:"Alcanzaste el límite de meseros de tu plan.",current:count,limit:limit.max_waiters},409);
-    const code=String(Math.floor(100000+Math.random()*900000));
+    const random=new Uint32Array(1);crypto.getRandomValues(random);const code=String(100000+(random[0]%900000));
     const {data,error}=await admin.from("restaurant_waiters").insert({business_id:businessId,display_name:name,waiter_code:code,pin_hash:await pinHash(pin)}).select("id,display_name,waiter_code,is_active,created_at").single();
     if(error)return reply({error:error.code==="23505"?"No se pudo generar un código único. Intenta de nuevo.":"No fue posible crear el mesero."},500);
     return reply({ok:true,waiter:data,limit:limit.max_waiters,current:(count??0)+1});
