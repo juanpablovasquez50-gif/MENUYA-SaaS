@@ -20,11 +20,21 @@ Deno.serve(async(req:Request)=>{
    const {data:p}=await db.from("products").select("id,name,price,is_active,is_available").eq("id",item.product_id).eq("business_id",business_id).maybeSingle();
    if(!p||!p.is_active||!p.is_available)return reply({error:"Producto no disponible."},409);
    let price=Number(p.price),variantName=null;
+   const selectedVariants=[];
+   for(const selected of (Array.isArray(item.variant_selections)?item.variant_selections:[])){
+    const variantQty=Number(selected.quantity);
+    if(!Number.isInteger(variantQty)||variantQty<1||variantQty>99)return reply({error:"Cantidad de extra no válida."},400);
+    const {data:v}=await db.from("product_option_values").select("id,name,extra_price,product_options!inner(product_id,option_type)").eq("id",selected.value_id).eq("business_id",business_id).eq("is_active",true).maybeSingle();
+    if(!v||v.product_options?.product_id!==p.id||v.product_options?.option_type!=="variant")return reply({error:"Variante inválida."},400);
+    price+=Number(v.extra_price||0)*variantQty;
+    selectedVariants.push(`${v.name} ×${variantQty}`);
+   }
    if(item.variant_value_id){
     const {data:v}=await db.from("product_option_values").select("id,name,extra_price,product_options!inner(product_id,option_type)").eq("id",item.variant_value_id).eq("business_id",business_id).eq("is_active",true).maybeSingle();
     if(!v||v.product_options?.product_id!==p.id||v.product_options?.option_type!=="variant")return reply({error:"Variante inválida."},400);
-    price+=Number(v.extra_price||0);variantName=v.name;
+    price+=Number(v.extra_price||0);selectedVariants.push(v.name);
    }
+   variantName=selectedVariants.length?selectedVariants.join(", "):null;
    const addons=[];
    for(const id of (Array.isArray(item.addon_value_ids)?item.addon_value_ids:[])){
     const {data:a}=await db.from("product_option_values").select("id,name,extra_price,product_options!inner(product_id,option_type)").eq("id",id).eq("business_id",business_id).eq("is_active",true).maybeSingle();
