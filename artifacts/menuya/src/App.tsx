@@ -5,7 +5,7 @@ import PointOfSale from '@/components/pos/PointOfSale';
 import RestaurantOperations from '@/components/restaurant/RestaurantOperations';
 import WaiterPortal from '@/components/restaurant/WaiterPortal';
 import * as React from 'react';
-import { type FormEvent, type ReactNode, useEffect, useState } from 'react';
+import { type FormEvent, type ReactNode, useCallback, useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -23,7 +23,7 @@ const shortDate = (date: string) => new Intl.DateTimeFormat('es-CO', { day: 'num
 const statusLabel: Record<string, string> = { pendiente: 'Pendiente', confirmado: 'Confirmado', preparando: 'En preparación', listo: 'Listo', en_camino: 'En camino', entregado: 'Entregado', cancelado: 'Cancelado', activo: 'Activo', rechazado: 'Rechazado', suspendido: 'Suspendido', activa: 'Activa', vencida: 'Vencida' };
 const productLimitLabel = (limit: number) => limit >= 999999 ? 'ilimitados' : String(limit);
 const adminLinks = [['/admin', 'Resumen', LayoutDashboard], ['/admin/businesses', 'Comercios', Store], ['/admin/requests', 'Solicitudes', ClipboardList], ['/admin/users', 'Usuarios', Users], ['/admin/plans', 'Planes', Tag], ['/admin/subscriptions', 'Suscripciones', CreditCard], ['/admin/settings', 'Ajustes', Settings], ['/admin/audit', 'Auditoría', Activity]] as const;
-const shopLinks = [['/app', 'Inicio', LayoutDashboard], ['/app/catalog', 'Catálogo', ShoppingBag], ['/app/products', 'Productos', Package], ['/app/categories', 'Categorías', Tag], ['/app/orders', 'Pedidos', ClipboardList], ['/app/customers', 'Clientes', Users], ['/app/editor', 'CLICKOK Studio', Pencil], ['/app/analytics', 'Analítica', BarChart3], ['/app/settings', 'Ajustes', Settings], ['/app/subscription', 'Mi plan', CreditCard]] as const;
+const shopLinks = [['/app', 'Inicio', LayoutDashboard], ['/app/catalog', 'Catálogo', ShoppingBag], ['/app/products', 'Productos', Package], ['/app/services', 'Servicios', CalendarDays], ['/app/categories', 'Categorías', Tag], ['/app/orders', 'Pedidos', ClipboardList], ['/app/customers', 'Clientes', Users], ['/app/editor', 'CLICKOK Studio', Pencil], ['/app/analytics', 'Analítica', BarChart3], ['/app/settings', 'Ajustes', Settings], ['/app/subscription', 'Mi plan', CreditCard]] as const;
 type Session = { userId: string; role: 'admin' | 'owner' } | null;
 type FormField = { name: string; label: string; type?: string; value?: string | number | boolean; options?: string[]; required?: boolean };
 type CartLine = { key: string; productId: string; cantidad: number; variantes?: { choice: ProductChoice; cantidad: number }[]; complementos: ProductChoice[] };
@@ -488,10 +488,97 @@ function MerchantPage({ path, data, business, update, modules = [] }: { path: st
     </>;
   }
   if (path === '/app/settings') return <><PageTitle eyebrow="DATOS DEL NEGOCIO" title="Ajustes" description="Mantén al día la información que tus clientes necesitan." /><div className="settings-grid"><section className="panel setting-section"><span className="eyebrow">INFORMACIÓN PÚBLICA</span><h2>Que te encuentren</h2><div className="form-stack"><SettingInput label="Nombre del negocio" value={business.nombre} id="business-name" onSave={v => update(d => ({ ...d, businesses: d.businesses.map(b => b.id === business.id ? { ...b, nombre: v } : b) }), 'Datos guardados', 'Negocio')} /><SettingInput label="Teléfono" value={business.telefono} id="business-phone" onSave={v => update(d => ({ ...d, businesses: d.businesses.map(b => b.id === business.id ? { ...b, telefono: v } : b) }), 'Teléfono actualizado', 'Negocio')} /><SettingInput label="Correo de contacto" value={settings.contacto} id="contact-email" onSave={v => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, contacto: v } : s) }), 'Contacto actualizado', 'Negocio')} /><SettingInput label="Redes sociales" value={settings.redes} id="business-social" onSave={v => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, redes: v } : s) }), 'Redes actualizadas', 'Negocio')} /></div></section><section className="panel setting-section"><span className="eyebrow">CÓMO OPERAS</span><h2>Pagos y entregas</h2><div className="form-stack"><SettingInput label="Métodos de pago" value={settings.pagos} id="payment-methods" onSave={v => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, pagos: v } : s) }), 'Métodos de pago guardados', 'Negocio')} /><SettingInput label="Opciones de entrega" value={settings.entrega} id="delivery-methods" onSave={v => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, entrega: v } : s) }), 'Opciones de entrega guardadas', 'Negocio')} /><div className="settings-info"><CircleHelp size={17} /><p>CLICKOK organiza tus pedidos. El cobro y la coordinación de entrega siguen directamente contigo y tu cliente.</p></div></div></section></div></>;
+  if (path === '/app/services') return <BusinessServicesPage businessId={business.id}/>;
   if (path === '/app/restaurant') return foodBusiness ? <RestaurantOperations businessId={business.id}/> : <Empty title="Módulo exclusivo para restaurantes" text="La gestión de mesas y meseros solo está disponible para negocios del sector restaurante."/>;
-  if (path === '/app/pos') return (plan && (/^pro$/i.test(plan.nombre.trim()) || plan.funciones.some(feature => /punto de venta|\\bpos\\b/i.test(feature)))) ? <PointOfSale businessId={business.id}/> : <Empty title="Desbloquea el punto de venta con Pro" text="El módulo Punto de venta está disponible al adquirir el plan Pro. Actualiza tu suscripción para gestionar ventas presenciales desde CLICKOK."><Link href="/app/subscription" className="btn btn-outline">Adquirir plan Pro</Link></Empty>;
+  if (path === '/app/pos') return (plan && (/^pro$/i.test(plan.nombre.trim()) || plan.funciones.some(feature => /punto de venta|\\bpos\\b/i.test(feature)))) ? <PointOfSale businessId={business.id}/> : <Empty title="Desbloquea el punto de venta con Pro" text="El módulo Punto de venta está disponible al adquirir el plan Pro. Actualiza tu suscripción para gestionar ventas presenciales desde CLICKOK." action={<Link href="/app/subscription" className="btn btn-outline">Adquirir plan Pro</Link>} />;
   if (path === '/app/subscription') return <><PageTitle eyebrow="TU TIENDA, A TU RITMO" title="Plan y suscripción" description="Empieza con lo esencial. Cambia cuando tu negocio lo pida." /><div className="current-plan"><div><span className="eyebrow">PLAN ACTUAL</span><h2>{plan?.nombre || 'Gratis'}<span>{money(plan?.precio || 0)} <small>/ mes</small></span></h2><p>Suscripción {statusLabel[subscription?.estado || 'activa']?.toLowerCase()} · Renueva el {shortDate(subscription?.vencimiento || new Date().toISOString())}</p></div><Status value={subscription?.estado || 'activa'} /></div><div className="plans-grid">{data.plans.filter(p => p.activo).map(p => <article className={`plan-card ${p.id === plan?.id ? 'plan-selected' : ''}`} key={p.id}><span className="eyebrow">{p.id === 'pro' ? 'PARA CRECER' : p.id === 'starter' ? 'EL FAVORITO' : 'PARA EMPEZAR'}</span><h3>{p.nombre}</h3><p className="plan-price">{money(p.precio)}<small> / {p.periodicidad === 'year' ? 'año' : 'mes'}</small></p><p className="plan-products">{p.max_productos >= 999999 ? 'Productos ilimitados' : `Hasta ${p.max_productos} productos`}</p><ul>{p.funciones.map(f => <li key={f}><Check size={15} /> {f}</li>)}</ul><Button kind={p.id === plan?.id ? 'soft' : 'outline'} disabled={p.id === plan?.id || p.precio <= 0 || Boolean(checkoutBusy)} onClick={() => void startSubscriptionCheckout(p.id)} testId={`button-plan-${p.id}`}>{p.id === plan?.id ? 'Tu plan actual' : checkoutBusy === p.id ? 'Conectando con Wompi…' : p.precio <= 0 ? 'Plan gratuito' : 'Pagar con Wompi'}</Button></article>)}</div>{checkoutError && <div className="notice notice-error" role="alert">{checkoutError}</div>}<p className="fine-print">Pagos procesados de forma segura por Wompi. Tu plan se activa cuando recibimos la confirmación del pago.</p></>;
   return <Empty title="Página en construcción" text="Este espacio estará disponible pronto." />;
+}
+
+function BusinessServicesPage({ businessId }: { businessId: string }) {
+  type BusinessService = { id: string; name: string; description: string | null; price: number; duration_minutes: number | null; is_active: boolean };
+  const emptyForm = { name: '', description: '', price: '0', duration: '' };
+  const [services, setServices] = useState<BusinessService[]>([]);
+  const [form, setForm] = useState(emptyForm);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    const { data, error: queryError } = await supabase
+      .from('business_services')
+      .select('id,name,description,price,duration_minutes,is_active')
+      .eq('business_id', businessId)
+      .order('created_at', { ascending: false });
+    if (queryError) setError(queryError.message);
+    else setServices((data || []).map(row => ({ ...row, price: Number(row.price || 0) })));
+    setLoading(false);
+  }, [businessId]);
+  useEffect(() => { void load(); }, [load]);
+  const resetForm = () => { setForm(emptyForm); setEditingId(null); setError(''); };
+  const save = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (saving) return;
+    const name = form.name.trim();
+    const price = Number(form.price);
+    const duration = form.duration.trim() ? Number(form.duration) : null;
+    if (name.length < 2 || name.length > 120) { setError('El nombre debe tener entre 2 y 120 caracteres.'); return; }
+    if (!Number.isFinite(price) || price < 0) { setError('Ingresa un precio válido.'); return; }
+    if (duration !== null && (!Number.isInteger(duration) || duration <= 0)) { setError('La duración debe ser un número entero mayor que cero.'); return; }
+    setSaving(true); setError(''); setNotice('');
+    const values = { name, description: form.description.trim() || null, price, duration_minutes: duration };
+    const result = editingId
+      ? await supabase.from('business_services').update(values).eq('id', editingId).eq('business_id', businessId)
+      : await supabase.from('business_services').insert({ ...values, business_id: businessId });
+    if (result.error) setError(result.error.message);
+    else {
+      setNotice(editingId ? 'Servicio actualizado.' : 'Servicio creado y disponible para publicar en la vitrina.');
+      resetForm();
+      await load();
+    }
+    setSaving(false);
+  };
+  const edit = (service: BusinessService) => {
+    setEditingId(service.id);
+    setForm({ name: service.name, description: service.description || '', price: String(service.price), duration: service.duration_minutes ? String(service.duration_minutes) : '' });
+    setError(''); setNotice('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  const toggleActive = async (service: BusinessService) => {
+    setError(''); setNotice('');
+    const { error: updateError } = await supabase.from('business_services').update({ is_active: !service.is_active }).eq('id', service.id).eq('business_id', businessId);
+    if (updateError) setError(updateError.message);
+    else { setNotice(service.is_active ? 'Servicio ocultado de la vitrina.' : 'Servicio publicado en la vitrina.'); await load(); }
+  };
+  return <>
+    <PageTitle eyebrow="SERVICIOS DE TU NEGOCIO" title="Servicios" description="Administra lo que ofreces. Los servicios activos aparecen en tu vitrina y las solicitudes llegan al punto de venta." />
+    <section className="panel setting-section" style={{ marginBottom: 20 }}>
+      <div className="panel-head"><div><span className="eyebrow">{editingId ? 'EDITAR SERVICIO' : 'NUEVO SERVICIO'}</span><h2>{editingId ? 'Actualiza los datos' : 'Agrega un servicio a tu vitrina'}</h2></div><CalendarDays size={20}/></div>
+      <form className="form-stack" onSubmit={save}>
+        <label className="field"><span>Nombre del servicio *</span><input required minLength={2} maxLength={120} value={form.name} onChange={e=>setForm(current=>({...current,name:e.target.value}))} placeholder="Ej. Corte clásico"/></label>
+        <label className="field"><span>Descripción</span><textarea maxLength={1000} value={form.description} onChange={e=>setForm(current=>({...current,description:e.target.value}))} placeholder="Describe brevemente el servicio"/></label>
+        <div className="form-grid">
+          <label className="field"><span>Precio en pesos colombianos *</span><input required type="number" min="0" step="1" value={form.price} onChange={e=>setForm(current=>({...current,price:e.target.value}))}/></label>
+          <label className="field"><span>Duración en minutos (opcional)</span><input type="number" min="1" step="1" value={form.duration} onChange={e=>setForm(current=>({...current,duration:e.target.value}))} placeholder="Ej. 30"/></label>
+        </div>
+        {error && <div className="notice notice-error" role="alert">{error}</div>}
+        {notice && <div className="notice notice-success" role="status">{notice}</div>}
+        <div className="modal-actions"><Button kind="ghost" onClick={resetForm}>Limpiar</Button><Button type="submit" disabled={saving}>{saving ? 'Guardando…' : editingId ? 'Guardar cambios' : 'Crear servicio'} <Check size={15}/></Button></div>
+      </form>
+    </section>
+    <section className="panel setting-section">
+      <div className="panel-head"><div><span className="eyebrow">CATÁLOGO DE SERVICIOS</span><h2>{services.length} servicio(s)</h2><p className="subtle">Activa un servicio para mostrarlo en la vitrina pública.</p></div><Button kind="outline" onClick={()=>void load()} disabled={loading}>Actualizar</Button></div>
+      {loading ? <div className="auth-loading"><span className="loader-line"/>Cargando servicios…</div> : services.length ? <div className="category-manager">{services.map(service=><article className="category-row" key={service.id}>
+        <span className="category-order"><CalendarDays size={17}/></span>
+        <div className="category-info"><b>{service.name}</b><small>{service.description || 'Sin descripción'}{service.duration_minutes ? ` · ${service.duration_minutes} min` : ''}</small><small><b>{money(service.price)}</b></small></div>
+        <Status value={service.is_active ? 'activo' : 'suspendido'}/>
+        <div className="table-actions"><button title="Editar servicio" onClick={()=>edit(service)}><Pencil size={15}/></button><button title={service.is_active ? 'Ocultar de vitrina' : 'Publicar en vitrina'} onClick={()=>void toggleActive(service)}>{service.is_active ? <EyeOff size={15}/> : <Eye size={15}/>}</button></div>
+      </article>)}</div> : <Empty title="Todavía no tienes servicios" text="Crea el primero. Cuando esté activo, tus clientes podrán solicitarlo desde la vitrina y pagarlo en el POS."/>}
+    </section>
+  </>;
 }
 
 function SettingInput({ label, value, id, onSave }: { label: string; value: string; id: string; onSave: (value: string) => void }) {
@@ -545,7 +632,7 @@ function AdminPage({ path, data, update }: { path: string; data: DemoData; updat
       users: [...d.users, { id: ownerId, nombre: ownerName, email, password: 'demo2026', role: 'owner', business_ids: [businessId] }],
       businesses: [...d.businesses, created],
       categories: [...d.categories, category],
-      settings: [...d.settings, { business_id: businessId, portada: '', logo: '', color: '#e77a60', fuente: 'Manrope', contacto: phone, redes: '', pagos: 'Efectivo, Nequi', entrega: 'Domicilio y recoger en tienda', publicado: state === 'activo', tagline: 'Un negocio local, hecho con cariño.' }],
+      settings: [...d.settings, { business_id: businessId, portada: '', logo: '', color: '#e77a60', fuente: 'Manrope', contacto: phone, redes: '', pagos: 'Efectivo, Nequi', entrega: 'Domicilio y recoger en tienda', publicado: state === 'activo', tagline: 'Un negocio local, hecho con cariño.', layout: 'grid', card_style: 'classic', button_style: 'rounded' }],
       subscriptions: [...d.subscriptions, { id: repository.id(), business_id: businessId, plan_id: planId, estado: state === 'activo' ? 'activa' : 'pendiente', inicio: repository.date(0), vencimiento: repository.date(-30) }],
     }), `Comercio creado · acceso demo ${email} / demo2026`, businessName);
     setModal(null);
