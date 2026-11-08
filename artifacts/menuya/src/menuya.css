@@ -1271,3 +1271,72 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 
 
 .clickok-world .atomlabs-credit .atomlabs-symbol{width:22px;height:22px;display:block;flex:0 0 22px;overflow:visible}
+
+
+/* CLICKOK — motion system premium: profundidad, luz y transiciones */
+.clickok-world .hero-art,
+.clickok-world .studio-feature-visual{perspective:1500px;transform-style:preserve-3d}
+.clickok-world .stripe-ui-window,
+.clickok-world .studio-feature-window{transform-style:preserve-3d;will-change:transform;transition:transform .8s cubic-bezier(.2,.75,.25,1),box-shadow .8s cubic-bezier(.2,.75,.25,1)}
+.clickok-world .stripe-ui-window{animation:ck-premium-float 8s ease-in-out infinite;box-shadow:0 38px 100px #11152d35,0 12px 30px #11152d18}
+.clickok-world .stripe-stage{isolation:isolate}
+.clickok-world .stripe-stage:before{content:"";position:absolute;inset:7% 5% 10%;z-index:-1;border-radius:40%;background:radial-gradient(ellipse,#8176ff38 0%,#635bff12 45%,transparent 72%);filter:blur(28px);animation:ck-light-breathe 7s ease-in-out infinite}
+.clickok-world .stripe-floating-order{animation:ck-float-soft 6s ease-in-out infinite;box-shadow:0 22px 60px #11152d24;transition:transform .45s ease,box-shadow .45s ease}
+.clickok-world .stripe-floating-pill{animation:ck-float-soft 7s ease-in-out -2s infinite}
+.clickok-world .studio-feature-window{transition:transform .8s cubic-bezier(.2,.75,.25,1),box-shadow .8s ease;box-shadow:0 35px 100px #0006,0 8px 24px #0002}
+.clickok-world .studio-feature-visual:after{content:"";position:absolute;z-index:2;inset:20px 0 35px;pointer-events:none;border-radius:18px;background:linear-gradient(115deg,transparent 25%,#ffffff20 46%,transparent 62%);transform:translateX(-120%);animation:ck-glass-sweep 9s ease-in-out infinite}
+.clickok-world .studio-feature-float{animation:ck-float-soft 6.5s ease-in-out infinite;transition:transform .45s ease,box-shadow .45s ease}
+.clickok-world .stripe-bento-card{transform:translateZ(0);transform-style:preserve-3d;transition:transform .55s cubic-bezier(.2,.75,.25,1),box-shadow .55s ease,border-color .55s ease;will-change:transform}
+.clickok-world .stripe-bento-card:hover{transform:translateY(-9px) rotateX(2deg) rotateY(-1.2deg);box-shadow:0 28px 65px #17213b18;border-color:#a9a3ff80}
+.clickok-world .stripe-browser-product,
+.clickok-world .stripe-catalog-mock>div,
+.clickok-world .stripe-share-orb,
+.clickok-world .stripe-analytics-mock,
+.clickok-world .stripe-order-mock>div{transition:transform .55s cubic-bezier(.2,.75,.25,1),filter .55s ease}
+.clickok-world .stripe-bento-card:hover .stripe-browser-product{transform:translateZ(22px) rotateY(-7deg) rotateX(3deg)}
+.clickok-world .stripe-bento-card:hover .stripe-catalog-mock>div:nth-child(2){transform:translateY(-7px) translateZ(18px) rotate(-2deg)}
+.clickok-world .stripe-bento-card:hover .stripe-share-orb{transform:translateZ(24px) rotate(8deg) scale(1.04)}
+.clickok-world .stripe-bento-card:hover .stripe-order-mock>div{transform:translateX(4px)}
+.clickok-world .stripe-bento-card:hover .stripe-analytics-mock{transform:translateZ(15px)}
+.clickok-world .stripe-bento-card img,
+.clickok-world .studio-feature-products article>span,
+.clickok-world .stripe-browser-product{transition:transform .65s cubic-bezier(.2,.75,.25,1),filter .65s ease}
+.clickok-world .stripe-bento-card:hover img{transform:scale(1.045);filter:saturate(1.08)}
+.clickok-world .studio-feature-products article{transition:transform .45s cubic-bezier(.2,.75,.25,1),box-shadow .45s ease}
+.clickok-world .studio-feature-products article:nth-child(1){animation:ck-product-drift 7s ease-in-out infinite}
+.clickok-world .studio-feature-products article:nth-child(2){animation:ck-product-drift 7s ease-in-out -2.2s infinite}
+.clickok-world .studio-feature-products article:nth-child(3){animation:ck-product-drift 7s ease-in-out -4.4s infinite}
+.clickok-world .studio-feature-products article:hover{transform:translateY(-7px) rotateY(-5deg);box-shadow:0 14px 28px #24263820}
+.clickok-world .stripe-gradient-art,
+.clickok-world .stripe-glow-orbit,
+.clickok-world .ck-closing-orb{will-change:transform}
+.clickok-world .stripe-glow-orbit{animation:ck-orbit-breathe 12s ease-in-out infinite}
+.clickok-world .stripe-gradient-art{animation:ck-gradient-drift 18s ease-in-out infinite alternate}
+.clickok-world .sector-row{transition:padding .4s ease,background-color .4s ease,transform .4s ease}
+.clickok-world .sector-row:hover{padding-left:16px;padding-right:16px;transform:translateX(3px)}
+.clickok-world .sector-row svg{transition:transform .4s ease}
+.clickok-world .sector-row:hover svg{transform:translateX(5px)}
+.clickok-world .landing-nav a,.clickok-world .btn,.clickok-world .hero-secondary{transition:transform .3s ease,box-shadow .35s ease,color .3s ease,background-color .3s ease}
+.clickok-world .landing-actions .btn:hover,.clickok-world .hero-ctas .btn:hover,.clickok-world .closing-cta .btn:hover{transform:translateY(-3px);box-shadow:0 16px 36px #635bff35}
+@keyframes ck-premium-float{0%,100%{transform:perspective(1500px) rotateY(-5deg) rotateX(2deg) translateY(0)}50%{transform:perspective(1500px) rotateY(-3deg) rotateX(1deg) translateY(-10px)}}
+@keyframes ck-float-soft{0%,100%{transform:translate3d(0,0,18px)}50%{transform:translate3d(0,-9px,28px)}}
+@keyframes ck-light-breathe{0%,100%{opacity:.55;transform:scale(.94)}50%{opacity:1;transform:scale(1.06)}}
+@keyframes ck-glass-sweep{0%,62%,100%{transform:translateX(-120%)}78%{transform:translateX(120%)}}
+@keyframes ck-product-drift{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes ck-orbit-breathe{0%,100%{transform:rotate(-4deg) scale(1)}50%{transform:rotate(4deg) scale(1.035)}}
+@keyframes ck-gradient-drift{0%{transform:translate3d(-1%,0,0) scale(1)}100%{transform:translate3d(1%,1%,0) scale(1.025)}}
+@media(hover:hover) and (min-width:801px){
+ .clickok-world .stripe-ui-window:hover{transform:perspective(1500px) rotateY(-1deg) rotateX(0deg) translateY(-8px) scale(1.012);box-shadow:0 48px 115px #11152d45}
+ .clickok-world .studio-feature-window:hover{transform:perspective(1500px) rotateY(-1deg) rotateX(0deg) translateY(-8px) scale(1.012);box-shadow:0 48px 115px #0008}
+ .clickok-world .stripe-floating-order:hover,.clickok-world .studio-feature-float:hover{transform:translateY(-6px) translateZ(30px);box-shadow:0 24px 55px #11152d30}
+}
+@media(max-width:800px){
+ .clickok-world .stripe-ui-window{animation:ck-float-soft 9s ease-in-out infinite;transform:none}
+ .clickok-world .studio-feature-window{transform:none}
+ .clickok-world .studio-feature-visual:after{inset:20px 0 35px}
+ .clickok-world .stripe-bento-card:hover{transform:translateY(-4px)}
+}
+@media(prefers-reduced-motion:reduce){
+ .clickok-world *, .clickok-world *:before, .clickok-world *:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}
+ .clickok-world .stripe-ui-window,.clickok-world .studio-feature-window{transform:none!important}
+}
