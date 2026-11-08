@@ -1,12 +1,12 @@
 # Usuarios de restaurante y límite de meseros
 
-Estado: especificación funcional para implementar en Menuya. No habilita todavía cuentas de mesero.
+Estado: infraestructura inicial de base de datos aplicada y migración versionada. La creación/invitación de cuentas y la interfaz de meseros siguen pendientes.
 
 ## Regla de producto
 
 El límite de usuarios operativos adicionales (meseros) aplica exclusivamente a comercios cuyo sector configurado sea restaurante. Los demás sectores no reciben este límite ni el panel de meseros.
 
-Los cupos incluidos se determinan por el plan vigente del comercio. La matriz comercial debe ser configurable por plan; valores iniciales propuestos para validar con Producto: Básico 1, intermedio 3 y Pro 5 meseros. Estos números son una propuesta, no una tarifa ni condición contractual definitiva.
+Los cupos incluidos se determinan por el plan vigente del comercio mediante la tabla restaurant_plan_limits. La propuesta comercial conversada fue Básico 1, Intermedio 3 y Pro 5 meseros. Sin embargo, la base actual contiene los planes Gratis, Starter y Pro; por eso no se asignaron cupos automáticamente hasta aprobar la equivalencia comercial.
 
 ## Comportamiento esperado
 
@@ -17,6 +17,16 @@ Los cupos incluidos se determinan por el plan vigente del comercio. La matriz co
 - Al alcanzar el cupo, se bloquea la creación y se informa cuántos cupos están ocupados y qué plan permite ampliarlos.
 - Al bajar de plan, no se borran usuarios ni historial: se impide crear/reactivar usuarios por encima del nuevo cupo y se solicita al propietario ajustar los accesos.
 - Al cambiar el sector a uno distinto de restaurante, el panel y los permisos de mesero dejan de estar disponibles. No se eliminan cuentas ni datos históricos automáticamente.
+
+## Infraestructura ya aplicada
+
+- Se añadió el rol `waiter` a `business_memberships`.
+- Se creó `restaurant_plan_limits` con RLS habilitado.
+- Se agregó lectura de membresías al propietario/administrador del mismo comercio.
+- Se añadió un trigger que impide activar/invitar meseros en sectores distintos de restaurante y bloquea cupos excedidos o planes sin límite configurado.
+- La migración quedó versionada en `artifacts/menuya/supabase/migrations/20261108210024_restaurant_waiter_roles_and_plan_limits.sql`.
+
+La verificación confirmó la tabla, RLS, restricción de rol y trigger. Todavía no hay cupos cargados en la matriz, así que el sistema no permitirá altas de meseros hasta configurar los valores aprobados.
 
 ## Implementación técnica pendiente
 
