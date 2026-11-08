@@ -1340,3 +1340,21 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
  .clickok-world *, .clickok-world *:before, .clickok-world *:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}
  .clickok-world .stripe-ui-window,.clickok-world .studio-feature-window{transform:none!important}
 }
+
+
+/* First-login sector onboarding */
+.sector-onboarding{min-height:100vh;display:grid;place-items:center;padding:36px 20px;background:radial-gradient(ellipse at 50% 0%,#e9eaff 0%,#f7f8fc 48%,#fff 100%)}
+.sector-onboarding-card{width:min(760px,100%);padding:clamp(24px,5vw,48px);border:1px solid #e7e8f0;border-radius:24px;background:#fff;box-shadow:0 24px 80px #20264a12}
+.sector-onboarding-card h1{margin:12px 0;font-size:clamp(28px,5vw,42px);letter-spacing:-1.5px;color:#171a2b}
+.sector-onboarding-card>p{max-width:570px;margin:0 0 26px;color:#687086;line-height:1.65}
+.sector-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:24px 0}
+.sector-choice{display:flex;align-items:center;gap:13px;min-height:82px;padding:14px;border:1px solid #e5e7ef;border-radius:15px;background:#fff;color:#202338;text-align:left;cursor:pointer;transition:border-color .2s,background .2s,box-shadow .2s}
+.sector-choice:hover{border-color:#aaa4ff;background:#fafaff}
+.sector-choice.selected{border-color:#635bff;background:#f5f4ff;box-shadow:0 0 0 2px #635bff18}
+.sector-choice-icon{display:grid;place-items:center;width:42px;height:42px;flex:none;border-radius:12px;background:#f1f1f8;font-size:21px}
+.sector-choice-copy{display:grid;gap:4px;flex:1}
+.sector-choice-copy b{font-size:14px}
+.sector-choice-copy small{font-size:11px;line-height:1.4;color:#747b8d}
+.sector-choice>svg{color:#635bff;flex:none}
+.sector-onboarding-foot{display:block;margin-top:16px;text-align:center;color:#858b9b;font-size:11px}
+@media(max-width:560px){.sector-choice-grid{grid-template-columns:1fr}.sector-choice{min-height:72px}.sector-onboarding-card{padding:24px 18px}}
