@@ -650,3 +650,27 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
   .stripe-inspired .stripe-bento-orders h3{font-size:23px;line-height:1.2}
   .stripe-inspired .stripe-bento-orders p{font-size:13px}
 }
+
+/* CLICKOK — acceso renovado, centrado y coherente con la landing */
+.auth-layout{position:relative;isolation:isolate;overflow:hidden;background:radial-gradient(ellipse at 78% 14%,rgba(99,91,255,.13),transparent 35%),radial-gradient(ellipse at 18% 88%,rgba(25,201,218,.10),transparent 32%),#f7f9fd}
+.auth-layout::after{content:"";position:absolute;z-index:-1;width:620px;height:620px;top:-330px;right:-170px;border-radius:50%;background:linear-gradient(135deg,rgba(255,116,157,.12),rgba(99,91,255,.13),rgba(25,201,218,.10));filter:blur(18px);pointer-events:none}
+.auth-main{min-width:0;min-height:100dvh;padding:48px clamp(24px,6vw,80px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:34px;position:relative;z-index:1}
+.auth-mobile-brand{display:block;width:min(100%,440px);margin:0}
+.auth-mobile-brand .brand img{width:188px;height:auto;display:block}
+.auth-form-wrap{width:min(100%,440px);padding:clamp(28px,4vw,42px);border:1px solid rgba(255,255,255,.9);border-radius:24px;background:rgba(255,255,255,.76);-webkit-backdrop-filter:blur(24px) saturate(155%);backdrop-filter:blur(24px) saturate(155%);box-shadow:0 24px 70px rgba(24,43,78,.09),inset 0 1px 0 rgba(255,255,255,.95)}
+.auth-form-wrap .eyebrow{color:#635bff;font-size:10px;letter-spacing:1.7px;font-weight:800}
+.auth-form-wrap h2{margin:13px 0 9px;color:#10243b;font:750 clamp(30px,3.2vw,38px)/1.12 var(--sans);letter-spacing:-1.6px}
+.auth-form-wrap>.subtle{margin:0 0 27px;color:#657386;font-size:14px;line-height:1.65}
+.auth-form-wrap .field{gap:9px;color:#33465d;font-size:12px}
+.auth-form-wrap .field input,.auth-form-wrap .field select,.auth-form-wrap .field textarea{min-height:52px;padding:13px 15px;border:1px solid #dce3ef;border-radius:11px;background:rgba(255,255,255,.9);font-size:14px;color:#10243b;transition:border-color .2s ease,box-shadow .2s ease,background .2s ease}
+.auth-form-wrap .field input:focus,.auth-form-wrap .field select:focus,.auth-form-wrap .field textarea:focus{border-color:#8178ff;box-shadow:0 0 0 4px rgba(99,91,255,.12);background:#fff}
+.auth-form-wrap .password-wrap input{padding-right:48px}.auth-form-wrap .password-eye{right:13px;color:#7e8ba0}
+.auth-form-wrap .form-stack{gap:18px}
+.auth-form-wrap .full-btn{min-height:54px;border:0;border-radius:12px;background:linear-gradient(105deg,#635bff,#8154e9);box-shadow:0 10px 24px rgba(99,91,255,.22);font-size:15px;font-weight:700;letter-spacing:.1px;transition:transform .2s ease,box-shadow .2s ease}
+.auth-form-wrap .full-btn:hover{transform:translateY(-1px);box-shadow:0 14px 28px rgba(99,91,255,.28)}
+.auth-form-wrap .text-link{display:inline-block;margin-top:13px;color:#635bff;font-size:13px;font-weight:700;text-decoration:none}
+.auth-form-wrap .auth-switch{margin:25px 0 0;color:#7b8798;font-size:13px}.auth-form-wrap .auth-switch a{color:#635bff}
+.auth-form-wrap .security-note{margin-top:25px;color:#8a96a7;font-size:11px}.auth-form-wrap .security-note svg{color:#439c83}
+.auth-form-wrap .notice{border-radius:10px}.auth-form-wrap .notice-error{background:#fff0f0;color:#a33d4b}.auth-form-wrap .notice-success{background:#ecfaf4;color:#287b60}
+@media(max-width:760px){.auth-layout{min-height:100svh}.auth-main{min-height:100svh;padding:clamp(24px,7vh,62px) 22px;justify-content:center;gap:clamp(28px,5vh,42px)}.auth-mobile-brand{width:min(100%,440px)}.auth-mobile-brand .brand img{width:178px}.auth-form-wrap{width:min(100%,440px);padding:clamp(24px,6vw,34px);border-radius:21px}.auth-form-wrap h2{font-size:clamp(29px,8vw,36px)}.auth-form-wrap>.subtle{font-size:14px;margin-bottom:24px}.auth-form-wrap .field input,.auth-form-wrap .field select{min-height:52px}.auth-form-wrap .full-btn{min-height:54px}}
+@media(max-height:760px) and (max-width:760px){.auth-main{padding-top:22px;padding-bottom:22px;gap:20px}.auth-mobile-brand .brand img{width:150px}.auth-form-wrap{padding:23px}.auth-form-wrap>.subtle{margin-bottom:17px}.auth-form-wrap .form-stack{gap:13px}.auth-form-wrap .security-note{margin-top:17px}}
