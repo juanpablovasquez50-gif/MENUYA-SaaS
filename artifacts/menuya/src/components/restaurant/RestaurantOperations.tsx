@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Plus, Users, Utensils, RefreshCw, UserPlus, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import './restaurant-operations.css';
@@ -31,7 +31,7 @@ export default function RestaurantOperations({businessId}:{businessId:string}) {
   },[businessId]);
   useEffect(()=>{void refresh();},[refresh]);
 
-  const addTable=async(e:React.FormEvent)=>{
+  const addTable=async(e:FormEvent)=>{
     e.preventDefault();if(!name.trim())return;
     setBusy(true);setError('');setNotice('');
     const {error}=await supabase.from('restaurant_tables').insert({business_id:businessId,name:name.trim(),capacity:Math.max(1,Math.min(50,Number(capacity)||4))});
