@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
 
 :root {
   --ink: #182331; --ink-soft: #465568; --muted: #68788b; --paper: #f5f7fb; --paper-deep: #eaf0f7;
@@ -1260,3 +1260,11 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .studio-feature-float div{display:grid;gap:3px}.studio-feature-float small{font-size:8px;letter-spacing:.12em;color:#7a7f90}.studio-feature-float b{font-size:11px}
 @media(max-width:800px){.studio-feature-landing{grid-template-columns:1fr;padding:64px 22px;gap:28px}.studio-feature-copy{max-width:650px}.studio-feature-visual{max-width:650px;width:100%;margin:0 auto}.studio-feature-window{transform:none}}
 @media(max-width:480px){.studio-feature-landing{padding:52px 17px}.studio-feature-copy h2{font-size:38px}.studio-feature-copy>p{font-size:14px}.studio-feature-copy li{font-size:12px;align-items:flex-start}.studio-feature-app{grid-template-columns:74px minmax(0,1fr);min-height:290px}.studio-feature-app>aside{padding:13px 9px}.studio-feature-app>main{padding:11px}.studio-feature-cover{min-height:120px;padding:13px}.studio-feature-categories{gap:4px}.studio-feature-categories i{width:42px}.studio-feature-products article>span{height:42px}.studio-feature-float{right:0;padding:9px 11px}.studio-feature-float b{font-size:10px}}
+
+/* AtomLabs credit in CLICKOK footer */
+.clickok-world .atomlabs-credit{display:flex;flex-direction:column;align-items:flex-start;gap:5px;color:#182331}
+.clickok-world .atomlabs-credit>span{font:700 8px 'Space Mono',monospace;letter-spacing:.16em;color:#72788a}
+.clickok-world .atomlabs-credit>b{display:flex;align-items:center;gap:7px;font-family:'Archivo Black',sans-serif;font-size:20px;letter-spacing:-.045em;line-height:1}
+.clickok-world .atomlabs-credit>b svg{flex:0 0 auto}
+.clickok-world .atomlabs-credit sup{font:700 9px 'DM Sans',sans-serif;align-self:flex-start;margin-left:-5px}
+@media(max-width:620px){.clickok-world .atomlabs-credit{margin-left:0}.clickok-world .atomlabs-credit>b{font-size:18px}}
