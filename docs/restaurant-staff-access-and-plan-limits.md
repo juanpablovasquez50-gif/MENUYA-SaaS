@@ -23,10 +23,10 @@ Los cupos incluidos se determinan por el plan vigente del comercio mediante la t
 - Se añadió el rol `waiter` a `business_memberships`.
 - Se creó `restaurant_plan_limits` con RLS habilitado.
 - Se agregó lectura de membresías al propietario/administrador del mismo comercio.
-- Se añadió un trigger que impide activar/invitar meseros en sectores distintos de restaurante y bloquea cupos excedidos o planes sin límite configurado.
+- Se añadió un trigger que impide activar/invitar meseros en sectores distintos de restaurante y bloquea cupos excedidos o planes sin límite configurado.\n- Se desplegó la Edge Function `invite-restaurant-waiter`, que valida sesión, rol del propietario/administrador, sector, plan y cupo antes de enviar la invitación.
 - La migración quedó versionada en `artifacts/menuya/supabase/migrations/20261108210024_restaurant_waiter_roles_and_plan_limits.sql`.
 
-La verificación confirmó la tabla, RLS, restricción de rol y trigger. Todavía no hay cupos cargados en la matriz, así que el sistema no permitirá altas de meseros hasta configurar los valores aprobados.
+La verificación confirmó la tabla, RLS, restricción de rol y trigger; la Edge Function quedó activa con JWT obligatorio. Todavía no hay cupos cargados en la matriz y la interfaz no está conectada, así que aún no se pueden invitar meseros desde el panel.
 
 ## Implementación técnica pendiente
 
