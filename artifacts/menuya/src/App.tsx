@@ -554,7 +554,7 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
   const [cart, setCart] = useState<Record<string, number>>({});
   const [cartChoices, setCartChoices] = useState<Record<string, { variante?: ProductChoice; complementos: ProductChoice[] }>>({});
   const [configuring, setConfiguring] = useState<Product | null>(null);
-  const [variantId, setVariantId] = useState('');
+  const [variantQuantities, setVariantQuantities] = useState<Record<string, number>>({});
   const [addonQuantities, setAddonQuantities] = useState<Record<string, number>>({});
   const [checkout, setCheckout] = useState(false);
   const [delivery, setDelivery] = useState<'domicilio' | 'recoger'>('domicilio');
@@ -571,13 +571,13 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
   const settings = data.settings.find(s => s.business_id === business.id);
   const cats = data.categories.filter(c => c.business_id === business.id && c.activo).sort((a, b) => a.orden - b.orden);
   const products = data.products.filter(p => p.business_id === business.id && p.activo && p.disponible && (category === 'todos' || p.category_id === category) && `${p.nombre} ${p.descripcion}`.toLowerCase().includes(search.toLowerCase()));
-  const cartItems = Object.entries(cart).map(([id, cantidad]) => ({ p: data.products.find(p => p.id === id)!, cantidad, variante: cartChoices[id]?.variante, complementos: cartChoices[id]?.complementos || [] })).filter(x => x.p);
+  const cartItems = Object.entries(cart).map(([key, cantidad]) => { const [id, variantKey] = key.split('::'); return { key, p: data.products.find(p => p.id === id)!, cantidad, variante: cartChoices[key]?.variante, complementos: cartChoices[key]?.complementos || [] }; }).filter(x => x.p);
   const itemUnitPrice = (item: (typeof cartItems)[number]) => item.p.precio + (item.variante?.precio_extra || 0) + item.complementos.reduce((sum, choice) => sum + choice.precio_extra, 0);
   const subtotal = cartItems.reduce((a, x) => a + itemUnitPrice(x) * x.cantidad, 0);
   const openProduct = (product: Product) => {
     void supabase.from('catalog_events').insert({ business_id: business.id, product_id: product.id, event_type: 'inquiry' }).then(({ error }) => { if (error) console.warn('No se pudo registrar la consulta del producto:', error.message); });
     setConfiguring(product);
-    setVariantId(product.variantes?.[0]?.id || '');
+    setVariantQuantities({});
     setAddonQuantities({});
   };
   const addItem = (product: Product) => {
@@ -588,10 +588,21 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
     openProduct(product);
   };
   const confirmConfiguredItem = (product: Product) => {
-    const variant = product.variantes?.find(choice => choice.id === variantId);
+    const selectedVariants = (product.variantes || []).filter(choice => (variantQuantities[choice.id] || 0) > 0);
     const complementos = (product.complementos || []).flatMap(choice => Array.from({ length: addonQuantities[choice.id] || 0 }, () => choice));
-    setCart(current => ({ ...current, [product.id]: (current[product.id] || 0) + 1 }));
-    setCartChoices(current => ({ ...current, [product.id]: { variante: variant, complementos } }));
+    if (product.variantes?.length && !selectedVariants.length) { setError('Selecciona al menos una unidad de una variante.'); return; }
+    if (selectedVariants.length) {
+      for (const variant of selectedVariants) {
+        const key = `${product.id}::${variant.id}`;
+        const quantity = variantQuantities[variant.id] || 0;
+        setCart(current => ({ ...current, [key]: (current[key] || 0) + quantity }));
+        setCartChoices(current => ({ ...current, [key]: { variante: variant, complementos } }));
+      }
+    } else {
+      setCart(current => ({ ...current, [product.id]: (current[product.id] || 0) + 1 }));
+      setCartChoices(current => ({ ...current, [product.id]: { complementos } }));
+    }
+    setError('');
     setConfiguring(null);
   };
   const setQty = (id: string, amount: number) => setCart(c => { const next = { ...c }; if (amount <= 0) delete next[id]; else next[id] = amount; return next; });
@@ -646,15 +657,15 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
     {configuring && <Modal title={`Personaliza ${configuring.nombre}`} close={() => setConfiguring(null)}>
       <div className="product-config">
         {configuring.imagen && <img className="product-detail-image" src={configuring.imagen} alt={configuring.nombre}/>}<p className="subtle">{configuring.descripcion}</p><div className="product-detail-price">{money(configuring.precio)}</div>
-        {!!configuring.variantes?.length && <section className="field"><span>Variantes</span><div data-testid="product-additions-grid" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(125px,1fr))',gap:10,marginTop:8}}>{configuring.variantes.map(choice => { const selected = variantId===choice.id; return <div key={choice.id} style={{display:'flex',flexDirection:'column',alignItems:'stretch',gap:9,padding:12,borderRadius:12,border:selected?'2px solid var(--primary, #2563eb)':'1px solid var(--border, #ddd)',background:selected?'var(--surface-muted, #f1f5f9)':'var(--surface, #fff)'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}><b>{choice.nombre}</b><button type="button" aria-label={selected?`Quitar ${choice.nombre}`:`Agregar ${choice.nombre}`} aria-pressed={selected} onClick={() => setVariantId(current => current===choice.id ? '' : choice.id)} data-testid={`addition-choice-${choice.id}`} style={{width:34,height:34,flexShrink:0,border:0,borderRadius:999,background:selected?'var(--primary, #2563eb)':'var(--surface-strong, #e5e7eb)',color:selected?'white':'inherit',fontSize:22,fontWeight:700,lineHeight:1,cursor:'pointer'}}>{selected?'−':'+'}</button></div><small>{choice.precio_extra ? `+${money(choice.precio_extra)}` : 'Incluido'}</small></div>})}</div></section>}
+        {!!configuring.variantes?.length && <section className="field"><span>Variantes</span><div data-testid="product-additions-grid" className="product-extras-compact">{configuring.variantes.map(choice => { const quantity = variantQuantities[choice.id] || 0; const selected = quantity > 0; return <div key={choice.id} className={`product-extra-compact ${selected?'is-selected':''}`}><div className="product-extra-copy"><b>{choice.nombre}</b><small>{choice.precio_extra ? `+${money(choice.precio_extra)} c/u` : 'Precio base'}</small>{selected && <small className="product-extra-subtotal">Subtotal {money((configuring.precio + choice.precio_extra) * quantity)}</small>}</div><div className="product-extra-controls"><button type="button" aria-label={`Quitar una unidad de ${choice.nombre}`} disabled={!selected} onClick={() => setVariantQuantities(current => ({...current,[choice.id]:Math.max(0,(current[choice.id]||0)-1)}))} data-testid={`button-variant-minus-${choice.id}`}>−</button><b aria-live="polite">{quantity}</b><button type="button" aria-label={`Agregar una unidad de ${choice.nombre}`} onClick={() => setVariantQuantities(current => ({...current,[choice.id]:(current[choice.id]||0)+1}))} data-testid={`button-variant-plus-${choice.id}`}>+</button></div></div>})}</div></section>}}
         {!!configuring.complementos?.length && <fieldset className="choice-list"><legend>{isFoodBusiness(business.tipo) ? 'Adiciones y extras' : 'Accesorios y complementos'}</legend><div data-testid="product-extras-grid" className="product-extras-compact">{configuring.complementos.map(choice => { const quantity = addonQuantities[choice.id] || 0; const selected = quantity > 0; return <div key={choice.id} className={`product-extra-compact ${selected?'is-selected':''}`}><div className="product-extra-copy"><b>{choice.nombre}</b><small>{choice.precio_extra ? `+${money(choice.precio_extra)} c/u` : 'Incluido'}</small>{selected && <small className="product-extra-subtotal">Subtotal {money(choice.precio_extra * quantity)}</small>}</div><div className="product-extra-controls"><button type="button" aria-label={`Quitar una unidad de ${choice.nombre}`} disabled={!selected} onClick={() => setAddonQuantities(current => ({...current,[choice.id]:Math.max(0,(current[choice.id]||0)-1)}))} data-testid={`button-addon-minus-${choice.id}`}>−</button><b aria-live="polite">{quantity}</b><button type="button" aria-label={`Agregar una unidad de ${choice.nombre}`} onClick={() => setAddonQuantities(current => ({...current,[choice.id]:(current[choice.id]||0)+1}))} data-testid={`button-addon-plus-${choice.id}`}>+</button></div></div>})}</div></fieldset>}
         {!configuring.variantes?.length && !configuring.complementos?.length && <div className="notice notice-info">Este producto no tiene opciones adicionales.</div>}
-        <div className="checkout-total"><span>Precio unitario</span><b>{money(configuring.precio + (configuring.variantes?.find(choice => choice.id === variantId)?.precio_extra || 0) + (configuring.complementos || []).reduce((sum, choice) => sum + choice.precio_extra * (addonQuantities[choice.id] || 0), 0))}</b></div>
+        <div className="checkout-total"><span>Precio unitario</span><b>{money((configuring.variantes?.length ? (configuring.variantes || []).reduce((sum, choice) => sum + (configuring.precio + choice.precio_extra) * (variantQuantities[choice.id] || 0), 0) : configuring.precio) + (configuring.complementos || []).reduce((sum, choice) => sum + choice.precio_extra * (addonQuantities[choice.id] || 0), 0) * Math.max(1, Object.values(variantQuantities).reduce((sum, quantity) => sum + quantity, 0)))}</b></div>
         <div className="modal-actions"><Button kind="ghost" onClick={() => setConfiguring(null)}>Cancelar</Button><Button onClick={() => confirmConfiguredItem(configuring)} data-testid="button-add-configured-product">Agregar al carrito <Plus size={15} /></Button></div>
       </div>
     </Modal>}
     {checkout && <Modal title="Tu pedido" close={() => setCheckout(false)}><form className="checkout-form" onSubmit={submitOrder}>
-      <div className="checkout-items">{cartItems.map(x => <div key={x.p.id}><span><b>{x.cantidad} × {x.p.nombre}</b><small>{[x.variante?.nombre, ...x.complementos.map(choice => `+ ${choice.nombre}`)].filter(Boolean).join(' · ') || 'Sin opciones'} · {money(itemUnitPrice(x))} c/u</small></span><div className="quantity-control"><button type="button" onClick={() => setQty(x.p.id, x.cantidad - 1)}>−</button><b>{x.cantidad}</b><button type="button" onClick={() => addItem(x.p)}>+</button></div><strong>{money(itemUnitPrice(x) * x.cantidad)}</strong></div>)}</div>
+      <div className="checkout-items">{cartItems.map(x => <div key={x.key}><span><b>{x.cantidad} × {x.p.nombre}</b><small>{[x.variante?.nombre, ...x.complementos.map(choice => `+ ${choice.nombre}`)].filter(Boolean).join(' · ') || 'Sin opciones'} · {money(itemUnitPrice(x))} c/u</small></span><div className="quantity-control"><button type="button" onClick={() => setQty(x.key, x.cantidad - 1)}>−</button><b>{x.cantidad}</b><button type="button" onClick={() => setQty(x.key, x.cantidad + 1)}>+</button></div><strong>{money(itemUnitPrice(x) * x.cantidad)}</strong></div>)}</div>
       <div className="checkout-total"><span>Total</span><b>{money(subtotal)}</b></div>{error && <div className="notice notice-error">{error}</div>}
       <div className="form-grid">
         <label className="field"><span>Tu nombre *</span><input required name="nombre" autoComplete="name" data-testid="input-checkout-name" /></label>
