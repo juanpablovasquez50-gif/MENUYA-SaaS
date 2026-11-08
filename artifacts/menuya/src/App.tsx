@@ -341,10 +341,8 @@ function MerchantPage({ path, data, business, update }: { path: string; data: De
       const time = new Date(o.created_at).getTime();
       return time >= previousStart && time < currentStart;
     });
-    const currentPosSales = posSales.filter(sale => new Date(sale.created_at).getTime() >= currentStart);
-    const previousPosSales = posSales.filter(sale => { const time = new Date(sale.created_at).getTime(); return time >= previousStart && time < currentStart; });
-    const currentSales = currentOrders.reduce((sum, order) => sum + order.total, 0) + currentPosSales.reduce((sum, sale) => sum + sale.total, 0);
-    const previousSales = previousOrders.reduce((sum, order) => sum + order.total, 0) + previousPosSales.reduce((sum, sale) => sum + sale.total, 0);
+    const currentSales = currentOrders.reduce((sum, order) => sum + order.total, 0);
+    const previousSales = previousOrders.reduce((sum, order) => sum + order.total, 0);
     const currentCustomers = new Set(currentOrders.map(order => order.customer_id).filter(Boolean)).size;
     const previousCustomers = new Set(previousOrders.map(order => order.customer_id).filter(Boolean)).size;
     const variation = (current: number, previous: number) => previous > 0
@@ -354,7 +352,7 @@ function MerchantPage({ path, data, business, update }: { path: string; data: De
       {business.estado !== 'activo' && <div className="notice notice-warn"><Clock3 size={18} /><span><b>Tu tienda está {statusLabel[business.estado]?.toLowerCase()}.</b> {business.estado === 'pendiente' ? 'La tienda no será visible al público hasta su aprobación.' : 'Contacta al equipo de CLICKOK si necesitas ayuda.'}</span></div>}
       <div className="metrics-grid">
         <Metric label="Pedidos recibidos" value={String(currentOrders.length)} note="Últimos 30 días" icon={ShoppingCart} trend={variation(currentOrders.length, previousOrders.length)} />
-        <Metric label="Ventas registradas" value={money(currentSales)} note="Últimos 30 días · pedidos y ventas POS" icon={TrendingUp} trend={variation(currentSales, previousSales)} />
+        <Metric label="Ventas registradas" value={money(currentSales)} note="" icon={TrendingUp} trend={variation(currentSales, previousSales)} />
         <Metric label="Productos publicados" value={String(products.filter(p => p.activo).length)} note={productLimit >= 999999 ? 'Sin límite de productos' : `de ${productLimit} disponibles`} icon={Package} />
         <Metric label="Clientes activos" value={String(currentCustomers)} note="Con pedidos en los últimos 30 días" icon={Users} trend={variation(currentCustomers, previousCustomers)} />
       </div>
@@ -739,7 +737,6 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
   const business = membership?.businesses ?? undefined;
   const [location] = useLocation();
   const [remoteData, setRemoteData] = useState<DemoData | null>(null);
-  const [posSales, setPosSales] = useState<{total:number;created_at:string;order_id:string|null}[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [savingError, setSavingError] = useState('');
@@ -747,7 +744,7 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
   const loadRemoteData = async () => {
     if (!business?.id) return;
     setLoading(true); setLoadError('');
-    const [categoryResult, productResult, productOptionsResult, productOptionValuesResult, settingsResult, subscriptionResult, planResult, orderResult, customerResult, catalogEventResult, posSalesResult] = await Promise.all([
+    const [categoryResult, productResult, productOptionsResult, productOptionValuesResult, settingsResult, subscriptionResult, planResult, orderResult, customerResult, catalogEventResult] = await Promise.all([
       supabase.from('categories').select('id,business_id,name,sort_order,is_active').eq('business_id',business.id).order('sort_order'),
       supabase.from('products').select('id,business_id,category_id,name,description,price,previous_price,image_url,is_active,is_available,is_featured,stock').eq('business_id',business.id).order('created_at',{ascending:false}),
       supabase.from('product_options').select('id,business_id,product_id,name,option_type,is_required,sort_order').eq('business_id',business.id).order('sort_order'),
@@ -758,11 +755,9 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
       supabase.from('orders').select('id,business_id,customer_id,order_number,status,fulfillment_type,delivery_address,notes,payment_method,total,created_at,order_items!order_items_order_id_fkey(product_id,product_name,unit_price,quantity,variant_name,addons_snapshot)').eq('business_id',business.id).order('created_at',{ascending:false}),
       supabase.from('customers').select('id,business_id,name,phone,total_orders,total_spent,last_order_at').eq('business_id',business.id).order('last_order_at',{ascending:false}),
       supabase.from('catalog_events').select('id,business_id,product_id,event_type,created_at').eq('business_id',business.id).gte('created_at',new Date(Date.now()-30*86400000).toISOString()).order('created_at',{ascending:false}),
-      supabase.from('sales').select('total,created_at,order_id').eq('business_id',business.id).is('order_id',null).order('created_at',{ascending:false}),
     ]);
-    const firstError = categoryResult.error || productResult.error || productOptionsResult.error || productOptionValuesResult.error || settingsResult.error || subscriptionResult.error || planResult.error || orderResult.error || customerResult.error || catalogEventResult.error || posSalesResult.error;
+    const firstError = categoryResult.error || productResult.error || productOptionsResult.error || productOptionValuesResult.error || settingsResult.error || subscriptionResult.error || planResult.error || orderResult.error || customerResult.error || catalogEventResult.error;
     if (firstError) { setLoadError(firstError.message); setLoading(false); return; }
-    setPosSales((posSalesResult.data || []).map(sale => ({total:Number(sale.total || 0),created_at:sale.created_at,order_id:sale.order_id}))); 
     const profileName = context.profile?.full_name || String(context.user.user_metadata?.full_name || context.user.email || 'Comercio');
     const biz = {
       id: business.id, owner_id: context.user.id, nombre: business.name, slug: business.slug,
