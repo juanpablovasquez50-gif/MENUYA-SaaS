@@ -732,6 +732,51 @@ function MerchantDashboardSkeleton() {
   </div>;
 }
 
+const sectorChoices = [
+  { value: 'restaurante', label: 'Restaurante', detail: 'Menús, pedidos y operación gastronómica', icon: '🍽️' },
+  { value: 'veterinaria', label: 'Veterinaria', detail: 'Servicios, pacientes y productos para mascotas', icon: '🐾' },
+  { value: 'tienda de ropa', label: 'Tienda de ropa', detail: 'Prendas, tallas, colores y colecciones', icon: '👕' },
+  { value: 'tecnologia', label: 'Tecnología', detail: 'Equipos, referencias y accesorios', icon: '💻' },
+  { value: 'minimercado', label: 'Minimercado', detail: 'Productos de consumo e inventario', icon: '🛒' },
+  { value: 'servicios', label: 'Servicios', detail: 'Agenda y servicios de tu negocio', icon: '🧰' },
+  { value: 'otro', label: 'Otro tipo de negocio', detail: 'Configura tu operación con módulos generales', icon: '✳️' },
+] as const;
+
+function BusinessSectorOnboarding({ businessId, onComplete }: { businessId: string; onComplete: () => void }) {
+  const [selected, setSelected] = useState<string>('restaurante');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const submit = async () => {
+    if (busy) return;
+    setBusy(true); setError('');
+    try {
+      const { error: rpcError } = await supabase.rpc('configure_business_sector', {
+        p_business_id: businessId,
+        p_business_type: selected,
+      });
+      if (rpcError) throw rpcError;
+      onComplete();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No fue posible configurar el sector. Inténtalo nuevamente.');
+    } finally { setBusy(false); }
+  };
+  return <main className="sector-onboarding">
+    <div className="sector-onboarding-card">
+      <span className="eyebrow">CONFIGUREMOS TU ESPACIO</span>
+      <h1>¿Qué tipo de negocio tienes?</h1>
+      <p>Adaptaremos tu panel y activaremos las herramientas que necesitas. Podrás seguir usando los módulos comunes de CLICKOK.</p>
+      <div className="sector-choice-grid">
+        {sectorChoices.map(choice => <button type="button" key={choice.value} className={selected === choice.value ? 'sector-choice selected' : 'sector-choice'} onClick={() => setSelected(choice.value)} aria-pressed={selected === choice.value}>
+          <span className="sector-choice-icon">{choice.icon}</span><span className="sector-choice-copy"><b>{choice.label}</b><small>{choice.detail}</small></span>{selected === choice.value && <CheckCircle2 size={19}/>}
+        </button>)}
+      </div>
+      {error && <div className="notice notice-error" role="alert">{error}</div>}
+      <Button className="full-btn" disabled={busy} onClick={() => void submit()}>{busy ? 'Preparando tu espacio…' : 'Continuar a mi panel'} <ArrowRight size={16}/></Button>
+      <small className="sector-onboarding-foot">Puedes cambiar el sector más adelante desde la configuración del negocio.</small>
+    </div>
+  </main>;
+}
+
 function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; onLogout: () => void }) {
   const membership = context.memberships[0];
   const business = membership?.businesses ?? undefined;
@@ -740,6 +785,8 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [savingError, setSavingError] = useState('');
+  const [sectorConfigured, setSectorConfigured] = useState<boolean | null>(null);
+  const [sectorCheckError, setSectorCheckError] = useState('');
   const saveQueueRef = React.useRef<Promise<void>>(Promise.resolve());
   const loadRemoteData = async () => {
     if (!business?.id) return;
@@ -800,6 +847,18 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
     setRemoteData(data); setLoading(false);
   };
   useEffect(() => { void loadRemoteData(); }, [business?.id]);
+  useEffect(() => {
+    let active = true;
+    if (!business?.id) return;
+    supabase.from('businesses').select('sector_configured_at').eq('id', business.id).maybeSingle()
+      .then(({ data, error }) => {
+        if (!active) return;
+        if (error) { setSectorCheckError(error.message); setSectorConfigured(false); return; }
+        setSectorConfigured(Boolean(data?.sector_configured_at));
+      });
+    return () => { active = false; };
+  }, [business?.id]);
+
   useEffect(() => {
     if (!business?.id) return;
     const channel = supabase.channel(`merchant-dashboard-${business.id}`)
@@ -934,6 +993,9 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
   };
   if (!business) return <div className="auth-layout"><main className="auth-main"><div className="auth-form-wrap"><h2>{context.isPlatformAdmin ? 'Acceso de plataforma' : 'Cuenta autenticada'}</h2><div className="notice notice-error">No encontramos un comercio vinculado a esta cuenta. No se crearán datos de demostración.</div><Button className="full-btn" onClick={onLogout}>Cerrar sesión <LogOut size={16}/></Button></div></main></div>;
   if (loading) return <MerchantDashboardSkeleton />;
+  if (sectorConfigured === null) return <MerchantDashboardSkeleton />;
+  if (sectorCheckError) return <div className="auth-form-wrap"><div className="notice notice-error">No fue posible verificar la configuración del negocio: {sectorCheckError}</div><Button onClick={() => window.location.reload()}>Reintentar</Button></div>;
+  if (sectorConfigured === false) return <BusinessSectorOnboarding businessId={business.id} onComplete={() => { setSectorConfigured(true); void loadRemoteData(); }} />;
   if (loadError || !remoteData) return <div className="auth-form-wrap"><div className="notice notice-error">{loadError || 'No fue posible cargar el comercio.'}</div><Button onClick={() => void loadRemoteData()}>Reintentar</Button></div>;
   const session: Session = {userId:context.user.id,role:'owner'};
   return <AppShell data={remoteData} session={session} update={updateRemote} logout={onLogout} business={remoteData.businesses[0]} activePath={location}>
