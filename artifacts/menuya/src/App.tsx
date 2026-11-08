@@ -680,7 +680,7 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
     const notes=String(form.get('service_notes')||'').trim();
     if(!customerName){setError('Escribe tu nombre para solicitar el servicio.');setServiceBusy(false);return;}
     try {
-      const {error:insertError}=await supabase.from('service_orders').insert({business_id:business.id,service_id:serviceRequest.id,service_name:serviceRequest.name,quantity:1,unit_price:serviceRequest.price,total:serviceRequest.price,customer_name:customerName,scheduled_at:scheduled?new Date(scheduled).toISOString():null,notes:notes||null,status:'pending'});
+      const {error:insertError}=await supabase.rpc('storefront_request_service_order',{p_business_id:business.id,p_service_id:serviceRequest.id,p_customer_name:customerName,p_scheduled_at:scheduled?new Date(scheduled).toISOString():null,p_notes:notes||null});
       if(insertError)throw insertError;
       setServiceRequest(null);setServiceSuccess(true);
     } catch(err) { setError(err instanceof Error?err.message:'No fue posible enviar la solicitud.'); }
