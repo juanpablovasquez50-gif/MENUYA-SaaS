@@ -630,6 +630,24 @@ function PlatformAdminLogin({ onLogin }: { onLogin: (email: string, password: st
 
 function PlatformAdminPage({ context, onLogout }: { context: MenuyaAuthContext; onLogout: () => void }) { return <PlatformAdminCenter context={context} onLogout={onLogout} />; }
 
+function MerchantDashboardSkeleton() {
+  return <div className="merchant-skeleton" aria-label="Cargando panel del negocio" role="status">
+    <aside className="merchant-skeleton-side">
+      <div className="ms-brand"><i/><b/></div>
+      <div className="ms-side-label"/>
+      {Array.from({length:7},(_,i)=><div className={`ms-nav ${i===0?'active':''}`} key={i}><i/><span/></div>)}
+      <div className="ms-side-bottom"><i/><span/></div>
+    </aside>
+    <main className="merchant-skeleton-main">
+      <header className="ms-topbar"><div><i/><b/></div><div className="ms-user"><i/><span/></div></header>
+      <section className="ms-heading"><div className="ms-line wide"/><div className="ms-line medium"/></section>
+      <section className="ms-stats">{Array.from({length:4},(_,i)=><div className="ms-card stat" key={i}><i/><b/><span/></div>)}</section>
+      <section className="ms-content-grid"><div className="ms-card ms-chart"><div className="ms-card-head"><b/><i/></div><div className="ms-chart-bars">{Array.from({length:9},(_,i)=><i key={i}/>)}</div></div><div className="ms-card ms-activity"><div className="ms-card-head"><b/></div>{Array.from({length:4},(_,i)=><div className="ms-activity-row" key={i}><i/><span/><b/></div>)}</div></section>
+      <div className="ms-card ms-table"><div className="ms-card-head"><b/><i/></div>{Array.from({length:4},(_,i)=><div className="ms-table-row" key={i}><i/><span/><span/><b/></div>)}</div>
+    </main>
+  </div>;
+}
+
 function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; onLogout: () => void }) {
   const membership = context.memberships[0];
   const business = membership?.businesses ?? undefined;
@@ -804,7 +822,7 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
     });
   };
   if (!business) return <div className="auth-layout"><main className="auth-main"><div className="auth-form-wrap"><h2>{context.isPlatformAdmin ? 'Acceso de plataforma' : 'Cuenta autenticada'}</h2><div className="notice notice-error">No encontramos un comercio vinculado a esta cuenta. No se crearán datos de demostración.</div><Button className="full-btn" onClick={onLogout}>Cerrar sesión <LogOut size={16}/></Button></div></main></div>;
-  if (loading) return <div className="auth-loading"><span className="loader-line" />Cargando tu espacio de MENUYA...</div>;
+  if (loading) return <MerchantDashboardSkeleton />;
   if (loadError || !remoteData) return <div className="auth-form-wrap"><div className="notice notice-error">{loadError || 'No fue posible cargar el comercio.'}</div><Button onClick={() => void loadRemoteData()}>Reintentar</Button></div>;
   const session: Session = {userId:context.user.id,role:'owner'};
   return <AppShell data={remoteData} session={session} update={updateRemote} logout={onLogout} business={remoteData.businesses[0]} activePath={location}>
