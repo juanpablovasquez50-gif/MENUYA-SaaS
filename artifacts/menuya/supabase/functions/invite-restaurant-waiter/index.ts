@@ -57,11 +57,11 @@ Deno.serve(async (req: Request) => {
     return json({ error: "La gestión de meseros solo está disponible para restaurantes." }, 403);
   }
 
-  const { data: subscription, error: subscriptionError } = await adminClient
-    .from("subscriptions").select("plan_id").eq("business_id", businessId)
-    .eq("status", "active").or("ends_at.is.null,ends_at.gt.now()")
-    .order("created_at", { ascending: false }).limit(1).maybeSingle();
+  const { data: subscriptionRows, error: subscriptionError } = await adminClient
+    .from("subscriptions").select("plan_id,ends_at").eq("business_id", businessId)
+    .eq("status", "active").order("created_at", { ascending: false }).limit(10);
   if (subscriptionError) return json({ error: "No fue posible consultar el plan." }, 500);
+  const subscription = (subscriptionRows || []).find((item) => !item.ends_at || new Date(item.ends_at).getTime() > Date.now());
   if (!subscription) return json({ error: "El comercio no tiene un plan activo." }, 409);
 
   const { data: limitRow, error: limitError } = await adminClient
