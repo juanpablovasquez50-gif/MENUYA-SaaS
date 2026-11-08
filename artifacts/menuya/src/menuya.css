@@ -828,3 +828,22 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .product-extra-controls button:disabled{opacity:.35;cursor:not-allowed}
 .product-extra-controls b{min-width:15px;text-align:center;font-size:12px}
 @media(max-width:520px){.product-extras-compact{grid-template-columns:1fr}.product-extra-compact{padding:8px 9px}}
+
+
+/* Wompi promotional banner — landing page only */
+.wompi-promo {
+  position: relative; isolation: isolate; display: flex; align-items: center; justify-content: center;
+  gap: clamp(12px, 2.2vw, 28px); width: min(1160px, calc(100% - 64px)); min-height: 76px;
+  margin: 22px auto 0; padding: 15px 28px; overflow: hidden; border: 1px solid #00825a;
+  border-radius: 16px; background: linear-gradient(105deg, #b0f2ae 0%, #dfff61 100%); color: #2c2a29;
+}
+.wompi-promo::after { position: absolute; z-index: -1; top: -55px; right: 12%; width: 170px; height: 170px; border: 1px solid #00825a33; border-radius: 50%; content: ""; }
+.wompi-promo p { margin: 0; font-size: clamp(15px, 1.7vw, 20px); font-weight: 600; letter-spacing: -.45px; text-align: center; }
+.wompi-promo p strong { font-weight: 800; }
+.wompi-promo > img { display: block; width: 104px; max-height: 36px; object-fit: contain; flex: 0 0 auto; }
+.wompi-promo-mark { display: flex; gap: 4px; align-items: center; }
+.wompi-promo-dot { display: block; width: 8px; height: 25px; border-radius: 8px; background: #00825a; transform: rotate(24deg); }
+.wompi-promo-dot:nth-child(2) { height: 32px; background: #2c2a29; }
+.wompi-promo-dot:nth-child(3) { background: #00825a; }
+@media (max-width: 800px) { .wompi-promo { width: calc(100% - 46px); min-height: 68px; margin-top: 17px; padding: 13px 18px; gap: 14px; } .wompi-promo > img { width: 88px; max-height: 31px; } }
+@media (max-width: 560px) { .wompi-promo { width: calc(100% - 36px); min-height: 64px; margin-top: 13px; padding: 11px 12px; gap: 10px; border-radius: 12px; } .wompi-promo p { font-size: 13px; line-height: 1.25; letter-spacing: -.25px; } .wompi-promo > img { width: 72px; max-height: 27px; } .wompi-promo-mark { gap: 3px; } .wompi-promo-dot { width: 6px; height: 20px; } .wompi-promo-dot:nth-child(2) { height: 25px; } }
