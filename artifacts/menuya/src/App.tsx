@@ -25,6 +25,8 @@ type Session = { userId: string; role: 'admin' | 'owner' } | null;
 type FormField = { name: string; label: string; type?: string; value?: string | number | boolean; options?: string[]; required?: boolean };
 type CartLine = { key: string; productId: string; cantidad: number; variante?: ProductChoice; complementos: ProductChoice[] };
 const choiceText = (choices: ProductChoice[] = []) => choices.map(choice => `${choice.nombre}|${choice.precio_extra}`).join('\n');
+const isFoodBusiness = (type: string) => /restaurante|panader[ií]a|cafeter[ií]a|comida|reposter[ií]a|pasteler[ií]a|bar\b/i.test(type.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase());
+const optionLabelForBusiness = (type: string) => { const t=type.toLowerCase(); if(/ropa|calzado|zapater|moda/.test(t)) return 'Tallas y colores'; if(/tecnolog|electr[oó]nic|comput/.test(t)) return 'Modelos y especificaciones'; if(/barber|belleza|peluquer/.test(t)) return 'Servicios y modalidades'; return 'Variantes y opciones'; };
 const parseChoices = (value: string | boolean | undefined) => String(value || '').split('\n').map(row => row.trim()).filter(Boolean).map(row => {
   const [nombre, price = '0'] = row.split('|');
   return { id: repository.id(), nombre: nombre.trim(), precio_extra: Number(price.replace(/[^\d.-]/g, '')) || 0 };
@@ -251,6 +253,8 @@ function FormModal({ title, fields, close, submit, submitText = 'Guardar', busin
 }
 
 function MerchantPage({ path, data, business, update }: { path: string; data: DemoData; business: Business; update: (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => void }) {
+  const foodBusiness = isFoodBusiness(business.tipo);
+  const variantLabel = optionLabelForBusiness(business.tipo);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('todos');
   const [categoryFilter, setCategoryFilter] = useState('todos');
@@ -297,11 +301,11 @@ function MerchantPage({ path, data, business, update }: { path: string; data: De
     openModal(initial ? 'Editar producto' : 'Nuevo producto', [
     { name: 'nombre', label: 'Nombre', value: initial?.nombre, required: true }, { name: 'precio', label: 'Precio (COP)', type: 'number', value: initial?.precio, required: true },
     { name: 'descripcion', label: 'Descripción', type: 'textarea', value: initial?.descripcion }, { name: 'imagen', label: 'Fotografía del producto', type: 'image', value: initial?.imagen || '' }, { name: 'category_id', label: 'Categoría', value: initial?.category_id || cats[0]?.id, options: cats.map(c => c.id) },
-    { name: 'variantes', label: 'Variantes (una por línea: Nombre|recargo)', type: 'textarea', value: choiceText(initial?.variantes) }, { name: 'complementos', label: 'Complementos (una por línea: Nombre|recargo)', type: 'textarea', value: choiceText(initial?.complementos) },
+    { name: 'variantes', label: `${variantLabel} (una por línea: Nombre|recargo)`, type: 'textarea', value: choiceText(initial?.variantes) }, ...(foodBusiness ? [{ name: 'complementos', label: 'Adiciones y extras (una por línea: Nombre|recargo)', type: 'textarea', value: choiceText(initial?.complementos) }] : []),
     { name: 'precio_anterior', label: 'Precio anterior (opcional)', type: 'number', value: initial?.precio_anterior || '' }, { name: 'stock', label: 'Stock', type: 'number', value: initial?.stock || 0 },
     { name: 'disponible', label: 'Disponible', type: 'checkbox', value: initial?.disponible ?? true }, { name: 'destacado', label: 'Destacado', type: 'checkbox', value: initial?.destacado ?? false },
   ], v => {
-    const item: Product = { id: initial?.id || repository.id(), business_id: business.id, category_id: String(v.category_id || cats[0]?.id || ''), nombre: String(v.nombre), descripcion: String(v.descripcion || ''), precio: Number(v.precio), precio_anterior: Number(v.precio_anterior) || undefined, imagen: String(v.imagen || '') || undefined, activo: initial?.activo ?? true, disponible: Boolean(v.disponible), destacado: Boolean(v.destacado), stock: Number(v.stock), variantes: parseChoices(v.variantes), complementos: parseChoices(v.complementos) };
+    const item: Product = { id: initial?.id || repository.id(), business_id: business.id, category_id: String(v.category_id || cats[0]?.id || ''), nombre: String(v.nombre), descripcion: String(v.descripcion || ''), precio: Number(v.precio), precio_anterior: Number(v.precio_anterior) || undefined, imagen: String(v.imagen || '') || undefined, activo: initial?.activo ?? true, disponible: Boolean(v.disponible), destacado: Boolean(v.destacado), stock: Number(v.stock), variantes: parseChoices(v.variantes), complementos: foodBusiness ? parseChoices(v.complementos) : (initial?.complementos || []) };
     update(d => ({ ...d, products: initial ? d.products.map(p => p.id === initial.id ? item : p) : [...d.products, item] }), initial ? 'Producto actualizado' : 'Producto creado', item.nombre); setModal(null);
     });
   };
@@ -637,7 +641,7 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
       <div className="product-config">
         {configuring.imagen && <img className="product-detail-image" src={configuring.imagen} alt={configuring.nombre}/>}<p className="subtle">{configuring.descripcion}</p><div className="product-detail-price">{money(configuring.precio)}</div>
         {!!configuring.variantes?.length && <label className="field"><span>Elige una variante</span><select value={variantId} onChange={e => setVariantId(e.target.value)} data-testid="select-product-variant">{configuring.variantes.map(choice => <option key={choice.id} value={choice.id}>{choice.nombre}{choice.precio_extra ? ` · +${money(choice.precio_extra)}` : ''}</option>)}</select></label>}
-        {!!configuring.complementos?.length && <fieldset className="choice-list"><legend>Complementos</legend>{configuring.complementos.map(choice => <label key={choice.id}><input type="checkbox" checked={addonIds.includes(choice.id)} onChange={e => setAddonIds(current => e.target.checked ? [...current, choice.id] : current.filter(id => id !== choice.id))} data-testid={`checkbox-addon-${choice.id}`} /><span>{choice.nombre}</span><b>{choice.precio_extra ? `+${money(choice.precio_extra)}` : 'Incluido'}</b></label>)}</fieldset>}
+        {!!configuring.complementos?.length && <fieldset className="choice-list"><legend>{isFoodBusiness(business.tipo) ? 'Adiciones y extras' : 'Accesorios y complementos'}</legend>{configuring.complementos.map(choice => <label key={choice.id}><input type="checkbox" checked={addonIds.includes(choice.id)} onChange={e => setAddonIds(current => e.target.checked ? [...current, choice.id] : current.filter(id => id !== choice.id))} data-testid={`checkbox-addon-${choice.id}`} /><span>{choice.nombre}</span><b>{choice.precio_extra ? `+${money(choice.precio_extra)}` : 'Incluido'}</b></label>)}</fieldset>}
         {!configuring.variantes?.length && !configuring.complementos?.length && <div className="notice notice-info">Este producto no tiene opciones adicionales.</div>}
         <div className="checkout-total"><span>Precio unitario</span><b>{money(configuring.precio + (configuring.variantes?.find(choice => choice.id === variantId)?.precio_extra || 0) + (configuring.complementos || []).filter(choice => addonIds.includes(choice.id)).reduce((sum, choice) => sum + choice.precio_extra, 0))}</b></div>
         <div className="modal-actions"><Button kind="ghost" onClick={() => setConfiguring(null)}>Cancelar</Button><Button onClick={() => confirmConfiguredItem(configuring)} data-testid="button-add-configured-product">Agregar al carrito <Plus size={15} /></Button></div>
