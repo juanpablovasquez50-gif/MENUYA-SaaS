@@ -1,4 +1,6 @@
 -- Sector configuration foundation for the multi-industry SaaS.
+alter table public.businesses add column if not exists sector_configured_at timestamptz;
+update public.businesses set sector_configured_at = now() where sector_configured_at is null and nullif(pg_catalog.btrim(coalesce(business_type,'')), '') is not null;
 create table if not exists public.business_modules (
   business_id uuid not null references public.businesses(id) on delete cascade,
   module_key text not null,
@@ -74,7 +76,8 @@ begin
   end if;
 
   update public.businesses
-     set business_type = pg_catalog.btrim(p_business_type)
+     set business_type = pg_catalog.btrim(p_business_type),
+         sector_configured_at = now()
    where id = p_business_id;
 
   insert into public.business_modules(business_id,module_key,enabled,activation_source)
