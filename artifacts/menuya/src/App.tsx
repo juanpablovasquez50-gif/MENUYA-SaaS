@@ -108,8 +108,13 @@ function ImageUploadField({ field, value, businessId, onChange }: { field: FormF
     </div>
   </div>;
 }
+function ChoiceBuilderField({ field, onChange }: { field: FormField; onChange: (name: string, value: string) => void }) {
+  const [rows, setRows] = useState(() => String(field.value || '').split('\n').filter(Boolean).map(line => { const [nombre, precio='0'] = line.split('|'); return { nombre, precio }; }));
+  const sync = (next: { nombre: string; precio: string }[]) => { setRows(next); onChange(field.name, next.filter(x => x.nombre.trim()).map(x => `${x.nombre.trim()}|${x.precio || '0'}`).join('\n')); };
+  return <section className="choice-builder"><div className="choice-builder-head"><div><b>{field.label}</b><small>Agrega cada opción sin escribir formatos especiales.</small></div><span>{rows.length} opciones</span></div>{rows.map((row,index)=><div className="choice-builder-row" key={index}><input aria-label="Nombre de la opción" placeholder="Ej. Queso extra" value={row.nombre} onChange={e=>sync(rows.map((x,i)=>i===index?{...x,nombre:e.target.value}:x))}/><label><span>$</span><input aria-label="Precio adicional" type="number" min="0" placeholder="0" value={row.precio} onChange={e=>sync(rows.map((x,i)=>i===index?{...x,precio:e.target.value}:x))}/></label><button type="button" aria-label="Eliminar opción" onClick={()=>sync(rows.filter((_,i)=>i!==index))}>×</button></div>)}<button className="choice-builder-add" type="button" onClick={()=>sync([...rows,{nombre:'',precio:'0'}])}>＋ Agregar opción</button></section>;
+}
 function Field({ field, onChange, businessId }: { field: FormField; onChange: (name: string, value: string | boolean) => void; businessId?: string }) {
-  if (field.type === 'image') return <ImageUploadField field={field} value={String(field.value ?? '')} businessId={businessId} onChange={onChange as (name: string, value: string) => void}/>;
+  if (field.type === 'choiceBuilder') return <ChoiceBuilderField field={field} onChange={onChange as (name: string, value: string) => void}/>;\n  if (field.type === 'image') return <ImageUploadField field={field} value={String(field.value ?? '')} businessId={businessId} onChange={onChange as (name: string, value: string) => void}/>;
   return <label className="field"><span>{field.label}{field.required ? ' *' : ''}</span>
       {field.options ? <select name={field.name} required={field.required} value={String(field.value ?? '')} onChange={e => onChange(field.name, e.target.value)} data-testid={`select-${field.name}`}>{field.options.map(o => <option key={o} value={o}>{statusLabel[o] || o}</option>)}</select>
       : field.type === 'textarea' ? <textarea name={field.name} required={field.required} defaultValue={String(field.value ?? '')} onChange={e => onChange(field.name, e.target.value)} data-testid={`input-${field.name}`} />
@@ -301,7 +306,7 @@ function MerchantPage({ path, data, business, update }: { path: string; data: De
     openModal(initial ? 'Editar producto' : 'Nuevo producto', [
     { name: 'nombre', label: 'Nombre', value: initial?.nombre, required: true }, { name: 'precio', label: 'Precio (COP)', type: 'number', value: initial?.precio, required: true },
     { name: 'descripcion', label: 'Descripción', type: 'textarea', value: initial?.descripcion }, { name: 'imagen', label: 'Fotografía del producto', type: 'image', value: initial?.imagen || '' }, { name: 'category_id', label: 'Categoría', value: initial?.category_id || cats[0]?.id, options: cats.map(c => c.id) },
-    { name: 'variantes', label: `${variantLabel} (una por línea: Nombre|recargo)`, type: 'textarea', value: choiceText(initial?.variantes) }, ...(foodBusiness ? [{ name: 'complementos', label: 'Adiciones y extras (una por línea: Nombre|recargo)', type: 'textarea', value: choiceText(initial?.complementos) }] : []),
+    { name: 'variantes', label: variantLabel, type: 'choiceBuilder', value: choiceText(initial?.variantes) }, ...(foodBusiness ? [{ name: 'complementos', label: 'Adiciones y extras', type: 'choiceBuilder', value: choiceText(initial?.complementos) }] : []),
     { name: 'precio_anterior', label: 'Precio anterior (opcional)', type: 'number', value: initial?.precio_anterior || '' }, { name: 'stock', label: 'Stock', type: 'number', value: initial?.stock || 0 },
     { name: 'disponible', label: 'Disponible', type: 'checkbox', value: initial?.disponible ?? true }, { name: 'destacado', label: 'Destacado', type: 'checkbox', value: initial?.destacado ?? false },
   ], v => {
