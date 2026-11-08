@@ -10,7 +10,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import { Link, Route, Switch, Router as WouterRouter, useLocation, useParams } from 'wouter';
-import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BarChart3, Bell, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, ClipboardList, Clock3, CreditCard, ExternalLink, Eye, EyeOff, ImagePlus, LayoutDashboard, Loader2, LogOut, Menu, MoreHorizontal, Package, Pencil, Plus, Search, Settings, ShieldCheck, ShoppingBag, ShoppingCart, Store, Tag, Trash2, TrendingUp, Upload, Users, X, Zap } from 'lucide-react';
+import { Activity, ArrowDownRight, ArrowLeft, ArrowRight, BarChart3, Bell, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, ClipboardList, Clock3, CreditCard, ExternalLink, Eye, EyeOff, ImagePlus, LayoutDashboard, Loader2, LogOut, Menu, MoreHorizontal, Package, PawPrint, CalendarDays, Pencil, Plus, Search, Settings, ShieldCheck, ShoppingBag, ShoppingCart, Store, Tag, Trash2, TrendingUp, Upload, Users, X, Zap } from 'lucide-react';
 import { type AuditLog, type Business, type CatalogEvent, type Category, type Customer, type DemoData, type Order, type OrderStatus, type Plan, type Product, type ProductChoice, type StoreSettings, repository } from '@/lib/menuya-data';
 import { type MenuyaAuthContext, ensureBusinessForCurrentUser, getAuthContext, isSupabaseConfigured, sendPasswordRecovery, preparePasswordRecovery, signInWithEmail, signOut, signUpWithEmail, updatePassword } from '@/lib/menuya-auth';
 import { supabase } from '@/lib/supabase';
@@ -226,10 +226,46 @@ function Landing({ data }: { data: DemoData }) {
   </div>;
 }
 
-function AppShell({ data, session, update, logout, children, business, activePath }: { data: DemoData; session: Session; update: (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => void; logout: () => void; children: ReactNode; business?: Business; activePath: string }) {
+
+function VeterinaryWorkspace({ businessId }: { businessId: string }) {
+  type Patient = { id:string; name:string; species:string; breed:string|null; owner_name:string; owner_phone:string|null };
+  type Appointment = { id:string; patient_id:string; scheduled_at:string; reason:string; status:string };
+  const [patients,setPatients]=useState<Patient[]>([]);
+  const [appointments,setAppointments]=useState<Appointment[]>([]);
+  const [loading,setLoading]=useState(true),[saving,setSaving]=useState(false);
+  const [error,setError]=useState(''),[notice,setNotice]=useState(''),[query,setQuery]=useState('');
+  const [tab,setTab]=useState<'patients'|'appointments'>('patients');
+  const [p,setP]=useState({name:'',species:'Perro',breed:'',owner_name:'',owner_phone:'',sex:'No especificado',birth_date:'',notes:''});
+  const [a,setA]=useState({patient_id:'',scheduled_at:'',reason:'Consulta general'});
+  const refresh=async()=>{setLoading(true);setError('');const [pr,ar]=await Promise.all([supabase.from('vet_patients').select('id,name,species,breed,owner_name,owner_phone').eq('business_id',businessId).eq('is_active',true).order('name'),supabase.from('vet_appointments').select('id,patient_id,scheduled_at,reason,status').eq('business_id',businessId).order('scheduled_at',{ascending:false}).limit(100)]);if(pr.error||ar.error)setError(pr.error?.message||ar.error?.message||'Error cargando datos');else{setPatients(pr.data||[]);setAppointments(ar.data||[]);}setLoading(false);};
+  useEffect(()=>{void refresh();},[businessId]);
+  const savePatient=async(e:FormEvent)=>{e.preventDefault();setSaving(true);setError('');const {error}=await supabase.from('vet_patients').insert({...p,business_id:businessId,birth_date:p.birth_date||null,breed:p.breed||null,owner_phone:p.owner_phone||null,notes:p.notes||null});if(error)setError(error.message);else{setP({name:'',species:'Perro',breed:'',owner_name:'',owner_phone:'',sex:'No especificado',birth_date:'',notes:''});setNotice('Paciente registrado.');await refresh();}setSaving(false);};
+  const saveAppointment=async(e:FormEvent)=>{e.preventDefault();setSaving(true);setError('');const {error}=await supabase.from('vet_appointments').insert({business_id:businessId,patient_id:a.patient_id,scheduled_at:new Date(a.scheduled_at).toISOString(),reason:a.reason});if(error)setError(error.message);else{setA({patient_id:'',scheduled_at:'',reason:'Consulta general'});setNotice('Cita agendada.');setTab('appointments');await refresh();}setSaving(false);};
+  const setStatus=async(id:string,status:string)=>{const {error}=await supabase.from('vet_appointments').update({status,updated_at:new Date().toISOString()}).eq('id',id).eq('business_id',businessId);if(error)setError(error.message);else await refresh();};
+  const visible=patients.filter(x=>(x.name+' '+x.owner_name+' '+x.species+' '+(x.owner_phone||'')).toLowerCase().includes(query.toLowerCase()));
+  const patientName=(id:string)=>patients.find(x=>x.id===id)?.name||'Paciente';
+  return <section className="vet-workspace"><PageTitle eyebrow="MÓDULO VETERINARIO" title="Pacientes y citas" description="Registra mascotas, responsables y agenda de atención."/>
+    <div className="vet-summary"><article><PawPrint/><b>{patients.length}</b><span>Pacientes</span></article><article><CalendarDays/><b>{appointments.filter(x=>x.status!=='Completada'&&x.status!=='Cancelada').length}</b><span>Citas pendientes</span></article><article><CheckCircle2/><b>{appointments.filter(x=>x.status==='Completada').length}</b><span>Atenciones completadas</span></article></div>
+    {error&&<div className="notice notice-error">{error}</div>}{notice&&<div className="notice notice-success">{notice}</div>}
+    <div className="vet-tabs"><button className={tab==='patients'?'active':''} onClick={()=>setTab('patients')}>Pacientes</button><button className={tab==='appointments'?'active':''} onClick={()=>setTab('appointments')}>Agenda de citas</button></div>
+    {tab==='patients'?<div className="vet-layout"><section className="panel"><div className="panel-head"><div><span className="eyebrow">NUEVO REGISTRO</span><h2>Registrar paciente</h2></div></div><form className="vet-form" onSubmit={savePatient}>
+      <label>Nombre de la mascota<input required maxLength={120} value={p.name} onChange={e=>setP(v=>({...v,name:e.target.value}))}/></label>
+      <label>Especie<select value={p.species} onChange={e=>setP(v=>({...v,species:e.target.value}))}>{['Perro','Gato','Ave','Conejo','Reptil','Otro'].map(x=><option key={x}>{x}</option>)}</select></label>
+      <label>Raza<input value={p.breed} onChange={e=>setP(v=>({...v,breed:e.target.value}))}/></label>
+      <label>Responsable<input required value={p.owner_name} onChange={e=>setP(v=>({...v,owner_name:e.target.value}))}/></label>
+      <label>Teléfono<input type="tel" value={p.owner_phone} onChange={e=>setP(v=>({...v,owner_phone:e.target.value}))}/></label>
+      <label>Fecha de nacimiento<input type="date" value={p.birth_date} onChange={e=>setP(v=>({...v,birth_date:e.target.value}))}/></label>
+      <label>Observaciones<textarea rows={3} value={p.notes} onChange={e=>setP(v=>({...v,notes:e.target.value}))}/></label>
+      <Button type="submit" disabled={saving}>{saving?'Guardando…':'Guardar paciente'} <Plus size={15}/></Button></form></section>
+      <section className="panel"><div className="panel-head"><div><span className="eyebrow">BASE DE PACIENTES</span><h2>Pacientes registrados</h2></div></div><input className="vet-search" placeholder="Buscar mascota o responsable" value={query} onChange={e=>setQuery(e.target.value)}/>{loading?<p>Cargando…</p>:visible.length===0?<p className="subtle">Aún no hay pacientes registrados.</p>:<div className="vet-patient-list">{visible.map(x=><article key={x.id}><span className="vet-avatar"><PawPrint/></span><div><b>{x.name}</b><small>{x.species}{x.breed?' · '+x.breed:''}</small><small>Responsable: {x.owner_name} · {x.owner_phone||'Sin teléfono'}</small></div></article>)}</div>}</section></div>
+    :<div className="vet-layout"><section className="panel"><div className="panel-head"><div><span className="eyebrow">PROGRAMAR ATENCIÓN</span><h2>Nueva cita</h2></div></div><form className="vet-form" onSubmit={saveAppointment}><label>Paciente<select required value={a.patient_id} onChange={e=>setA(v=>({...v,patient_id:e.target.value}))}><option value="">Selecciona</option>{patients.map(x=><option key={x.id} value={x.id}>{x.name} · {x.owner_name}</option>)}</select></label><label>Fecha y hora<input type="datetime-local" required value={a.scheduled_at} onChange={e=>setA(v=>({...v,scheduled_at:e.target.value}))}/></label><label>Motivo<input required value={a.reason} onChange={e=>setA(v=>({...v,reason:e.target.value}))}/></label><Button type="submit" disabled={saving||patients.length===0}>{saving?'Agendando…':'Agendar cita'} <CalendarDays size={15}/></Button>{patients.length===0&&<small>Registra un paciente antes de agendar.</small>}</form></section><section className="panel"><div className="panel-head"><div><span className="eyebrow">AGENDA</span><h2>Citas registradas</h2></div></div>{appointments.length===0?<p className="subtle">No hay citas registradas.</p>:<div className="vet-appointment-list">{appointments.map(x=><article key={x.id}><div><b>{patientName(x.patient_id)}</b><small>{new Date(x.scheduled_at).toLocaleString('es-CO',{dateStyle:'medium',timeStyle:'short'})} · {x.reason}</small></div><select aria-label="Estado de la cita" value={x.status} onChange={e=>void setStatus(x.id,e.target.value)}>{['Agendada','Confirmada','En consulta','Completada','Cancelada'].map(st=><option key={st}>{st}</option>)}</select></article>)}</div>}</section></div>}
+  </section>;
+}
+
+function AppShell({ data, session, update, logout, children, business, activePath, modules = [] }: { data: DemoData; session: Session; update: (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => void; logout: () => void; children: ReactNode; business?: Business; activePath: string; modules?: string[] }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const isAdmin = session?.role === 'admin';
-  const links = isAdmin ? adminLinks : [...shopLinks, ['/app/pos', 'Punto de venta', ShoppingCart] as const];
+  const links = isAdmin ? adminLinks : [...shopLinks, ['/app/pos', 'Punto de venta', ShoppingCart] as const, ...(modules.includes('pet_store_tools') ? [['/app/veterinary', 'Veterinaria', PawPrint] as const] : [])];
   const [location, setLocation] = useLocation();
   const user = data.users.find(u => u.id === session?.userId);
   const switchBusiness = (id: string) => { localStorage.setItem('menuya-business', id); setLocation('/app'); window.dispatchEvent(new Event('menuya-business-change')); };
@@ -261,7 +297,7 @@ function FormModal({ title, fields, close, submit, submitText = 'Guardar', busin
   return <Modal title={title} close={close}><form className="modal-form" onSubmit={e => { e.preventDefault(); submit(values); }}><div className="form-grid">{fields.map(f => <Field key={f.name} field={{...f, value: values[f.name]}} businessId={businessId} onChange={(n, v) => setValues(prev => ({ ...prev, [n]: v }))} />)}</div><div className="modal-actions"><Button kind="ghost" onClick={close}>Cancelar</Button><Button type="submit" testId="button-save-form"><Check size={16} /> {submitText}</Button></div></form></Modal>;
 }
 
-function MerchantPage({ path, data, business, update }: { path: string; data: DemoData; business: Business; update: (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => void }) {
+function MerchantPage({ path, data, business, update, modules = [] }: { path: string; data: DemoData; business: Business; update: (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => void; modules?: string[] }) {
   const foodBusiness = isFoodBusiness(business.tipo);
   const variantLabel = optionLabelForBusiness(business.tipo);
   const [search, setSearch] = useState('');
@@ -330,6 +366,7 @@ function MerchantPage({ path, data, business, update }: { path: string; data: De
       && (!orderFrom || orderDate >= orderFrom) && (!orderTo || orderDate <= orderTo);
   });
   const HeaderAction = ({ text, onClick }: { text: string; onClick: () => void }) => <Button onClick={onClick} testId="button-create"><Plus size={16} /> {text}</Button>;
+  if (path === '/app/veterinary' && modules.includes('pet_store_tools')) return <VeterinaryWorkspace businessId={business.id} />;
 
   if (path === '/app' || path === '/app/') {
     const now = Date.now();
@@ -787,6 +824,7 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
   const [savingError, setSavingError] = useState('');
   const [sectorConfigured, setSectorConfigured] = useState<boolean | null>(null);
   const [sectorCheckError, setSectorCheckError] = useState('');
+  const [enabledModules, setEnabledModules] = useState<string[]>([]);
   const saveQueueRef = React.useRef<Promise<void>>(Promise.resolve());
   const loadRemoteData = async () => {
     if (!business?.id) return;
@@ -847,6 +885,16 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
     setRemoteData(data); setLoading(false);
   };
   useEffect(() => { void loadRemoteData(); }, [business?.id]);
+  useEffect(() => {
+    let active = true;
+    if (!business?.id || sectorConfigured !== true) return;
+    supabase.from('business_modules').select('module_key').eq('business_id',business.id).eq('enabled',true).then(({data,error}) => {
+      if (!active) return;
+      if (error) { setSectorCheckError(error.message); return; }
+      setEnabledModules((data || []).map(row => row.module_key));
+    });
+    return () => { active = false; };
+  }, [business?.id,sectorConfigured]);
   useEffect(() => {
     let active = true;
     if (!business?.id) return;
@@ -998,9 +1046,9 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
   if (sectorConfigured === false) return <BusinessSectorOnboarding businessId={business.id} onComplete={() => { setSectorConfigured(true); void loadRemoteData(); }} />;
   if (loadError || !remoteData) return <div className="auth-form-wrap"><div className="notice notice-error">{loadError || 'No fue posible cargar el comercio.'}</div><Button onClick={() => void loadRemoteData()}>Reintentar</Button></div>;
   const session: Session = {userId:context.user.id,role:'owner'};
-  return <AppShell data={remoteData} session={session} update={updateRemote} logout={onLogout} business={remoteData.businesses[0]} activePath={location}>
+  return <AppShell data={remoteData} session={session} update={updateRemote} logout={onLogout} business={remoteData.businesses[0]} activePath={location} modules={enabledModules}>
     {savingError && <div className="notice notice-error" role="alert">{savingError}</div>}
-    <MerchantPage path={location} data={remoteData} business={remoteData.businesses[0]} update={updateRemote} />
+    <MerchantPage path={location} data={remoteData} business={remoteData.businesses[0]} update={updateRemote} modules={enabledModules} />
   </AppShell>;
 }
 
