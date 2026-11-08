@@ -737,9 +737,11 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
   const loadRemoteData = async () => {
     if (!business?.id) return;
     setLoading(true); setLoadError('');
-    const [categoryResult, productResult, settingsResult, subscriptionResult, planResult, orderResult, customerResult, catalogEventResult] = await Promise.all([
+    const [categoryResult, productResult, productOptionsResult, productOptionValuesResult, settingsResult, subscriptionResult, planResult, orderResult, customerResult, catalogEventResult] = await Promise.all([
       supabase.from('categories').select('id,business_id,name,sort_order,is_active').eq('business_id',business.id).order('sort_order'),
       supabase.from('products').select('id,business_id,category_id,name,description,price,previous_price,image_url,is_active,is_available,is_featured,stock').eq('business_id',business.id).order('created_at',{ascending:false}),
+      supabase.from('product_options').select('id,business_id,product_id,name,option_type,is_required,sort_order').eq('business_id',business.id).order('sort_order'),
+      supabase.from('product_option_values').select('id,business_id,option_id,name,extra_price,is_active,sort_order').eq('business_id',business.id).eq('is_active',true).order('sort_order'),
       supabase.from('store_settings').select('business_id,cover_url,logo_url,brand_color,font_family,contact_text,social_links,payment_methods,delivery_info,is_published,tagline,storefront_layout,product_card_style,button_style').eq('business_id',business.id).maybeSingle(),
       supabase.from('subscriptions').select('id,business_id,plan_id,status,starts_at,ends_at,plans(id,name,price,billing_period,max_products,features,is_active)').eq('business_id',business.id).maybeSingle(),
       supabase.from('plans').select('id,code,name,price,billing_period,max_products,features,is_active').eq('is_active',true).order('price'),
@@ -747,7 +749,7 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
       supabase.from('customers').select('id,business_id,name,phone,total_orders,total_spent,last_order_at').eq('business_id',business.id).order('last_order_at',{ascending:false}),
       supabase.from('catalog_events').select('id,business_id,product_id,event_type,created_at').eq('business_id',business.id).gte('created_at',new Date(Date.now()-30*86400000).toISOString()).order('created_at',{ascending:false}),
     ]);
-    const firstError = categoryResult.error || productResult.error || settingsResult.error || subscriptionResult.error || planResult.error || orderResult.error || customerResult.error || catalogEventResult.error;
+    const firstError = categoryResult.error || productResult.error || productOptionsResult.error || productOptionValuesResult.error || settingsResult.error || subscriptionResult.error || planResult.error || orderResult.error || customerResult.error || catalogEventResult.error;
     if (firstError) { setLoadError(firstError.message); setLoading(false); return; }
     const profileName = context.profile?.full_name || String(context.user.user_metadata?.full_name || context.user.email || 'Comercio');
     const biz = {
@@ -756,7 +758,13 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
       created_at: new Date().toISOString(),
     };
     const categories: Category[] = (categoryResult.data || []).map(c => ({id:c.id,business_id:c.business_id,nombre:c.name,orden:c.sort_order,activo:c.is_active}));
-    const products: Product[] = (productResult.data || []).map(p => ({id:p.id,business_id:p.business_id,category_id:p.category_id || '',nombre:p.name,descripcion:p.description || '',precio:Number(p.price),precio_anterior:p.previous_price ? Number(p.previous_price) : undefined,imagen:p.image_url || undefined,activo:p.is_active,disponible:p.is_available,destacado:p.is_featured,stock:p.stock ?? 0,variantes:[],complementos:[]}));
+    const products: Product[] = (productResult.data || []).map(p => {
+      const groups = (productOptionsResult.data || []).filter(group => group.product_id === p.id);
+      const values = (group: any) => (productOptionValuesResult.data || []).filter(value => value.option_id === group.id).map(value => ({id:value.id,nombre:value.name,precio_extra:Number(value.extra_price || 0)}));
+      const variants = groups.filter(group => ['variant','variants','variante','variantes'].includes(String(group.option_type).toLowerCase())).flatMap(values);
+      const addons = groups.filter(group => ['addon','addons','extra','extras','complemento','complementos'].includes(String(group.option_type).toLowerCase())).flatMap(values);
+      return {id:p.id,business_id:p.business_id,category_id:p.category_id || '',nombre:p.name,descripcion:p.description || '',precio:Number(p.price),precio_anterior:p.previous_price ? Number(p.previous_price) : undefined,imagen:p.image_url || undefined,activo:p.is_active,disponible:p.is_available,destacado:p.is_featured,stock:p.stock ?? 0,variantes:variants,complementos:addons};
+    });
     const s = settingsResult.data;
     const settings: StoreSettings = {
       business_id:business.id,portada:s?.cover_url || '',logo:s?.logo_url || '',color:s?.brand_color || '#7352e8',
@@ -850,6 +858,22 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
             ? await supabase.from('products').update(payload).eq('id',id).eq('business_id',business.id)
             : await supabase.from('products').insert(payload);
           if(result.error) throw result.error;
+          if (!oldProducts.has(id) || JSON.stringify(before?.variantes || []) !== JSON.stringify(item.variantes || []) || JSON.stringify(before?.complementos || []) !== JSON.stringify(item.complementos || [])) {
+            const oldGroups = await supabase.from('product_options').select('id').eq('product_id',id).eq('business_id',business.id);
+            if (oldGroups.error) throw oldGroups.error;
+            const oldGroupIds = (oldGroups.data || []).map(group => group.id);
+            if (oldGroupIds.length) {
+              const removed = await supabase.from('product_options').delete().in('id',oldGroupIds).eq('business_id',business.id);
+              if (removed.error) throw removed.error;
+            }
+            for (const [optionType, optionName, choices] of [['variant','Variantes',item.variantes || []],['addon','Adiciones y extras',item.complementos || []]] as const) {
+              if (!choices.length) continue;
+              const groupResult = await supabase.from('product_options').insert({business_id:business.id,product_id:id,name:optionName,option_type:optionType,is_required:optionType === 'variant',sort_order:optionType === 'variant' ? 0 : 1}).select('id').single();
+              if (groupResult.error) throw groupResult.error;
+              const valueResult = await supabase.from('product_option_values').insert(choices.map((choice,index)=>({business_id:business.id,option_id:groupResult.data.id,name:choice.nombre,extra_price:choice.precio_extra || 0,is_active:true,sort_order:index})));
+              if (valueResult.error) throw valueResult.error;
+            }
+          }
         }
         for (const id of oldProducts.keys()) if (!newProducts.has(id)) {
           const result=await supabase.from('products').delete().eq('id',id).eq('business_id',business.id);
@@ -1098,12 +1122,14 @@ function PublicRoute({ data, update }: { data: DemoData; update: (fn: (d: DemoDa
           if (active) { setStoreData(null); setLoading(false); }
           return;
         }
-        const [categoryResult, productResult, settingsResult] = await Promise.all([
+        const [categoryResult, productResult, productOptionsResult, productOptionValuesResult, settingsResult] = await Promise.all([
           supabase.from('categories').select('id,business_id,name,sort_order,is_active').eq('business_id',businessRow.id).eq('is_active',true).order('sort_order'),
           supabase.from('products').select('id,business_id,category_id,name,description,price,previous_price,image_url,is_active,is_available,is_featured,stock').eq('business_id',businessRow.id).eq('is_active',true).eq('is_available',true).order('created_at',{ascending:false}),
+          supabase.from('product_options').select('id,business_id,product_id,name,option_type,is_required,sort_order').eq('business_id',businessRow.id).order('sort_order'),
+          supabase.from('product_option_values').select('id,business_id,option_id,name,extra_price,is_active,sort_order').eq('business_id',businessRow.id).eq('is_active',true).order('sort_order'),
           supabase.from('store_settings').select('business_id,cover_url,logo_url,brand_color,font_family,contact_text,social_links,payment_methods,delivery_info,is_published,tagline,storefront_layout,product_card_style,button_style').eq('business_id',businessRow.id).maybeSingle(),
         ]);
-        const queryError = categoryResult.error || productResult.error || settingsResult.error;
+        const queryError = categoryResult.error || productResult.error || productOptionsResult.error || productOptionValuesResult.error || settingsResult.error;
         if (queryError) throw queryError;
         if (!settingsResult.data?.is_published) {
           if (active) { setStoreData(null); setLoading(false); }
@@ -1124,7 +1150,13 @@ function PublicRoute({ data, update }: { data: DemoData; update: (fn: (d: DemoDa
           layout:row.storefront_layout || 'grid', card_style:row.product_card_style || 'classic', button_style:row.button_style || 'rounded',
         };
         const categories = (categoryResult.data || []).map(c=>({id:c.id,business_id:c.business_id,nombre:c.name,orden:c.sort_order,activo:c.is_active}));
-        const products = (productResult.data || []).map(p=>({id:p.id,business_id:p.business_id,category_id:p.category_id || '',nombre:p.name,descripcion:p.description || '',precio:Number(p.price),precio_anterior:p.previous_price ? Number(p.previous_price) : undefined,imagen:p.image_url || undefined,activo:p.is_active,disponible:p.is_available,destacado:p.is_featured,stock:p.stock ?? 0,variantes:[],complementos:[]}));
+        const products = (productResult.data || []).map(p=>{
+          const groups=(productOptionsResult.data || []).filter(group=>group.product_id===p.id);
+          const values=(group: any)=>(productOptionValuesResult.data || []).filter(value=>value.option_id===group.id).map(value=>({id:value.id,nombre:value.name,precio_extra:Number(value.extra_price || 0)}));
+          const variants=groups.filter(group=>['variant','variants','variante','variantes'].includes(String(group.option_type).toLowerCase())).flatMap(values);
+          const addons=groups.filter(group=>['addon','addons','extra','extras','complemento','complementos'].includes(String(group.option_type).toLowerCase())).flatMap(values);
+          return {id:p.id,business_id:p.business_id,category_id:p.category_id || '',nombre:p.name,descripcion:p.description || '',precio:Number(p.price),precio_anterior:p.previous_price ? Number(p.previous_price) : undefined,imagen:p.image_url || undefined,activo:p.is_active,disponible:p.is_available,destacado:p.is_featured,stock:p.stock ?? 0,variantes:variants,complementos:addons};
+        });
         const remote: DemoData = {...data,users:[],businesses:[profile],categories,products,customers:[],orders:[],settings:[settings],subscriptions:[],audit:[],catalog_events:[]};
         if (active) { setStoreData(remote); setLoading(false); }
       } catch (error) {
