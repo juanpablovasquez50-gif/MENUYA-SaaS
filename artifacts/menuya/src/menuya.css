@@ -1019,3 +1019,17 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
   font-family:inherit!important;
 }
 .live-preview svg,.public-store svg{font-family:initial!important}
+
+
+/* CLICKOK Studio — selector de siete plantillas personalizables */
+.studio-template-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:13px}
+.studio-template-card{display:flex;min-width:0;flex-direction:column;gap:5px;padding:9px;text-align:left;border:1px solid var(--line,#e5e8ef);border-radius:13px;background:var(--surface,#fff);color:var(--ink,#263247);cursor:pointer;transition:border-color .18s,transform .18s,box-shadow .18s}
+.studio-template-card:hover{border-color:var(--template-color,#635bff);transform:translateY(-2px);box-shadow:0 7px 18px #17223512}
+.studio-template-card strong{font-size:12px}.studio-template-card small{font-size:10px;color:var(--muted,#748094)}
+.studio-template-art{height:72px;position:relative;display:flex;align-items:flex-end;gap:5px;padding:9px;overflow:hidden;border-radius:8px;background:linear-gradient(135deg,color-mix(in srgb,var(--template-color) 16%,white),#f7f8fb)}
+.studio-template-art:before{content:"";position:absolute;left:0;right:0;top:0;height:17px;background:var(--template-color)}
+.studio-template-art i{display:block;flex:1;height:30px;border-radius:4px;background:color-mix(in srgb,var(--template-color) 22%,white);border:1px solid color-mix(in srgb,var(--template-color) 18%,white)}
+.studio-template-art i:nth-child(2){height:38px}.studio-template-art i:nth-child(3){height:25px}
+.studio-template-art b{position:absolute;right:10px;top:23px;width:24px;height:5px;border-radius:5px;background:var(--template-color)}
+.studio-template-hint{margin:10px 0 0;color:var(--muted,#748094);font-size:10px;line-height:1.5}
+@media(max-width:420px){.studio-template-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.studio-template-card{padding:7px}.studio-template-art{height:62px}}
