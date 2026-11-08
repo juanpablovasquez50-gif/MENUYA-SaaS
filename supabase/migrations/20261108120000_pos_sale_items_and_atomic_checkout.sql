@@ -1,5 +1,7 @@
 -- CLICKOK POS: sale line snapshots and an atomic checkout transaction.
 -- Existing sales, cash_sessions and inventory_movements tables are preserved.
+-- Required by the tenant-safe composite foreign key from sale_items.
+create unique index if not exists sales_business_id_id_uidx on public.sales(business_id, id);
 create table if not exists public.sale_items (
   id uuid primary key default gen_random_uuid(),
   business_id uuid not null references public.businesses(id) on delete cascade,
