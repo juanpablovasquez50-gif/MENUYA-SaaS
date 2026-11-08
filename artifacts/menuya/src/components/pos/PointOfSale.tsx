@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertCircle, Banknote, CheckCircle2, Clock3, CreditCard, Minus, Plus, Receipt, Search, ShoppingCart, Wallet } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { Product } from '@/lib/menuya-data';
+import './pos.css';
 
 type PosProduct = Pick<Product, 'id'|'nombre'|'precio'|'imagen'|'stock'|'activo'|'disponible'>;
 type CashSession = { id:string; opening_amount:number; status:string; opened_at:string; branch_id:string|null };
