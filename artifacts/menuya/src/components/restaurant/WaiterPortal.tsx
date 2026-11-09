@@ -1,7 +1,7 @@
 import { useCallback,useEffect,useState } from 'react';
 import { useParams } from 'wouter';
 import { supabase } from '@/lib/supabase';
-import { Utensils,ShoppingBag,LogOut,Send,RefreshCw,Plus,Minus,ClipboardList } from 'lucide-react';
+import { Utensils,ShoppingBag,LogOut,Send,RefreshCw,Plus,Minus,ClipboardList,ChefHat,Check } from 'lucide-react';
 
 type Product={id:string;name:string;price:number;image_url:string|null};
 type Table={id:string;name:string;capacity:number;status:string};
@@ -20,7 +20,7 @@ async function functionErrorMessage(error:any,data:any):Promise<string>{
 export default function WaiterPortal(){
  const params=useParams<{slug:string}>(),slug=params.slug||'';
  const [code,setCode]=useState(''),[pin,setPin]=useState(''),[token,setToken]=useState(()=>sessionStorage.getItem('menuya-waiter-token')||'');
- const [waiter,setWaiter]=useState<{id:string;name:string}|null>(null),[products,setProducts]=useState<Product[]>([]),[tables,setTables]=useState<Table[]>([]);
+ const [waiter,setWaiter]=useState<{id:string;name:string;role?:'waiter'|'chef'}|null>(null),[products,setProducts]=useState<Product[]>([]),[tables,setTables]=useState<Table[]>([]);
  const [orders,setOrders]=useState<any[]>([]),[cart,setCart]=useState<Line[]>([]),[tableId,setTableId]=useState(''),[notes,setNotes]=useState('');
  const [tab,setTab]=useState<'take'|'orders'>('take'),[search,setSearch]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
  const call=useCallback(async(action:string,body:Record<string,unknown>={})=>{
@@ -28,10 +28,11 @@ export default function WaiterPortal(){
   if(error)throw new Error(await functionErrorMessage(error,data));if(data?.error)throw new Error(data.error);return data;
  },[token]);
  const load=useCallback(async()=>{
+  if(waiter?.role==='chef'){const data=await call('chef_orders');setOrders(data.orders||[]);return;}
   const [p,t,o]=await Promise.all([call('waiter_catalog'),call('waiter_tables'),call('waiter_orders')]);
   setProducts(p.products||[]);setTables(t.tables||[]);setOrders(o.orders||[]);
   setTableId(current=>current||(t.tables?.find((x:Table)=>x.status==='available')?.id||t.tables?.[0]?.id||''));
- },[call]);
+ },[call,waiter?.role]);
  useEffect(()=>{if(!token)return;void load().catch(e=>{setError(e.message);sessionStorage.removeItem('menuya-waiter-token');setToken('');});},[token,load]);
  const login=async(e:React.FormEvent)=>{e.preventDefault();setBusy(true);setError('');try{
   const {data,error}=await supabase.functions.invoke('restaurant-waiter-access',{body:{action:'login',business_slug:slug,waiter_code:code,pin}});
@@ -41,12 +42,14 @@ export default function WaiterPortal(){
  const add=(p:Product)=>setCart(prev=>{const found=prev.find(x=>x.product.id===p.id);return found?prev.map(x=>x.product.id===p.id?{...x,quantity:x.quantity+1}:x):[...prev,{product:p,quantity:1}];});
  const change=(id:string,delta:number)=>setCart(prev=>prev.map(x=>x.product.id===id?{...x,quantity:x.quantity+delta}:x).filter(x=>x.quantity>0));
  const total=cart.reduce((s,x)=>s+Number(x.product.price)*x.quantity,0);
+ const updateChefOrder=async(orderId:string,status:'preparing'|'ready')=>{setBusy(true);setError('');setNotice('');try{await call('chef_update_order',{order_id:orderId,status});setNotice(status==='preparing'?'Preparación iniciada.':'Pedido marcado como listo.');await load();}catch(e){setError(e instanceof Error?e.message:'No fue posible actualizar el pedido.');}finally{setBusy(false);}};
  const sendOrder=async()=>{if(!tableId||!cart.length)return;setBusy(true);setError('');setNotice('');try{
   const data=await call('create_order',{table_id:tableId,items:cart.map(x=>({product_id:x.product.id,quantity:x.quantity})),notes});
   setNotice('Pedido #'+data.order.order_number+' enviado a cocina.');setCart([]);setNotes('');setTab('orders');await load();
  }catch(e){setError(e instanceof Error?e.message:'No fue posible enviar el pedido.');}finally{setBusy(false);}};
  const logout=async()=>{try{await call('logout');}catch{}sessionStorage.removeItem('menuya-waiter-token');setToken('');setWaiter(null);};
  if(!token)return <main className="waiter-login"><form onSubmit={login}><div className="waiter-mark"><Utensils/></div><span>MENUYA · EQUIPO DE SERVICIO</span><h1>Acceso de mesero</h1><p>Ingresa el código y PIN que te entregó el administrador.</p><label>Código de mesero<input value={code} onChange={e=>setCode(e.target.value)} inputMode="numeric" required placeholder="Ej. 123456"/></label><label>PIN<input value={pin} onChange={e=>setPin(e.target.value)} inputMode="numeric" type="password" minLength={4} maxLength={8} required placeholder="Tu PIN"/></label>{error&&<div className="waiter-error">{error}</div>}<button disabled={busy}>{busy?'Verificando…':'Ingresar'}</button></form></main>;
+ if(waiter?.role==='chef')return <main className="waiter-app chef-app"><header><div><span>MENUYA · COCINA</span><h1>Hola, {waiter.name}</h1><p>Pedidos del restaurante en tiempo real de actualización</p></div><button onClick={()=>void logout()}><LogOut size={17}/> Salir</button></header>{notice&&<p className="waiter-notice">{notice}</p>}{error&&<p className="waiter-error">{error}</p>}<div className="waiter-section-head"><h2>Comandas</h2><button onClick={()=>void load()}><RefreshCw size={15}/> Actualizar</button></div><section className="chef-order-list">{orders.length?orders.map(o=><article className={'chef-ticket chef-'+o.status} key={o.id}><header><div><b>Pedido #{o.order_number}</b><small>{o.restaurant_tables?.name||'Pedido para llevar'} · {new Date(o.created_at).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})}</small></div><span>{o.status==='pending'?'Nuevo':o.status==='confirmed'?'Confirmado':o.status==='preparing'?'En preparación':'Listo'}</span></header><div className="chef-ticket-items">{(o.order_items||[]).map((i:any,index:number)=><div key={index}><b>{i.quantity} × {i.product_name}</b>{i.variant_name&&<small>Variante: {i.variant_name}</small>}{Array.isArray(i.addons_snapshot)&&i.addons_snapshot.length>0&&<small>Adiciones: {i.addons_snapshot.map((a:any)=>a.name||a.label||String(a)).join(', ')}</small>}</div>)}</div>{o.notes&&<p className="chef-ticket-notes"><b>Nota:</b> {o.notes}</p>}<footer>{(o.status==='pending'||o.status==='confirmed')&&<button disabled={busy} onClick={()=>void updateChefOrder(o.id,'preparing')}><ChefHat size={16}/> Empezar preparación</button>}{o.status==='preparing'&&<button disabled={busy} onClick={()=>void updateChefOrder(o.id,'ready')}><Check size={16}/> Pedido listo</button>}</footer></article>):<p className="waiter-orders">No hay pedidos pendientes en cocina.</p>}</section></main>;
  return <main className="waiter-app"><header><div><span>MENUYA · MESERO</span><h1>Hola, {waiter?.name||'equipo'}</h1></div><button onClick={()=>void logout()}><LogOut size={17}/> Salir</button></header>
   <nav><button className={tab==='take'?'active':''} onClick={()=>setTab('take')}><ShoppingBag size={16}/> Tomar pedido</button><button className={tab==='orders'?'active':''} onClick={()=>setTab('orders')}><ClipboardList size={16}/> Mis pedidos ({orders.length})</button></nav>
   {notice&&<p className="waiter-notice">{notice}</p>}{error&&<p className="waiter-error">{error}</p>}
