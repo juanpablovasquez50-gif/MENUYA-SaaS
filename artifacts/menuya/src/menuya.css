@@ -1774,3 +1774,16 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
   border-color:#fff!important;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.65),0 0 0 3px color-mix(in srgb,var(--store-color) 20%,transparent)!important;
 }
+
+
+/* Keep storefront search integrated with the palette: remove decorative white outlines */
+.public-store .public-toolbar .search-field{
+  border:1px solid color-mix(in srgb,var(--store-color) 16%,var(--store-background,#f7f7f5))!important;
+  outline:none!important;
+  box-shadow:none!important;
+}
+.public-store .public-toolbar .search-field:focus-within{
+  border-color:color-mix(in srgb,var(--store-color) 30%,var(--store-background,#f7f7f5))!important;
+  outline:none!important;
+  box-shadow:none!important;
+}
