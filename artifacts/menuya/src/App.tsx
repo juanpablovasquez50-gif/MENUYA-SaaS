@@ -4,6 +4,7 @@ import PlatformAdminCenter from '@/components/PlatformAdminCenter';
 import PointOfSale from '@/components/pos/PointOfSale';
 import PushNotificationsSettings from '@/components/PushNotificationsSettings';
 import HelpCenter from '@/components/HelpCenter';
+import LegalPages from '@/components/LegalPages';
 import RestaurantOperations from '@/components/restaurant/RestaurantOperations';
 import WaiterPortal from '@/components/restaurant/WaiterPortal';
 import * as React from 'react';
@@ -199,7 +200,7 @@ function AuthPage({ mode, data, onLogin, onRegister, onForgot, onReset }: {
         {mode !== 'forgot' && <><label className="field"><span>{mode === 'reset' ? 'Nueva contraseña *' : 'Contraseña *'}</span><div className="password-wrap"><input name="password" required minLength={8} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} type={showPassword ? 'text' : 'password'} data-testid="input-password" /><button type="button" className="password-eye" onClick={() => setShowPassword(!showPassword)} aria-label="Mostrar u ocultar contraseña">{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div></label>
           {(mode === 'register' || mode === 'reset') && <Field field={{ name: 'confirmPassword', label: 'Confirma tu contraseña', type: 'password', required: true }} onChange={() => {}} />}
         </>}
-        {mode === 'register' && <p className="fine-print">Tu comercio se crea inicialmente privado y pendiente de revisión. No se publicará automáticamente.</p>}
+        {mode === 'register' && <><p className="fine-print">Tu comercio se crea inicialmente privado y pendiente de revisión. No se publicará automáticamente.</p><label className="legal-consent"><input type="checkbox" name="aceptaDatos" required/><span>He leído y acepto la <Link href="/legal/privacidad" target="_blank">Política de tratamiento de datos personales</Link> y los <Link href="/legal/terminos" target="_blank">Términos y condiciones</Link>. Autorizo el tratamiento de mis datos para crear y administrar mi cuenta.</span></label></>}
         <Button type="submit" className="full-btn" disabled={busy || (mode === "reset" && !recoveryReady)} testId="button-auth-submit">{busy ? 'Procesando...' : mode === 'register' ? 'Crear mi cuenta y tienda' : mode === 'forgot' ? 'Enviar instrucciones' : mode === 'reset' ? 'Actualizar contraseña' : 'Entrar'} <ArrowRight size={16} /></Button>
       </form>
       {mode === 'login' && <Link href="/forgot-password" className="text-link">¿Olvidaste tu contraseña?</Link>}
@@ -226,7 +227,7 @@ function Landing({ data }: { data: DemoData }) {
     <section className="how-section ck-how stripe-how" id="como-funciona"><div className="section-label">EMPIEZA EN POCOS PASOS <span>02 — SIMPLE POR DISEÑO</span></div><div className="how-grid"><h2>De la idea<br/><em>a tu tienda online.</em></h2><div className="steps"><article><span>01</span><div><h3>Abre tu espacio</h3><p>Registra tu negocio y configura la información principal de tu marca.</p></div></article><article><span>02</span><div><h3>Organiza tu oferta</h3><p>Agrega productos o servicios, categorías, precios y detalles.</p></div></article><article><span>03</span><div><h3>Publica y conecta</h3><p>Comparte tu vitrina y gestiona los pedidos desde CLICKOK.</p></div></article></div></div></section>
     <section className="sector-section ck-ecosystem" id="ecosistema"><div className="section-label">CRECE A TU MANERA <span>03 — PARA DIFERENTES NEGOCIOS</span></div><div className="sector-head"><h2>Tu negocio es único.<br/>Tu plataforma también.</h2><p>CLICKOK se adapta a distintas formas de vender, desde una tienda de ropa hasta un restaurante o un negocio de servicios.</p></div><div className="sector-list">{[['01','Gastronomía','Cartas, productos y pedidos.'],['02','Moda y accesorios','Colecciones con identidad propia.'],['03','Servicios','Catálogos y solicitudes.'],['04','Comercio y retail','Un espacio para mostrar lo que vendes.']].map(([n,t,d])=><div key={n} className="sector-row"><span>{n}</span><b>{t}</b><p>{d}</p><ArrowRight size={18}/></div>)}</div></section>
     <section className="closing-cta ck-closing stripe-closing"><span className="eyebrow light">TU NEGOCIO PUEDE LLEGAR MÁS LEJOS</span><h2>Haz espacio para<br/><em>todo lo que viene.</em></h2><p>Empieza a construir la presencia digital de tu negocio.</p><Link href="/register" className="btn btn-light btn-large">Crear mi espacio gratis <ArrowRight size={17}/></Link><div className="ck-closing-orb"/></section>
-    <footer className="landing-footer ck-footer"><Brand/><span>Tu negocio, conectado.</span><span>Una nueva forma de vender y crecer.</span><Link href="/login">Iniciar sesión <ArrowRight size={14}/></Link><a className="atomlabs-credit" href="https://atomlabs.lat/#top" target="_blank" rel="noreferrer"><span>DESARROLLADO POR</span><b><svg className="atomlabs-symbol" viewBox="0 0 64 64" aria-hidden="true"><g fill="none" stroke="currentColor" strokeWidth="4.2" strokeLinecap="round"><ellipse cx="32" cy="32" rx="12" ry="27"/><ellipse cx="32" cy="32" rx="12" ry="27" transform="rotate(60 32 32)"/><ellipse cx="32" cy="32" rx="12" ry="27" transform="rotate(120 32 32)"/></g><circle cx="32" cy="32" r="4.2" fill="currentColor"/></svg>ATOMLABS<sup>®</sup></b></a></footer>
+    <footer className="landing-footer ck-footer"><Brand/><span>Tu negocio, conectado.</span><span>Una nueva forma de vender y crecer.</span><div className="legal-footer-links"><Link href="/legal/privacidad">Tratamiento de datos</Link><Link href="/legal/terminos">Términos y condiciones</Link></div><Link href="/login">Iniciar sesión <ArrowRight size={14}/></Link><a className="atomlabs-credit" href="https://atomlabs.lat/#top" target="_blank" rel="noreferrer"><span>DESARROLLADO POR</span><b><svg className="atomlabs-symbol" viewBox="0 0 64 64" aria-hidden="true"><g fill="none" stroke="currentColor" strokeWidth="4.2" strokeLinecap="round"><ellipse cx="32" cy="32" rx="12" ry="27"/><ellipse cx="32" cy="32" rx="12" ry="27" transform="rotate(60 32 32)"/><ellipse cx="32" cy="32" rx="12" ry="27" transform="rotate(120 32 32)"/></g><circle cx="32" cy="32" r="4.2" fill="currentColor"/></svg>ATOMLABS<sup>®</sup></b></a></footer>
   </div>;
 }
 
@@ -763,7 +764,7 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
         <label className="field"><span>Método de pago</span><select name="metodo_pago" data-testid="select-checkout-payment">{settings.pagos.split(',').map(x => <option key={x}>{x.trim()}</option>)}</select></label>
         <label className="field"><span>Observaciones</span><textarea name="observaciones" placeholder="¿Alguna indicación para tu pedido?" data-testid="input-checkout-notes" /></label>
       </div>
-      <p className="fine-print">No necesitas crear una cuenta. {business.nombre} confirmará contigo los detalles de pago y entrega.</p>
+      <label className="legal-consent"><input type="checkbox" name="aceptaPrivacidad" required/><span>He leído la <Link href="/legal/privacidad" target="_blank">Política de tratamiento de datos de CLICKOK</Link>. Entiendo que mis datos del pedido serán compartidos con <strong>{business.nombre}</strong> para gestionar la compra, entrega y atención.</span></label><p className="fine-print">No necesitas crear una cuenta. {business.nombre} confirmará contigo los detalles de pago y entrega.</p>
       <div className="modal-actions"><Button kind="ghost" onClick={() => setCheckout(false)}>Seguir mirando</Button><Button type="submit" testId="button-submit-order">Confirmar pedido · {money(subtotal)} <ArrowRight size={15} /></Button></div>
     </form></Modal>}
   </div>;
@@ -1158,6 +1159,7 @@ function Router() {
 
   const register = async (v: Record<string, string>): Promise<string | null> => {
     if (!isSupabaseConfigured) return 'La conexión de MENUYA aún no está configurada en este entorno.';
+    if (v.aceptaDatos !== 'on') return 'Debes aceptar la política de tratamiento de datos y los términos para crear tu cuenta.';
     try {
       const result = await signUpWithEmail({
         email: v.email,
@@ -1166,6 +1168,9 @@ function Router() {
         phone: v.telefono,
         businessName: v.negocio,
         businessType: v.sector,
+        privacyPolicyVersion: '1.0',
+        privacyConsentAt: new Date().toISOString(),
+        termsVersion: '1.0',
       });
       if (result.session) {
         const context = await ensureBusinessForCurrentUser();
@@ -1208,6 +1213,8 @@ function Router() {
 
   return <RoutedErrorBoundary><Switch>
     <Route path="/"><Landing data={data} /></Route>
+    <Route path="/legal/privacidad"><LegalPages document="privacy" /></Route>
+    <Route path="/legal/terminos"><LegalPages document="terms" /></Route>
     <Route path="/admin/login"><PlatformAdminLogin onLogin={login} /></Route>
     <Route path="/login"><AuthPage mode="login" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
     <Route path="/register"><AuthPage mode="register" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
