@@ -332,12 +332,15 @@ function MerchantPage({ path, data, business, update, modules = [] }: { path: st
   const [draftStoreColor, setDraftStoreColor] = useState('');
   const [checkoutBusy, setCheckoutBusy] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState('');
+  const [showHelpWelcome, setShowHelpWelcome] = useState(false);
   const cats = data.categories.filter(c => c.business_id === business.id).sort((a, b) => a.orden - b.orden);
   const products = data.products.filter(p => p.business_id === business.id);
   const orders = data.orders.filter(o => o.business_id === business.id).sort((a, b) => b.created_at.localeCompare(a.created_at));
   const customers = data.customers.filter(c => c.business_id === business.id);
   const settings = data.settings.find(s => s.business_id === business.id)!;
   useEffect(() => { setDraftStoreColor(settings.color); }, [settings.color, business.id]);
+  useEffect(() => { try { if (!window.localStorage.getItem(`clickok-help-welcome-${business.id}`)) setShowHelpWelcome(true); } catch { setShowHelpWelcome(false); } }, [business.id]);
+  const dismissHelpWelcome = () => { setShowHelpWelcome(false); try { window.localStorage.setItem(`clickok-help-welcome-${business.id}`, '1'); } catch { /* Storage may be unavailable. */ } };
   const previewStoreColor = draftStoreColor || settings.color;
   const startSubscriptionCheckout = async (planId: string) => {
     setCheckoutBusy(planId); setCheckoutError('');
@@ -406,7 +409,7 @@ function MerchantPage({ path, data, business, update, modules = [] }: { path: st
     const variation = (current: number, previous: number) => previous > 0
       ? `${current >= previous ? '+' : ''}${Math.round(((current - previous) / previous) * 100)}% vs. período anterior`
       : undefined;
-    return <><PageTitle eyebrow="TU NEGOCIO, EN UN VISTAZO" title={`Hola, ${data.users.find(u => u.id === business.owner_id)?.nombre.split(' ')[0] || 'bienvenido'}.`} description="Esto es lo que está pasando en tu tienda." action={<Link href={`/${business.slug}`} className="btn btn-outline" target="_blank"><Eye size={16} /> Ver mi tienda</Link>} />
+    return <><PageTitle eyebrow="TU NEGOCIO, EN UN VISTAZO" title={`Hola, ${data.users.find(u => u.id === business.owner_id)?.nombre.split(' ')[0] || 'bienvenido'}.`} description="Esto es lo que está pasando en tu tienda." action={<Link href={`/${business.slug}`} className="btn btn-outline" target="_blank"><Eye size={16} /> Ver mi tienda</Link>} />\n      {showHelpWelcome && <section className="help-dashboard-banner"><span className="help-dashboard-icon"><BookOpen size={20}/></span><div><b>¿Primera vez en CLICKOK?</b><p>Explora los tutoriales y aprende a configurar tu vitrina, gestionar pedidos y activar notificaciones.</p></div><Link href="/app/help" onClick={dismissHelpWelcome}>Ver tutoriales <ArrowRight size={15}/></Link><button type="button" onClick={dismissHelpWelcome} aria-label="Cerrar aviso"><X size={16}/></button></section>}
       {business.estado !== 'activo' && <div className="notice notice-warn"><Clock3 size={18} /><span><b>Tu tienda está {statusLabel[business.estado]?.toLowerCase()}.</b> {business.estado === 'pendiente' ? 'La tienda no será visible al público hasta su aprobación.' : 'Contacta al equipo de CLICKOK si necesitas ayuda.'}</span></div>}
       <div className="metrics-grid">
         <Metric label="Pedidos recibidos" value={String(currentOrders.length)} note="Últimos 30 días" icon={ShoppingCart} trend={variation(currentOrders.length, previousOrders.length)} />
