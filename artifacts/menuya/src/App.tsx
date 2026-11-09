@@ -334,6 +334,22 @@ function MerchantPage({ path, data, business, update, modules = [] }: { path: st
   const [checkoutBusy, setCheckoutBusy] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState('');
   const [showHelpWelcome, setShowHelpWelcome] = useState(false);
+  const [posSales, setPosSales] = useState<{ id: string; total: number; created_at: string }[]>([]);
+  useEffect(() => {
+    let active = true;
+    if (path !== '/app' && path !== '/app/' && path !== '/app/analytics') return;
+    setPosSales([]);
+    void supabase.from('sales').select('id,total,created_at').eq('business_id', business.id).is('order_id', null).order('created_at', { ascending: false })
+      .then(({ data: rows, error }) => {
+        if (!active) return;
+        if (error) {
+          console.error('No fue posible cargar las ventas directas del POS:', error);
+          return;
+        }
+        setPosSales((rows || []).map(row => ({ id: row.id, total: Number(row.total || 0), created_at: row.created_at })));
+      });
+    return () => { active = false; };
+  }, [business.id, path]);
   const cats = data.categories.filter(c => c.business_id === business.id).sort((a, b) => a.orden - b.orden);
   const products = data.products.filter(p => p.business_id === business.id);
   const orders = data.orders.filter(o => o.business_id === business.id).sort((a, b) => b.created_at.localeCompare(a.created_at));
@@ -403,8 +419,14 @@ function MerchantPage({ path, data, business, update, modules = [] }: { path: st
       const time = new Date(o.created_at).getTime();
       return time >= previousStart && time < currentStart;
     });
-    const currentSales = currentOrders.reduce((sum, order) => sum + order.total, 0);
-    const previousSales = previousOrders.reduce((sum, order) => sum + order.total, 0);
+    const currentPosSales = posSales.filter(sale => new Date(sale.created_at).getTime() >= currentStart);
+    const previousPosSales = posSales.filter(sale => {
+      const time = new Date(sale.created_at).getTime();
+      return time >= previousStart && time < currentStart;
+    });
+    // Las ventas POS asociadas a un pedido ya están incluidas en orders; solo se suman ventas independientes.
+    const currentSales = currentOrders.reduce((sum, order) => sum + order.total, 0) + currentPosSales.reduce((sum, sale) => sum + sale.total, 0);
+    const previousSales = previousOrders.reduce((sum, order) => sum + order.total, 0) + previousPosSales.reduce((sum, sale) => sum + sale.total, 0);
     const currentCustomers = new Set(currentOrders.map(order => order.customer_id).filter(Boolean)).size;
     const previousCustomers = new Set(previousOrders.map(order => order.customer_id).filter(Boolean)).size;
     const variation = (current: number, previous: number) => previous > 0
@@ -466,10 +488,18 @@ function MerchantPage({ path, data, business, update, modules = [] }: { path: st
     const previousCompleted = completed.filter(o => { const time = new Date(o.created_at).getTime(); return time >= previousStart && time < currentStart; });
     const currentOrders = orders.filter(o => new Date(o.created_at).getTime() >= currentStart);
     const previousOrders = orders.filter(o => { const time = new Date(o.created_at).getTime(); return time >= previousStart && time < currentStart; });
-    const currentSales = currentCompleted.reduce((a, o) => a + o.total, 0);
-    const previousSales = previousCompleted.reduce((a, o) => a + o.total, 0);
-    const average = currentCompleted.length ? Math.round(currentSales / currentCompleted.length) : 0;
-    const previousAverage = previousCompleted.length ? Math.round(previousSales / previousCompleted.length) : 0;
+    const currentPosSales = posSales.filter(sale => new Date(sale.created_at).getTime() >= currentStart);
+    const previousPosSales = posSales.filter(sale => {
+      const time = new Date(sale.created_at).getTime();
+      return time >= previousStart && time < currentStart;
+    });
+    // Las ventas POS vinculadas a pedidos se cuentan desde orders para evitar duplicados.
+    const currentSales = currentCompleted.reduce((a, o) => a + o.total, 0) + currentPosSales.reduce((a, sale) => a + sale.total, 0);
+    const previousSales = previousCompleted.reduce((a, o) => a + o.total, 0) + previousPosSales.reduce((a, sale) => a + sale.total, 0);
+    const currentSaleCount = currentCompleted.length + currentPosSales.length;
+    const previousSaleCount = previousCompleted.length + previousPosSales.length;
+    const average = currentSaleCount ? Math.round(currentSales / currentSaleCount) : 0;
+    const previousAverage = previousSaleCount ? Math.round(previousSales / previousSaleCount) : 0;
     const variation = (current: number, previous: number) => {
       if (previous === 0) return current > 0 ? 'Nuevo período' : 'Sin variación';
       const change = Math.round(((current - previous) / previous) * 100);
