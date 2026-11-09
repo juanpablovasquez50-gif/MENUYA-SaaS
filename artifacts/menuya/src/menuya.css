@@ -1890,3 +1890,38 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
     padding:9px;
   }
 }
+
+
+/* Storefront cover: controlled height across desktop, tablet and mobile */
+.public-store .public-hero .public-cover{
+  height:clamp(190px,20vw,280px)!important;
+  min-height:0!important;
+  max-height:280px;
+  background-size:cover!important;
+  background-position:center center!important;
+}
+.public-store .public-hero{
+  padding-bottom:10px;
+}
+.public-store .public-store-intro{
+  margin-top:-24px;
+}
+.public-store .public-contact{
+  margin-top:4px;
+  padding-bottom:10px;
+}
+.public-store .public-main{
+  padding-top:12px;
+}
+@media(max-width:700px){
+  .public-store .public-hero .public-cover{
+    height:clamp(150px,34vw,190px)!important;
+    min-height:0!important;
+    max-height:190px;
+    background-position:center center!important;
+  }
+  .public-store .public-hero{padding-bottom:8px}
+  .public-store .public-store-intro{margin-top:-20px}
+  .public-store .public-contact{margin-top:3px;padding-bottom:8px}
+  .public-store .public-main{padding-top:8px}
+}
