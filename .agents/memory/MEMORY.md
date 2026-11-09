@@ -1,1 +1,0 @@
-- [Stable Wouter routes](wouter-stable-routes.md) — avoid inline route component wrappers when parent updates can remount pages and repeat effects.
