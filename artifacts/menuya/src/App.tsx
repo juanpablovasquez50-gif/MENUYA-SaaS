@@ -28,7 +28,7 @@ const productLimitLabel = (limit: number) => limit >= 999999 ? 'ilimitados' : St
 const adminLinks = [['/admin', 'Resumen', LayoutDashboard], ['/admin/businesses', 'Comercios', Store], ['/admin/requests', 'Solicitudes', ClipboardList], ['/admin/users', 'Usuarios', Users], ['/admin/plans', 'Planes', Tag], ['/admin/subscriptions', 'Suscripciones', CreditCard], ['/admin/settings', 'Ajustes', Settings], ['/admin/audit', 'Auditoría', Activity]] as const;
 const shopLinks = [['/app', 'Inicio', LayoutDashboard], ['/app/catalog', 'Catálogo', ShoppingBag], ['/app/products', 'Productos', Package], ['/app/categories', 'Categorías', Tag], ['/app/orders', 'Pedidos', ClipboardList], ['/app/customers', 'Clientes', Users], ['/app/editor', 'CLICKOK Studio', Pencil], ['/app/analytics', 'Analítica', BarChart3], ['/app/help', 'Centro de ayuda', HelpCircle], ['/app/settings', 'Ajustes', Settings], ['/app/subscription', 'Mi plan', CreditCard]] as const;
 type Session = { userId: string; role: 'admin' | 'owner' } | null;
-type FormField = { name: string; label: string; type?: string; value?: string | number | boolean; options?: string[]; required?: boolean };
+type FormField = { name: string; label: string; type?: string; value?: string | number | boolean; options?: string[]; optionLabels?: Record<string, string>; required?: boolean };
 type CartLine = { key: string; productId: string; cantidad: number; variantes?: { choice: ProductChoice; cantidad: number }[]; complementos: ProductChoice[] };
 const choiceText = (choices: ProductChoice[] = []) => choices.map(choice => `${choice.nombre}|${choice.precio_extra}`).join('\n');
 const isFoodBusiness = (type: string) => /restaurante|panader[ií]a|cafeter[ií]a|comida|reposter[ií]a|pasteler[ií]a|bar\b/i.test(type.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase());
@@ -123,7 +123,7 @@ function Field({ field, onChange, businessId }: { field: FormField; onChange: (n
   if (field.type === 'choiceBuilder') return <ChoiceBuilderField field={field} onChange={onChange as (name: string, value: string) => void}/>;
   if (field.type === 'image') return <ImageUploadField field={field} value={String(field.value ?? '')} businessId={businessId} onChange={onChange as (name: string, value: string) => void}/>;
   return <label className="field"><span>{field.label}{field.required ? ' *' : ''}</span>
-      {field.options ? <select name={field.name} required={field.required} value={String(field.value ?? '')} onChange={e => onChange(field.name, e.target.value)} data-testid={`select-${field.name}`}>{field.options.map(o => <option key={o} value={o}>{statusLabel[o] || o}</option>)}</select>
+      {field.options ? <select name={field.name} required={field.required} value={String(field.value ?? '')} onChange={e => onChange(field.name, e.target.value)} data-testid={`select-${field.name}`}>{field.options.map(o => <option key={o} value={o}>{field.optionLabels?.[o] || statusLabel[o] || o}</option>)}</select>
       : field.type === 'textarea' ? <textarea name={field.name} required={field.required} defaultValue={String(field.value ?? '')} onChange={e => onChange(field.name, e.target.value)} data-testid={`input-${field.name}`} />
       : field.type === 'checkbox' ? <input name={field.name} type="checkbox" defaultChecked={Boolean(field.value)} onChange={e => onChange(field.name, e.target.checked)} data-testid={`input-${field.name}`} />
       : <input name={field.name} required={field.required} type={field.type || 'text'} defaultValue={String(field.value ?? '')} onChange={e => onChange(field.name, e.target.value)} data-testid={`input-${field.name}`} />}
@@ -386,7 +386,7 @@ function MerchantPage({ path, data, business, update, modules = [] }: { path: st
     }
     openModal(initial ? 'Editar producto' : 'Nuevo producto', [
     { name: 'nombre', label: 'Nombre', value: initial?.nombre, required: true }, { name: 'precio', label: 'Precio (COP)', type: 'number', value: initial?.precio, required: true },
-    { name: 'descripcion', label: 'Descripción', type: 'textarea', value: initial?.descripcion }, { name: 'imagen', label: 'Fotografía del producto', type: 'image', value: initial?.imagen || '' }, { name: 'category_id', label: 'Categoría', value: initial?.category_id || cats[0]?.id, options: cats.map(c => c.id) },
+    { name: 'descripcion', label: 'Descripción', type: 'textarea', value: initial?.descripcion }, { name: 'imagen', label: 'Fotografía del producto', type: 'image', value: initial?.imagen || '' }, { name: 'category_id', label: 'Categoría', value: initial?.category_id || cats[0]?.id, options: cats.map(c => c.id), optionLabels: Object.fromEntries(cats.map(c => [c.id, c.nombre])) },
     { name: 'variantes', label: variantLabel, type: 'choiceBuilder', value: choiceText(initial?.variantes) }, ...([{ name: 'complementos', label: foodBusiness ? 'Adiciones y extras' : 'Adiciones, accesorios o extras', type: 'choiceBuilder', value: choiceText(initial?.complementos) }]),
     { name: 'precio_anterior', label: 'Precio anterior (opcional)', type: 'number', value: initial?.precio_anterior || '' }, { name: 'stock', label: 'Stock', type: 'number', value: initial?.stock || 0 },
     { name: 'disponible', label: 'Disponible', type: 'checkbox', value: initial?.disponible ?? true }, { name: 'destacado', label: 'Destacado', type: 'checkbox', value: initial?.destacado ?? false },
