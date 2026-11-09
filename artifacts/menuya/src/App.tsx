@@ -710,6 +710,8 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
           delivery_address: entrega === 'domicilio' ? direccion : null,
           notes: String(form.get('observaciones') || '').trim(),
           payment_method: String(form.get('metodo_pago') || 'Efectivo'),
+          privacy_consent: form.get('aceptaPrivacidad') === 'on',
+          privacy_policy_version: '1.0',
           items: cartItems.map(x => ({
             product_id: x.p.id,
             quantity: x.cantidad,
