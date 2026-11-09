@@ -1925,3 +1925,24 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
   .public-store .public-contact{margin-top:3px;padding-bottom:8px}
   .public-store .public-main{padding-top:8px}
 }
+
+
+/* Preserve the complete 1920x700 storefront banner without cropping */
+.public-store .public-hero .public-cover{
+  width:100%!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  aspect-ratio:1920 / 700!important;
+  background-size:100% 100%!important;
+  background-position:center!important;
+}
+@media(max-width:700px){
+  .public-store .public-hero .public-cover{
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    aspect-ratio:1920 / 700!important;
+    background-size:100% 100%!important;
+  }
+}
