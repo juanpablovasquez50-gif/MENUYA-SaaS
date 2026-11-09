@@ -16,7 +16,8 @@ type StorefrontOrder = {id:string;order_number:number;status:string;total:number
 const money=(n:number)=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(n);
 const dateTime=(s:string)=>new Intl.DateTimeFormat('es-CO',{dateStyle:'short',timeStyle:'short'}).format(new Date(s));
 
-export default function PointOfSale({businessId}:{businessId:string}) {
+export default function PointOfSale({businessId,businessType}:{businessId:string;businessType:string}) {
+  const foodBusiness = /restaurante|panader[ií]a|cafeter[ií]a|comida|reposter[ií]a|pasteler[ií]a|bar\\b/i.test(businessType.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase());
   const [products,setProducts]=useState<PosProduct[]>([]);
   const [session,setSession]=useState<CashSession|null>(null);
   const [sales,setSales]=useState<Sale[]>([]);
@@ -134,8 +135,8 @@ export default function PointOfSale({businessId}:{businessId:string}) {
     <header className="pos-heading"><div><span className="eyebrow">OPERACIÓN DEL COMERCIO</span><h1>Punto de venta</h1><p>Vende en mostrador y mantén el inventario sincronizado con tu tienda.</p></div><div className={`pos-cash-state ${session?'is-open':''}`}><span/>{session?'Caja abierta':'Caja cerrada'}</div></header>
     <nav className="pos-tabs">
       <button className={tab==='sale'?'active':''} onClick={()=>setTab('sale')}><ShoppingCart size={16}/> Nueva venta</button>
-      <button className={tab==='table-orders'?'active':''} onClick={()=>setTab('table-orders')}><Receipt size={16}/> Pedidos de mesa ({tableOrders.length})</button>
-      <button className={tab==='storefront-orders'?'active':''} onClick={()=>setTab('storefront-orders')}><Receipt size={16}/> Pedidos de vitrina ({storefrontOrders.length})</button>
+      {foodBusiness&&<button className={tab==='table-orders'?'active':''} onClick={()=>setTab('table-orders')}><Receipt size={16}/> Pedidos de mesa ({tableOrders.length})</button>}
+      <button className={tab==='storefront-orders'?'active':''} onClick={()=>setTab('storefront-orders')}><Receipt size={16}/> Pedidos recibidos ({storefrontOrders.length})</button>
       <button className={tab==='history'?'active':''} onClick={()=>setTab('history')}><Receipt size={16}/> Historial</button>
       <button className={tab==='cash'?'active':''} onClick={()=>setTab('cash')}><Wallet size={16}/> Caja</button>
       <button className={tab==='cash-history'?'active':''} onClick={()=>setTab('cash-history')}><Clock3 size={16}/> Arqueos</button>
