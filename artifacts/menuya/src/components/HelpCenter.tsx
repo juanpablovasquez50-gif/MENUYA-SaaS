@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
-  Activity, ArrowLeft, ArrowRight, BarChart3, Bell, BookOpen, CheckCircle2,
-  ChevronDown, CircleHelp, ClipboardList, CreditCard, Monitor, Package,
-  Pencil, Search, Settings, ShoppingBag, ShoppingCart, Smartphone, Store,
-  Tags, Users, Utensils, X
+  ArrowLeft, ArrowRight, BarChart3, Bell, BookOpen, CheckCircle2,
+  CircleHelp, ClipboardList, CreditCard, Package, Pencil, Search, Settings,
+  ShoppingBag, ShoppingCart, Store, Tags, Users, Utensils, X
 } from 'lucide-react';
 import './HelpCenter.css';
 
@@ -23,7 +22,6 @@ type Props = {
   businessId: string;
   businessName: string;
   businessType: string;
-  modules?: string[];
 };
 
 const tutorials: Tutorial[] = [
@@ -228,7 +226,7 @@ const tutorials: Tutorial[] = [
 
 const categories = ['Todos', 'Primeros pasos', 'Catálogo y vitrina', 'Ventas y operación', 'Notificaciones', 'Pagos y cuenta', 'Herramientas del negocio'];
 
-export default function HelpCenter({ businessId, businessName, businessType, modules = [] }: Props) {
+export default function HelpCenter({ businessId, businessName, businessType }: Props) {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('Todos');
   const [selected, setSelected] = useState<string | null>(null);
@@ -243,11 +241,7 @@ export default function HelpCenter({ businessId, businessName, businessType, mod
     }
   }, [businessId]);
 
-  const availableTutorials = useMemo(() => tutorials.filter(item => {
-    if (item.id === 'restaurant' && !/restaurante|gastronom|comida|cafeter|panader|bar/i.test(businessType)) return false;
-    if (item.id === 'pos' && modules.length > 0 && !modules.includes('pos') && !modules.includes('point_of_sale')) return true;
-    return true;
-  }), [businessType, modules]);
+  const availableTutorials = useMemo(() => tutorials.filter(item => item.id !== 'restaurant' || /restaurante|gastronom|comida|cafeter|panader|bar/i.test(businessType)), [businessType]);
 
   const filtered = useMemo(() => availableTutorials.filter(item => {
     const matchesCategory = category === 'Todos' || item.category === category;
@@ -300,6 +294,6 @@ export default function HelpCenter({ businessId, businessName, businessType, mod
         </button>;
       })}</div> : <div className="help-empty"><Search size={22}/><b>No encontramos tutoriales</b><p>Prueba con otra palabra o selecciona “Todos”.</p></div>}
     </>}
-    <div className="help-contact-strip"><CircleHelp size={20}/><div><b>¿No encontraste lo que buscabas?</b><p>Consulta las guías disponibles o contacta al equipo de soporte de CLICKOK.</p></div><a href="mailto:soporte@atomlabs.lat">Contactar soporte <ArrowRight size={15}/></a></div>
+    <div className="help-contact-strip"><CircleHelp size={20}/><div><b>¿No encontraste lo que buscabas?</b><p>Consulta las guías disponibles o contacta al equipo de soporte de CLICKOK.</p></div><span className="help-support-hint">Consulta el canal de soporte de tu cuenta.</span></div>
   </div>;
 }
