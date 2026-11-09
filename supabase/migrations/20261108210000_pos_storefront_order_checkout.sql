@@ -33,48 +33,45 @@ begin
   if not exists(select 1 from public.order_items oi where oi.order_id=p_order_id and oi.business_id=p_business_id) then
     raise exception 'El pedido no tiene productos.' using errcode='22023';
   end if;
+
+  -- Bloquea todos los productos y valida la cantidad agregada por producto,
+  -- incluso cuando un mismo producto aparece en varias líneas/variantes.
   perform p.id from public.products p
    where p.business_id=p_business_id
      and p.id in (select oi.product_id from public.order_items oi
                    where oi.order_id=p_order_id and oi.business_id=p_business_id and oi.product_id is not null)
-   order by p.id
-   for update;
+   order by p.id for update;
   for v_product in
     select p.id,p.name,p.stock,sum(oi.quantity)::integer as requested_quantity
       from public.products p
       join public.order_items oi on oi.product_id=p.id and oi.business_id=p_business_id
      where p.business_id=p_business_id and oi.order_id=p_order_id
-     group by p.id,p.name,p.stock
-     order by p.id
+     group by p.id,p.name,p.stock order by p.id
   loop
     if v_product.stock is not null and v_product.stock<v_product.requested_quantity then
       raise exception 'Stock insuficiente para %.',v_product.name using errcode='22023';
     end if;
   end loop;
+
   insert into public.sales(business_id,branch_id,cash_session_id,sold_by,subtotal,discount,total,payment_method,order_id)
   values(p_business_id,p_branch_id,p_cash_session_id,auth.uid(),v_order.subtotal,0,v_order.total,pg_catalog.btrim(p_payment_method),p_order_id)
   returning id into v_sale_id;
+
+  -- Registra las líneas con el precio y nombre guardados al crear el pedido.
   for v_item in select oi.product_id,oi.product_name,oi.quantity,oi.unit_price,oi.line_total
     from public.order_items oi where oi.order_id=p_order_id and oi.business_id=p_business_id order by oi.id
   loop
     insert into public.sale_items(business_id,sale_id,product_id,product_name,quantity,unit_price,line_total)
     values(p_business_id,v_sale_id,v_item.product_id,v_item.product_name,v_item.quantity,v_item.unit_price,v_item.line_total);
-    if v_item.product_id is not null then
-      select p.id,p.stock into v_product from public.products p
-        where p.id=v_item.product_id and p.business_id=p_business_id for update;
-      if v_product.stock is not null then
-        update public.products set stock=stock-v_item.quantity,updated_at=now()
-          where id=v_item.product_id and business_id=p_business_id;
-        insert into public.inventory_movements(business_id,product_id,branch_id,movement_type,quantity,reason,actor_id)
-        values(p_business_id,v_item.product_id,p_branch_id,'out',v_item.quantity,'Pedido de vitrina cobrado en POS '||p_order_id::text,auth.uid());
-      end if;
+  end loop;
+
+  -- Descuenta inventario una sola vez por producto, con cantidades agregadas.
   for v_product in
     select p.id,p.stock,sum(oi.quantity)::integer as sold_quantity
       from public.products p
       join public.order_items oi on oi.product_id=p.id and oi.business_id=p_business_id
      where p.business_id=p_business_id and oi.order_id=p_order_id
-     group by p.id,p.stock
-     order by p.id
+     group by p.id,p.stock order by p.id
   loop
     if v_product.stock is not null then
       update public.products set stock=stock-v_product.sold_quantity,updated_at=now()
@@ -85,8 +82,6 @@ begin
     end if;
   end loop;
 
-    end if;
-  end loop;
   update public.orders set status='delivered',payment_method=pg_catalog.btrim(p_payment_method),updated_at=now()
     where id=p_order_id and business_id=p_business_id;
   return v_sale_id;
