@@ -8,8 +8,9 @@ Deno.serve(async(req:Request)=>{
   const url=Deno.env.get("SUPABASE_URL"),key=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if(!url||!key)return reply({error:"Servicio de pedidos no configurado."},500);
   const db=createClient(url,key,{auth:{persistSession:false}}),body=await req.json();
-  const {business_id,customer,items,fulfillment_type,delivery_address,notes,payment_method}=body??{};
+  const {business_id,customer,items,fulfillment_type,delivery_address,notes,payment_method,privacy_consent,privacy_policy_version}=body??{};
   if(!business_id||!customer?.name?.trim()||!customer?.phone?.trim()||!Array.isArray(items)||!items.length||items.length>50)return reply({error:"Datos del pedido incompletos."},400);
+  if(privacy_consent!==true||privacy_policy_version!=="1.0")return reply({error:"Debes aceptar la política de tratamiento de datos vigente para enviar el pedido."},400);
   if(!["delivery","pickup"].includes(fulfillment_type)||(fulfillment_type==="delivery"&&!String(delivery_address||"").trim()))return reply({error:"Dirección requerida para domicilio."},400);
   const {data:business}=await db.from("businesses").select("id,status,is_published").eq("id",business_id).maybeSingle();
   const {data:settings}=await db.from("store_settings").select("is_published").eq("business_id",business_id).maybeSingle();
@@ -50,7 +51,7 @@ Deno.serve(async(req:Request)=>{
   const {data:last}=await db.from("orders").select("order_number").eq("business_id",business_id).order("order_number",{ascending:false}).limit(1).maybeSingle();
   const number=Number(last?.order_number||0)+1;
   const trackingToken=crypto.randomUUID();
-  const {data:order,error:oe}=await db.from("orders").insert({business_id,customer_id:saved.id,order_number:number,status:"pending",tracking_token:trackingToken,fulfillment_type,delivery_address:fulfillment_type==="delivery"?String(delivery_address).trim():null,notes:String(notes||"").trim()||null,payment_method:String(payment_method||"Efectivo"),subtotal,delivery_fee:0,total:subtotal}).select("id,created_at").single();
+  const {data:order,error:oe}=await db.from("orders").insert({business_id,customer_id:saved.id,order_number:number,status:"pending",tracking_token:trackingToken,fulfillment_type,delivery_address:fulfillment_type==="delivery"?String(delivery_address).trim():null,notes:String(notes||"").trim()||null,payment_method:String(payment_method||"Efectivo"),privacy_policy_version,privacy_consent_at:new Date().toISOString(),subtotal,delivery_fee:0,total:subtotal}).select("id,created_at").single();
   if(oe)throw oe;
   const {error:ie}=await db.from("order_items").insert(normalized.map(x=>({...x,order_id:order.id})));
   if(ie){await db.from("orders").delete().eq("id",order.id).eq("business_id",business_id);throw ie;}

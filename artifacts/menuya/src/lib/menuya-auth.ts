@@ -44,6 +44,9 @@ export async function signUpWithEmail(input: {
   phone: string;
   businessName: string;
   businessType: string;
+  privacyPolicyVersion: string;
+  privacyConsentAt: string;
+  termsVersion: string;
 }) {
   ensureConfigured();
   const { data, error } = await supabase.auth.signUp({
@@ -55,6 +58,9 @@ export async function signUpWithEmail(input: {
         phone: input.phone.trim(),
         business_name: input.businessName.trim(),
         business_type: input.businessType.trim(),
+        privacy_policy_version: input.privacyPolicyVersion,
+        privacy_consent_at: input.privacyConsentAt,
+        terms_version: input.termsVersion,
       },
     },
   });
