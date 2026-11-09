@@ -1787,3 +1787,16 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
   outline:none!important;
   box-shadow:none!important;
 }
+
+
+/* Remove the pale rectangular toolbar slab behind the search input */
+.public-store .public-toolbar{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+.public-store .public-toolbar .search-field{
+  background:color-mix(in srgb,var(--store-card-background,#fff) 72%,var(--store-background,#f7f7f5))!important;
+}
