@@ -2176,3 +2176,56 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 @media(max-width:700px){
   .public-store .public-store-details{font-size:12px!important;gap:6px!important;margin-top:7px!important}
 }
+
+
+/* Mobile storefront product cards: prevent the split layout from squeezing text */
+@media (max-width: 640px) {
+  .public-featured-track {
+    display: flex !important;
+    gap: 14px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 4px 2px 16px !important;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .public-featured-track > .public-product {
+    display: flex !important;
+    flex: 0 0 min(82vw, 340px) !important;
+    flex-direction: column !important;
+    min-width: 0 !important;
+    width: min(82vw, 340px) !important;
+    overflow: hidden;
+    scroll-snap-align: start;
+  }
+  .public-featured-track > .public-product .public-product-art {
+    width: 100% !important;
+    min-width: 0 !important;
+    aspect-ratio: 16 / 10;
+  }
+  .public-featured-track > .public-product .public-product-info {
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+    padding: 14px !important;
+  }
+  .public-featured-track .product-title-button,
+  .public-featured-track .public-product-info p,
+  .public-featured-track .public-product-info b {
+    overflow-wrap: anywhere;
+    word-break: normal !important;
+  }
+  .public-products:not(.public-products-list) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .public-products .public-product {
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .public-products .public-product-art,
+  .public-products .public-product-info {
+    min-width: 0;
+    width: 100%;
+  }
+}
