@@ -1946,3 +1946,31 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
     background-size:100% 100%!important;
   }
 }
+
+
+/* Vitrina: keep the banner artwork clean and move the store name below it */
+.public-store .public-cover:before{
+  display:none!important;
+  background:none!important;
+  opacity:0!important;
+}
+.public-store .public-cover .cover-kicker,
+.public-store .public-cover .cover-shop-name{
+  display:none!important;
+}
+.public-store .public-store-intro>div:nth-child(2) h1{
+  display:block!important;
+  margin:0 0 4px!important;
+  color:inherit!important;
+  font-size:clamp(17px,2vw,24px)!important;
+  line-height:1.2!important;
+}
+.public-store .public-store-intro>div:nth-child(2) p{
+  margin:0!important;
+}
+@media(max-width:700px){
+  .public-store .public-store-intro>div:nth-child(2) h1{
+    display:block!important;
+    font-size:17px!important;
+  }
+}
