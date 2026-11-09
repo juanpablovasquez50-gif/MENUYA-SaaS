@@ -339,7 +339,7 @@ function MerchantPage({ path, data, business, update, modules = [] }: { path: st
     let active = true;
     if (path !== '/app' && path !== '/app/' && path !== '/app/analytics') return;
     setPosSales([]);
-    void supabase.from('sales').select('id,total,created_at').eq('business_id', business.id).is('order_id', null).order('created_at', { ascending: false })
+    void supabase.from('sales').select('id,total,created_at').eq('business_id', business.id).is('order_id', null).gte('created_at', new Date(Date.now() - 60 * 86400000).toISOString()).order('created_at', { ascending: false })
       .then(({ data: rows, error }) => {
         if (!active) return;
         if (error) {
