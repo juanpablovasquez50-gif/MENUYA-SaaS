@@ -779,7 +779,17 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
           }))
         }
       });
-      if (createError) throw createError;
+      if (createError) {
+        let message = 'No fue posible registrar el pedido. Intenta nuevamente.';
+        try {
+          const response = (createError as { context?: Response }).context;
+          if (response && typeof response.clone === 'function') {
+            const payload = await response.clone().json();
+            if (typeof payload?.error === 'string' && payload.error.trim()) message = payload.error;
+          }
+        } catch { /* Conserva el mensaje seguro si la respuesta no contiene JSON. */ }
+        throw new Error(message);
+      }
       if (!created?.order) throw new Error('El servidor no confirmó el registro del pedido.');
       const order = created.order as Order;
       setTrackingToken(String((created.order as Order & { tracking_token?: string }).tracking_token || ''));
