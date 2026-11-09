@@ -321,7 +321,6 @@ function FormModal({ title, fields, close, submit, submitText = 'Guardar', busin
 
 function MerchantPage({ path, data, business, update, modules = [] }: { path: string; data: DemoData; business: Business; update: (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => void; modules?: string[] }) {
   const foodBusiness = isFoodBusiness(business.tipo);
-  const variantLabel = optionLabelForBusiness(business.tipo);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('todos');
   const [categoryFilter, setCategoryFilter] = useState('todos');
@@ -387,11 +386,11 @@ function MerchantPage({ path, data, business, update, modules = [] }: { path: st
     openModal(initial ? 'Editar producto' : 'Nuevo producto', [
     { name: 'nombre', label: 'Nombre', value: initial?.nombre, required: true }, { name: 'precio', label: 'Precio (COP)', type: 'number', value: initial?.precio, required: true },
     { name: 'descripcion', label: 'Descripción', type: 'textarea', value: initial?.descripcion }, { name: 'imagen', label: 'Fotografía del producto', type: 'image', value: initial?.imagen || '' }, { name: 'category_id', label: 'Categoría', value: initial?.category_id || cats[0]?.id, options: cats.map(c => c.id), optionLabels: Object.fromEntries(cats.map(c => [c.id, c.nombre])) },
-    { name: 'variantes', label: variantLabel, type: 'choiceBuilder', value: choiceText(initial?.variantes) }, ...([{ name: 'complementos', label: foodBusiness ? 'Adiciones y extras' : 'Adiciones, accesorios o extras', type: 'choiceBuilder', value: choiceText(initial?.complementos) }]),
+    ...([{ name: 'complementos', label: foodBusiness ? 'Adiciones y extras' : 'Adiciones, accesorios o extras', type: 'choiceBuilder', value: choiceText(initial?.complementos) }]),
     { name: 'precio_anterior', label: 'Precio anterior (opcional)', type: 'number', value: initial?.precio_anterior || '' }, { name: 'stock', label: 'Stock', type: 'number', value: initial?.stock || 0 },
     { name: 'disponible', label: 'Disponible', type: 'checkbox', value: initial?.disponible ?? true }, { name: 'destacado', label: 'Destacado', type: 'checkbox', value: initial?.destacado ?? false },
   ], v => {
-    const item: Product = { id: initial?.id || repository.id(), business_id: business.id, category_id: String(v.category_id || cats[0]?.id || ''), nombre: String(v.nombre), descripcion: String(v.descripcion || ''), precio: Number(v.precio), precio_anterior: Number(v.precio_anterior) || undefined, imagen: String(v.imagen || '') || undefined, activo: initial?.activo ?? true, disponible: Boolean(v.disponible), destacado: Boolean(v.destacado), stock: Number(v.stock), variantes: parseChoices(v.variantes), complementos: parseChoices(v.complementos) };
+    const item: Product = { id: initial?.id || repository.id(), business_id: business.id, category_id: String(v.category_id || cats[0]?.id || ''), nombre: String(v.nombre), descripcion: String(v.descripcion || ''), precio: Number(v.precio), precio_anterior: Number(v.precio_anterior) || undefined, imagen: String(v.imagen || '') || undefined, activo: initial?.activo ?? true, disponible: Boolean(v.disponible), destacado: Boolean(v.destacado), stock: Number(v.stock), variantes: initial?.variantes || [], complementos: parseChoices(v.complementos) };
     update(d => ({ ...d, products: initial ? d.products.map(p => p.id === initial.id ? item : p) : [...d.products, item] }), initial ? 'Producto actualizado' : 'Producto creado', item.nombre); setModal(null);
     });
   };
