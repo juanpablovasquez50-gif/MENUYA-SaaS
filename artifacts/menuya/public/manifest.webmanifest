@@ -1,0 +1,17 @@
+{
+  "name": "CLICKOK",
+  "short_name": "CLICKOK",
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f5f7fb",
+  "theme_color": "#182331",
+  "icons": [
+    {
+      "src": "/clickok-pwa.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
