@@ -250,6 +250,7 @@ export default function HelpCenter({ businessId, businessName, businessType }: P
   }), [availableTutorials, category, query]);
 
   const current = availableTutorials.find(item => item.id === selected);
+  const CurrentIcon = current?.icon;
   const dismissWelcome = () => {
     setWelcome(false);
     try { window.localStorage.setItem(`clickok-help-welcome-${businessId}`, '1'); } catch { /* Storage may be unavailable. */ }
@@ -279,9 +280,9 @@ export default function HelpCenter({ businessId, businessName, businessType }: P
       <label className="help-filter"><span>Área</span><select value={category} onChange={e => { setCategory(e.target.value); setSelected(null); }}>{categories.map(item => <option key={item}>{item}</option>)}</select></label>
     </div>
 
-    {current ? <section className="help-detail">
+    {current && CurrentIcon ? <section className="help-detail">
       <button className="help-back" onClick={() => setSelected(null)}><ArrowLeft size={16}/> Volver a todos los tutoriales</button>
-      <div className="help-detail-head"><span className="help-tutorial-icon"><current.icon size={23}/></span><div><span className="eyebrow">{current.category}</span><h2>{current.title}</h2><p>{current.summary}</p></div></div>
+      <div className="help-detail-head"><span className="help-tutorial-icon"><CurrentIcon size={23}/></span><div><span className="eyebrow">{current.category}</span><h2>{current.title}</h2><p>{current.summary}</p></div></div>
       <ol className="help-steps">{current.steps.map((step, index) => <li key={index}><span>{String(index + 1).padStart(2, '0')}</span><p>{step}</p></li>)}</ol>
       {current.note && <div className="help-note"><CircleHelp size={18}/><p>{current.note}</p></div>}
       <div className="help-detail-footer"><CheckCircle2 size={17}/> Cuando termines, vuelve al Centro de ayuda para elegir otra guía.</div>
