@@ -2047,3 +2047,97 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
   .public-store .public-store-intro>div:nth-child(2) p{font-size:12px!important}
   .public-store .public-contact{margin-top:8px!important;font-size:11px!important}
 }
+
+
+/* CLICKOK Studio preview mirrors the current public storefront layout */
+.studio-browser .live-preview.public-store{
+  display:block!important;
+  min-height:0!important;
+  height:auto!important;
+  padding:0!important;
+  overflow:hidden!important;
+  border-radius:8px;
+  background:var(--store-background,#f7f7f5)!important;
+  color:var(--store-text,#20242b)!important;
+}
+.studio-browser .live-preview .public-header{
+  min-height:42px!important;
+  padding:7px 12px!important;
+}
+.studio-browser .live-preview .public-header .brand{
+  transform:scale(.78);
+  transform-origin:left center;
+}
+.studio-browser .live-preview .public-header-actions{gap:8px!important}
+.studio-browser .live-preview .public-track-link{font-size:8px!important}
+.studio-browser .live-preview .public-powered{font-size:6px!important}
+.studio-browser .live-preview .public-cover{
+  width:100%!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  aspect-ratio:1920 / 700!important;
+  margin:0!important;
+  padding:0!important;
+  background-size:100% 100%!important;
+  background-position:center!important;
+}
+.studio-browser .live-preview .public-cover:before{display:none!important}
+.studio-browser .live-preview .cover-kicker{display:none!important}
+.studio-browser .live-preview .public-store-intro{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  text-align:center!important;
+  gap:5px!important;
+  margin:-28px auto 0!important;
+  padding:0 10px!important;
+}
+.studio-browser .live-preview .public-logo{
+  width:54px!important;
+  height:54px!important;
+  flex:0 0 54px!important;
+  margin:0 auto!important;
+  border:3px solid var(--store-background,#fff)!important;
+  border-radius:10px!important;
+}
+.studio-browser .live-preview .public-store-intro>div:nth-child(2){
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  gap:2px!important;
+}
+.studio-browser .live-preview .public-store-intro h1{
+  display:block!important;
+  margin:0!important;
+  font-size:15px!important;
+  line-height:1.2!important;
+}
+.studio-browser .live-preview .public-store-intro p{margin:0!important;font-size:8px!important}
+.studio-browser .live-preview .open-label{font-size:7px!important;padding:4px 7px!important}
+.studio-browser .live-preview .public-contact{
+  display:flex!important;
+  justify-content:center!important;
+  flex-wrap:wrap!important;
+  gap:4px 7px!important;
+  margin:6px auto 0!important;
+  padding:0 10px 7px!important;
+  font-size:7px!important;
+}
+.studio-browser .live-preview .public-main{padding:8px 10px 14px!important}
+.studio-browser .live-preview .public-toolbar{margin-bottom:8px!important}
+.studio-browser .live-preview .search-field{min-height:28px!important;padding:6px 8px!important;font-size:8px!important}
+.studio-browser .live-preview .public-categories{gap:6px!important;margin-bottom:8px!important;overflow:hidden!important}
+.studio-browser .live-preview .public-categories button{padding:5px 8px!important;font-size:7px!important;white-space:nowrap}
+.studio-browser .live-preview .public-category-heading{margin:10px 0 7px!important}
+.studio-browser .live-preview .public-category-heading .eyebrow{font-size:6px!important}
+.studio-browser .live-preview .public-category-heading h2{font-size:13px!important}
+.studio-browser .live-preview .public-featured-track{grid-auto-columns:minmax(100px,30%)!important;gap:7px!important;padding-bottom:6px!important}
+.studio-browser .live-preview .public-category-section .public-products{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
+.studio-browser .live-preview .public-product-art{aspect-ratio:1.05/1!important;max-height:none!important}
+.studio-browser .live-preview .public-product-info{padding:7px!important}
+.studio-browser .live-preview .public-product-info .product-title-button{font-size:8px!important}
+.studio-browser .live-preview .public-product-info p{font-size:6px!important;line-height:1.3!important}
+.studio-browser .live-preview .public-product-info>div>b{font-size:8px!important}
+.studio-browser .live-preview .public-product-art>span{font-size:6px!important;padding:4px 6px!important}
+.studio-browser .live-preview .public-product-art>button{width:22px!important;height:22px!important}
