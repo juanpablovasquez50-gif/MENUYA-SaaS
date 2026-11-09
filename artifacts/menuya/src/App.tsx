@@ -363,17 +363,36 @@ function MerchantPage({ path, data, business, update, modules = [] }: { path: st
   useEffect(() => {
     let active = true;
     if (path !== '/app' && path !== '/app/' && path !== '/app/analytics') return;
-    setPosSales([]);
-    void supabase.from('sales').select('id,total,created_at').eq('business_id', business.id).is('order_id', null).gte('created_at', new Date(Date.now() - 60 * 86400000).toISOString()).order('created_at', { ascending: false })
-      .then(({ data: rows, error }) => {
-        if (!active) return;
-        if (error) {
-          console.error('No fue posible cargar las ventas directas del POS:', error);
-          return;
-        }
-        setPosSales((rows || []).map(row => ({ id: row.id, total: Number(row.total || 0), created_at: row.created_at })));
-      });
-    return () => { active = false; };
+    const loadPosSales = async () => {
+      const { data: rows, error } = await supabase.from('sales')
+        .select('id,total,created_at')
+        .eq('business_id', business.id)
+        .is('order_id', null)
+        .gte('created_at', new Date(Date.now() - 60 * 86400000).toISOString())
+        .order('created_at', { ascending: false });
+      if (!active) return;
+      if (error) {
+        console.error('No fue posible cargar las ventas directas del POS:', error);
+        return;
+      }
+      setPosSales((rows || []).map(row => ({ id: row.id, total: Number(row.total || 0), created_at: row.created_at })));
+    };
+    void loadPosSales();
+    const channel = supabase.channel(`dashboard-pos-sales-${business.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales', filter: `business_id=eq.${business.id}` }, () => {
+        void loadPosSales();
+      })
+      .subscribe();
+    const handleFocus = () => { void loadPosSales(); };
+    const handleVisibility = () => { if (document.visibilityState === 'visible') void loadPosSales(); };
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      active = false;
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      void supabase.removeChannel(channel);
+    };
   }, [business.id, path]);
   const cats = data.categories.filter(c => c.business_id === business.id).sort((a, b) => a.orden - b.orden);
   const products = data.products.filter(p => p.business_id === business.id);
