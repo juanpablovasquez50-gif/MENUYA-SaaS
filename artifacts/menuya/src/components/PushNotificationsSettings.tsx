@@ -76,7 +76,7 @@ export default function PushNotificationsSettings({ businessId }: Props) {
         auth: keys.auth,
         preferences: { new_order: true },
         updated_at: new Date().toISOString(),
-      }, { onConflict: 'endpoint' });
+      }, { onConflict: 'endpoint,business_id' });
       if (saveError) throw saveError;
       setEnabled(true);
       setNotice('Notificaciones de nuevos pedidos activadas en este dispositivo.');
