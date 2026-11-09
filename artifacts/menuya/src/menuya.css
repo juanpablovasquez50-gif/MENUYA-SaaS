@@ -1613,3 +1613,32 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 }
 .live-preview .live-products>div small,
 .live-preview .live-preview-details{color:var(--store-card-muted,#59616d)}
+
+
+/* Final category navigation palette: no default white pills on merchant-colored storefronts */
+.public-store .public-categories{
+  background:transparent!important;
+  border-bottom-color:color-mix(in srgb,var(--store-color) 18%,transparent)!important;
+}
+.public-store .public-categories button{
+  background:color-mix(in srgb,var(--store-background,#f7f7f5) 82%,var(--store-color) 7%)!important;
+  border:1px solid color-mix(in srgb,var(--store-color) 22%,var(--store-background,#f7f7f5))!important;
+  color:var(--store-text,#20242b)!important;
+  border-radius:9px!important;
+  box-shadow:none!important;
+  transition:background .18s ease,color .18s ease,border-color .18s ease;
+}
+.public-store .public-categories button.category-active{
+  background:var(--store-color)!important;
+  border-color:var(--store-color)!important;
+  color:var(--store-accent-text,#fff)!important;
+  box-shadow:inset 0 -3px 0 color-mix(in srgb,var(--store-accent-text,#fff) 32%,transparent)!important;
+}
+.public-store .public-categories button:focus-visible{
+  outline:2px solid var(--store-color);
+  outline-offset:3px;
+}
+@media(max-width:700px){
+  .public-store .public-categories{background:transparent!important}
+  .public-store .public-categories button{padding:9px 12px!important;font-size:11px!important}
+}
