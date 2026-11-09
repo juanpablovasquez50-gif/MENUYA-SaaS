@@ -2141,3 +2141,38 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .studio-browser .live-preview .public-product-info>div>b{font-size:8px!important}
 .studio-browser .live-preview .public-product-art>span{font-size:6px!important;padding:4px 6px!important}
 .studio-browser .live-preview .public-product-art>button{width:22px!important;height:22px!important}
+
+
+/* Dirección y tiempo estimado visibles bajo el nombre del comercio */
+.public-store .public-store-details{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:7px!important;
+  margin:9px auto 0!important;
+  padding:0 18px!important;
+  color:var(--store-muted)!important;
+  text-align:center!important;
+  font-size:14px!important;
+  line-height:1.4!important;
+}
+.public-store .public-store-details>div{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:7px!important;
+}
+.public-store .public-store-details svg{flex:0 0 auto!important;opacity:.8}
+.public-store .public-store-details b{color:var(--store-text)!important;font-weight:750!important}
+.studio-browser .live-preview .public-store-details{
+  gap:4px!important;
+  margin:5px auto 0!important;
+  padding:0 8px!important;
+  font-size:7px!important;
+}
+.studio-browser .live-preview .public-store-details svg{width:9px!important;height:9px!important}
+.studio-browser .live-preview .public-store-details>div{gap:4px!important}
+@media(max-width:700px){
+  .public-store .public-store-details{font-size:12px!important;gap:6px!important;margin-top:7px!important}
+}
