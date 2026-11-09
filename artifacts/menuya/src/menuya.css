@@ -1800,3 +1800,34 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .public-store .public-toolbar .search-field{
   background:color-mix(in srgb,var(--store-card-background,#fff) 72%,var(--store-background,#f7f7f5))!important;
 }
+
+
+/* CLICKOK — alto contraste en el modal público de producto */
+.public-store .modal .product-detail-price {
+  color: #182331 !important;
+}
+.public-store .modal .product-config > .subtle {
+  color: #596579 !important;
+}
+.public-store .modal .choice-list legend,
+.public-store .modal .field > span {
+  color: #365447 !important;
+}
+.public-store .modal .product-extra-copy b {
+  color: #182331 !important;
+}
+.public-store .modal .product-extra-copy small {
+  color: #596579 !important;
+}
+.public-store .modal .product-extra-copy .product-extra-subtotal {
+  color: #365447 !important;
+}
+.public-store .modal .product-extra-controls b {
+  color: #365447 !important;
+}
+.public-store .modal .checkout-total {
+  color: #596579 !important;
+}
+.public-store .modal .checkout-total b {
+  color: #182331 !important;
+}
