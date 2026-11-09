@@ -2240,3 +2240,12 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
     margin-top:8px!important;
   }
 }
+
+
+/* Identificación del desarrollador en el pie de las tiendas públicas */
+.public-footer .atomlabs-credit{display:inline-grid;gap:3px;padding-left:14px;border-left:1px solid currentColor;color:inherit;text-decoration:none;line-height:1;opacity:.88}
+.public-footer .atomlabs-credit>span{font:700 8px var(--mono);letter-spacing:.8px}
+.public-footer .atomlabs-credit b{display:flex;align-items:center;gap:4px;font:800 13px var(--sans);letter-spacing:-.4px}
+.public-footer .atomlabs-credit sup{font-size:7px;align-self:flex-start}
+.public-footer .atomlabs-symbol{width:18px;height:18px}
+@media(max-width:700px){.public-footer .atomlabs-credit{margin:8px auto 0;padding:8px 0 0;border-left:0;border-top:1px solid currentColor}}
