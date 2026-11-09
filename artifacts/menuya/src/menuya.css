@@ -2249,3 +2249,133 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .public-footer .atomlabs-credit sup{font-size:7px;align-self:flex-start}
 .public-footer .atomlabs-symbol{width:18px;height:18px}
 @media(max-width:700px){.public-footer .atomlabs-credit{margin:8px auto 0;padding:8px 0 0;border-left:0;border-top:1px solid currentColor}}
+
+
+
+/* Landing mobile: cierre y pie ordenados, con marca y acciones alineadas */
+@media(max-width:620px){
+  .stripe-inspired .stripe-closing{
+    min-height:0!important;
+    padding:76px 24px 68px!important;
+    gap:0!important;
+    align-items:flex-start!important;
+    text-align:left!important;
+    isolation:isolate;
+  }
+  .stripe-inspired .stripe-closing>.eyebrow{
+    margin:0 0 22px!important;
+    font-size:10px!important;
+    line-height:1.5!important;
+    letter-spacing:.16em!important;
+    max-width:100%;
+  }
+  .stripe-inspired .stripe-closing h2{
+    width:100%!important;
+    margin:0 0 24px!important;
+    font-size:clamp(43px,11.5vw,56px)!important;
+    line-height:1.04!important;
+    letter-spacing:-.065em!important;
+    overflow-wrap:normal;
+  }
+  .stripe-inspired .stripe-closing>p{
+    max-width:330px!important;
+    margin:0 0 28px!important;
+    font-size:15px!important;
+    line-height:1.6!important;
+    color:#c6c8df!important;
+  }
+  .stripe-inspired .stripe-closing>.btn{
+    min-height:58px!important;
+    width:min(100%,340px)!important;
+    justify-content:center!important;
+    padding:0 22px!important;
+    font-size:15px!important;
+    white-space:nowrap;
+  }
+  .stripe-inspired .ck-closing-orb{
+    width:210px!important;height:210px!important;
+    right:-100px!important;top:8%!important;
+    opacity:.3!important;z-index:-1!important;
+  }
+  .stripe-inspired .ck-footer{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    align-items:center!important;
+    column-gap:16px!important;
+    row-gap:17px!important;
+    padding:26px 22px 30px!important;
+    background:#fff!important;
+    border-top:1px solid #e6eaf0!important;
+    text-align:left!important;
+  }
+  .stripe-inspired .ck-footer>.brand{
+    grid-column:1/-1!important;
+    justify-self:start!important;
+    margin:0 0 2px!important;
+  }
+  .stripe-inspired .ck-footer>.brand img{
+    display:block!important;
+    width:auto!important;
+    height:39px!important;
+    max-width:190px!important;
+    object-fit:contain!important;
+  }
+  .stripe-inspired .ck-footer>span:first-of-type{
+    grid-column:1!important;
+    grid-row:2!important;
+    display:block!important;
+    margin:0!important;
+    color:#425466!important;
+    font-size:12px!important;
+    line-height:1.5!important;
+  }
+  .stripe-inspired .ck-footer>span:nth-of-type(2){display:none!important}
+  .stripe-inspired .ck-footer>.legal-footer-links{
+    grid-column:1/-1!important;
+    grid-row:4!important;
+    display:flex!important;
+    flex-wrap:wrap!important;
+    gap:10px 20px!important;
+    padding-top:16px!important;
+    border-top:1px solid #e6eaf0!important;
+  }
+  .stripe-inspired .ck-footer>.legal-footer-links a{
+    color:#697586!important;
+    font-size:12px!important;
+    line-height:1.5!important;
+  }
+  .stripe-inspired .ck-footer>a[href="/login"]{
+    grid-column:2!important;
+    grid-row:2!important;
+    justify-self:end!important;
+    display:flex!important;
+    align-items:center!important;
+    gap:7px!important;
+    color:#5148e5!important;
+    font-size:12px!important;
+    font-weight:650!important;
+    white-space:nowrap!important;
+  }
+  .stripe-inspired .ck-footer>.atomlabs-credit{
+    grid-column:1/-1!important;
+    grid-row:3!important;
+    justify-self:start!important;
+    align-items:flex-start!important;
+    margin:2px 0 0!important;
+    padding:0!important;
+    border:0!important;
+  }
+  .stripe-inspired .ck-footer>.atomlabs-credit>span{
+    color:#8792a2!important;
+    font-size:8px!important;
+    letter-spacing:.18em!important;
+  }
+  .stripe-inspired .ck-footer>.atomlabs-credit>b{
+    gap:7px!important;
+    font-size:21px!important;
+    color:#101828!important;
+  }
+  .stripe-inspired .ck-footer>.atomlabs-credit .atomlabs-symbol{
+    width:25px!important;height:25px!important;flex-basis:25px!important;
+  }
+}
