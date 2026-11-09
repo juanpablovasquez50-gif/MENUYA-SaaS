@@ -17,7 +17,8 @@ const money=(n:number)=>new Intl.NumberFormat('es-CO',{style:'currency',currency
 const dateTime=(s:string)=>new Intl.DateTimeFormat('es-CO',{dateStyle:'short',timeStyle:'short'}).format(new Date(s));
 
 export default function PointOfSale({businessId,businessType}:{businessId:string;businessType:string}) {
-  const foodBusiness = /restaurante|panader[ií]a|cafeter[ií]a|comida|reposter[ií]a|pasteler[ií]a|bar\\b/i.test(businessType.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase());
+  const normalizedBusinessType = businessType.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const foodBusiness = /restaurante|panaderia|cafeteria|comida|reposteria|pasteleria|bar\b/.test(normalizedBusinessType);
   const [products,setProducts]=useState<PosProduct[]>([]);
   const [session,setSession]=useState<CashSession|null>(null);
   const [sales,setSales]=useState<Sale[]>([]);
