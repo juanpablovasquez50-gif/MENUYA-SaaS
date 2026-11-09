@@ -2,12 +2,13 @@ create table if not exists public.push_subscriptions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   business_id uuid not null references public.businesses(id) on delete cascade,
-  endpoint text not null unique,
+  endpoint text not null,
   p256dh text not null,
   auth text not null,
   preferences jsonb not null default '{"new_order": true}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
+  constraint push_subscriptions_endpoint_business_unique unique (endpoint, business_id),
   constraint push_subscriptions_preferences_object check (jsonb_typeof(preferences) = 'object')
 );
 
