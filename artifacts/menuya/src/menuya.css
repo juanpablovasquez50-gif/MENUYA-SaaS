@@ -1400,3 +1400,26 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .vet-pharmacy-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}
 .vet-pharmacy-note{margin:18px 0 0;padding:12px;border-radius:7px;background:#f5f6f2;color:#718078;font-size:11px;line-height:1.5}
 @media(max-width:850px){.vet-pharmacy-layout{grid-template-columns:1fr}}
+
+
+/* CLICKOK storefront refinement — adaptable surfaces and mobile-first catalog navigation */
+.public-store{background:var(--store-background,#f7f7f5);}
+.public-hero{background:transparent;}
+.public-main{background:transparent;}
+.public-product{background:var(--store-card-background,#fff);}
+.public-products-list .public-product{background:transparent;}
+.public-categories{position:sticky;top:64px;z-index:20;background:var(--store-background,#f7f7f5);padding:10px 0 12px;gap:24px;border-bottom:1px solid color-mix(in srgb,var(--store-color) 12%,transparent);}
+.public-categories button{border:0;border-radius:0;background:transparent;padding:10px 2px;color:#222831;font-size:13px;font-weight:850;text-transform:uppercase;letter-spacing:-.02em;}
+.public-categories button.category-active{background:transparent;color:var(--store-color);box-shadow:inset 0 -3px 0 var(--store-color);}
+.public-product{border-color:color-mix(in srgb,var(--store-color) 10%,transparent);}
+.public-product-info{background:var(--store-card-background,#fff);}
+.public-product-info p{color:color-mix(in srgb,currentColor 58%,transparent);}
+.public-product-info b{color:var(--store-color);}
+.public-cover{border-radius:0 0 18px 18px;}
+.public-store-intro{padding-top:0;}
+.studio-inline-swatches{display:flex;gap:9px;align-items:center;margin-top:-3px;}
+.studio-inline-swatch{width:31px;height:31px;border:2px solid #dfe3e9;border-radius:50%;box-shadow:inset 0 0 0 2px #fff;cursor:pointer;}
+.studio-inline-swatch.selected{outline:2px solid var(--accent,#6d55e8);outline-offset:2px;}
+.live-preview{background:var(--store-background,#f7f7f5);}
+.live-preview .live-products>div{background:var(--store-card-background,#fff);}
+@media(max-width:700px){.public-header{height:58px}.public-categories{top:58px;gap:19px;margin:0 -2px;padding:9px 2px 11px}.public-categories button{font-size:12px}.public-main{padding-left:15px;padding-right:15px}.public-cover{min-height:175px}.public-store-intro{padding-left:15px;padding-right:15px}.public-contact{padding-left:15px;padding-right:15px}.public-product{border-radius:14px}}
