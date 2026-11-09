@@ -1335,17 +1335,35 @@ function TrackingPage({ initialToken = '' }: { initialToken?: string }) {
     return () => window.clearInterval(timer);
   }, [trackingActive, token]);
   const steps = [
-    ['pending', 'Pedido recibido'], ['confirmed', 'Pedido confirmado'],
-    ['preparing', 'En preparación'], ['ready', 'Listo para despacho'],
-    ['out_for_delivery', 'En camino'], ['delivered', 'Entregado']
+    { key: 'pending', label: 'Recibido', detail: 'Tu pedido llegó a la tienda', icon: '01' },
+    { key: 'preparing', label: 'En preparación', detail: 'La tienda está preparando tu pedido', icon: '02' },
+    { key: 'ready', label: 'Listo', detail: 'Tu pedido está listo', icon: '03' },
+    { key: 'delivered', label: 'Entregado', detail: 'Pedido completado', icon: '04' },
+    { key: 'cancelled', label: 'Cancelado', detail: 'Este pedido fue cancelado', icon: '×' },
   ];
-  const current = order ? steps.findIndex(([key]) => key === order.status) : -1;
+  const status = order?.status || '';
+  const currentKey = status === 'confirmed' ? 'preparing'
+    : status === 'out_for_delivery' ? 'ready' : status;
+  const current = steps.findIndex(step => step.key === currentKey);
+  const isCancelled = currentKey === 'cancelled';
+  const copyTrackingCode = async () => {
+    try { await navigator.clipboard.writeText(token); }
+    catch { setError('No fue posible copiar el código. Puedes seleccionarlo manualmente.'); }
+  };
   return <main className="tracking-page"><div className="tracking-card"><Brand /><span className="eyebrow">CLICKOK · SEGUIMIENTO</span><h1>Rastrea tu pedido</h1><p className="subtle">Consulta el estado actualizado de tu compra sin crear una cuenta.</p>
     {!initialToken && <form className="tracking-form" onSubmit={e => { e.preventDefault(); void lookup(token); }}><label className="field"><span>Código o enlace de seguimiento</span><input value={token} onChange={e => { setToken(e.target.value); setTrackingActive(false); }} placeholder="Pega aquí tu código" /></label><Button type="submit" disabled={loading}>{loading ? 'Consultando…' : 'Consultar pedido'}</Button></form>}
     {error && <div className="notice notice-error" role="alert">{error}</div>}
-    {order && <section className="tracking-result"><span className="eyebrow">{order.business_name}</span><h2>Pedido #{String(order.order_number).padStart(3, '0')}</h2>
-      {order.status === 'cancelled' ? <div className="notice notice-error">Este pedido fue cancelado.</div> : <ol className="tracking-steps">{steps.map(([key,label],i) => <li key={key} className={i <= current ? 'tracking-step-done' : ''}><span className="tracking-step-dot">{i < current ? '✓' : i+1}</span><span>{label}</span></li>)}</ol>}
-      <small>Última actualización: {new Date(order.updated_at || order.created_at).toLocaleString('es-CO',{dateStyle:'medium',timeStyle:'short'})}</small>
+    {order && <section className="tracking-result">
+      <div className="tracking-order-heading"><span className="eyebrow">{order.business_name}</span><h2>Pedido #{String(order.order_number).padStart(3, '0')}</h2></div>
+      <div className="tracking-code-panel"><div><span className="tracking-code-label">CÓDIGO DE SEGUIMIENTO</span><strong title={token}>{token}</strong></div><button type="button" className="tracking-copy-button" onClick={() => void copyTrackingCode()} aria-label="Copiar código de seguimiento">Copiar código</button></div>
+      <div className={`tracking-3d-track ${isCancelled ? 'is-cancelled' : ''}`} aria-label={`Estado actual: ${steps[Math.max(current, 0)].label}`}>
+        <div className="tracking-track-orbit" aria-hidden="true" />
+        <ol className="tracking-3d-stages">{steps.map((step, i) => <li key={step.key} className={`tracking-3d-stage ${i === current ? 'is-current' : i < current && !isCancelled ? 'is-complete' : ''} ${step.key === 'cancelled' ? 'is-alternative' : ''}`}>
+          <span className="tracking-3d-node">{i < current && !isCancelled ? '✓' : step.icon}</span><strong>{step.label}</strong><small>{step.detail}</small>
+        </li>)}</ol>
+      </div>
+      <div className="tracking-current-state"><span className="tracking-live-dot" /><div><small>ESTADO ACTUAL</small><strong>{isCancelled ? 'Pedido cancelado' : (steps[current]?.label || 'Pedido recibido')}</strong></div></div>
+      <small className="tracking-updated">Última actualización: {new Date(order.updated_at || order.created_at).toLocaleString('es-CO',{dateStyle:'medium',timeStyle:'short'})}</small>
     </section>}
     <Link href="/" className="tracking-back">Volver a la tienda</Link>
   </div></main>;
