@@ -70,6 +70,14 @@ export default function PointOfSale({businessId}:{businessId:string}) {
   },[businessId]);
 
   useEffect(()=>{load().catch(e=>setError(e.message||'No se pudo cargar el punto de venta.'));},[load]);
+  useEffect(()=>{
+    const channel=supabase.channel(`pos-storefront-orders-${businessId}`)
+      .on('postgres_changes',{event:'*',schema:'public',table:'orders',filter:`business_id=eq.${businessId}`},()=>{
+        void load().catch(e=>setError(e.message||'No se pudieron actualizar los pedidos de vitrina.'));
+      })
+      .subscribe();
+    return ()=>{void supabase.removeChannel(channel);};
+  },[businessId,load]);
   const cartLines=cart;
   const subtotal=selectedStorefrontOrder?selectedStorefrontOrder.subtotal:cartLines.reduce((sum,line)=>sum+(line.product.precio+line.extrasTotal)*line.quantity,0);
   const discountValue=Math.max(0,Math.min(subtotal,Number(discount)||0));
