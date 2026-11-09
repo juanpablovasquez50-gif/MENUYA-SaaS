@@ -2212,3 +2212,31 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .order-status-cancelled.is-active .order-status-index{background:#ad594c}
 .order-status-help{margin:10px 0 0;color:#829087;font-size:9px;line-height:1.5}
 @media(max-width:600px){.order-quick-status{padding:12px}.order-status-buttons{grid-template-columns:1fr 1fr}.order-status-button{min-height:55px;padding:8px}.order-status-cancelled{grid-column:1/-1}}
+
+
+/* Precio vigente: siempre visible y con alto contraste en la vitrina */
+.public-store .public-product-info .product-current-price{
+  display:inline-block!important;
+  margin:7px 8px 2px 0!important;
+  color:#171717!important;
+  font-family:inherit!important;
+  font-size:clamp(15px,1.35vw,19px)!important;
+  font-weight:900!important;
+  line-height:1.25!important;
+  letter-spacing:.01em;
+  opacity:1!important;
+  visibility:visible!important;
+}
+.public-store .public-product-info del{
+  display:inline-block!important;
+  color:#625b50!important;
+  font-size:11px!important;
+  opacity:.85!important;
+  vertical-align:baseline;
+}
+@media(max-width:700px){
+  .public-store .public-product-info .product-current-price{
+    font-size:16px!important;
+    margin-top:8px!important;
+  }
+}
