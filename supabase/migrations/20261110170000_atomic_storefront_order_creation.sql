@@ -24,9 +24,12 @@ begin
   if p_business_id is null
      or nullif(pg_catalog.btrim(p_customer_name), '') is null
      or nullif(pg_catalog.btrim(p_customer_phone), '') is null
+     or p_order_data is null
      or pg_catalog.jsonb_typeof(p_order_data) <> 'object'
+     or p_items is null
      or pg_catalog.jsonb_typeof(p_items) <> 'array'
-     or pg_catalog.jsonb_array_length(p_items) < 1 then
+     or pg_catalog.jsonb_array_length(p_items) < 1
+     or p_order_data->>'fulfillment_type' not in ('delivery', 'pickup') then
     raise exception 'Datos del pedido incompletos.' using errcode = '22023';
   end if;
 
@@ -37,10 +40,12 @@ begin
     raise exception 'Datos del pedido no válidos.' using errcode = '22023';
   end if;
 
-  -- Serialize order-number allocation per business.
-  perform pg_catalog.pg_advisory_xact_lock(
-    pg_catalog.hashtextextended(p_business_id::text, 0)
-  );
+  -- Lock the business row: the waiter-order RPC uses the same lock before
+  -- allocating order_number, so both checkout paths serialize consistently.
+  perform 1 from public.businesses b where b.id = p_business_id for update;
+  if not found then
+    raise exception 'Comercio no encontrado.' using errcode = '23503';
+  end if;
 
   insert into public.customers (
     business_id, name, phone, total_orders, total_spent, last_order_at
