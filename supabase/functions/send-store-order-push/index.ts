@@ -29,21 +29,43 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { business_id, order_number, customer_name, total } = await req.json();
-    if (!business_id || !order_number) return reply({ error: "Pedido incompleto." }, 400);
-    webpush.setVapidDetails(subject, publicKey, privateKey);
+    const { outbox_id } = await req.json();
+    if (!outbox_id || !/^[0-9a-f-]{36}$/i.test(String(outbox_id))) {
+      return reply({ error: "Referencia de notificación no válida." }, 400);
+    }
     const db = createClient(url, serviceKey, { auth: { persistSession: false } });
+    const { data: claimed, error: claimError } = await db
+      .rpc("claim_storefront_order_push_outbox", { p_outbox_id: outbox_id });
+    if (claimError) throw claimError;
+    const outbox = Array.isArray(claimed) ? claimed[0] : claimed;
+    if (!outbox) {
+      const { data: existing, error: lookupError } = await db
+        .from("storefront_order_push_outbox")
+        .select("status,available_at")
+        .eq("id", outbox_id)
+        .maybeSingle();
+      if (lookupError) throw lookupError;
+      if (!existing) return reply({ error: "Notificación no encontrada." }, 404);
+      if (existing.status === "sent") return reply({ sent: 0, failed: 0, already_sent: true });
+      return reply({ error: "La notificación está en espera de reintento." }, 409);
+    }
+
+    const event = outbox.payload || {};
+    const businessId = event.business_id;
+    const orderNumber = event.order_number;
+    if (!businessId || !orderNumber) throw new Error("El evento de notificación está incompleto.");
+    webpush.setVapidDetails(subject, publicKey, privateKey);
     const { data: subscriptions, error } = await db
       .from("push_subscriptions")
       .select("id,endpoint,p256dh,auth,preferences")
-      .eq("business_id", business_id);
+      .eq("business_id", businessId);
     if (error) throw error;
 
     const payload = JSON.stringify({
       title: "¡Nuevo pedido en tu vitrina!",
-      body: `Pedido #${order_number} de ${customer_name || "un cliente"} · ${total || ""}`,
+      body: `Pedido #${orderNumber} de ${event.customer_name || "un cliente"} · ${new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(Number(event.total || 0))}`,
       url: "/app/pos",
-      tag: `clickok-order-${order_number}`,
+      tag: `clickok-order-${orderNumber}`,
     });
 
     const results = await Promise.allSettled((subscriptions || [])
@@ -65,8 +87,24 @@ Deno.serve(async (req: Request) => {
       }));
     const sent = results.filter(result => result.status === "fulfilled").length;
     const failed = results.filter(result => result.status === "rejected").length;
-    if (failed) console.error("push delivery failures", failed);
-    return reply({ sent, failed });
+    if (failed) {
+      await db.from("storefront_order_push_outbox").update({
+        status: "failed",
+        available_at: new Date(Date.now() + Math.min(15 * 60_000, 30_000 * (2 ** Math.min(Number(outbox.attempts || 1) - 1, 5)))).toISOString(),
+        locked_until: null,
+        last_error: `${failed} subscription(s) failed`,
+      }).eq("id", outbox_id);
+      console.error("push delivery failures", failed);
+      return reply({ sent, failed, retry_scheduled: true }, 503);
+    }
+    const { error: markError } = await db.from("storefront_order_push_outbox").update({
+      status: "sent",
+      delivered_at: new Date().toISOString(),
+      locked_until: null,
+      last_error: null,
+    }).eq("id", outbox_id);
+    if (markError) throw markError;
+    return reply({ sent, failed: 0 });
   } catch (error) {
     console.error("send-store-order-push", error);
     return reply({ error: "No fue posible enviar las notificaciones." }, 500);
