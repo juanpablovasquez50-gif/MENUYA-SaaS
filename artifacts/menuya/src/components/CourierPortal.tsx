@@ -120,7 +120,6 @@ function DeliveryMap({order,currentLocation,onSaveAddress}:{order:any;currentLoc
   }
   lastPosition.current=currentLocation;
  },[hasDestination,currentLocation?.latitude,currentLocation?.longitude,currentLocation?.heading,destinationLat,destinationLng]);
- const handleCitySubmit=async(e:React.FormEvent<HTMLFormElement>)=>{
   const handleCitySubmit=async(e:React.FormEvent<HTMLFormElement>)=>{
    e.preventDefault();
    const neighborhoodValue=neighborhood.trim();
