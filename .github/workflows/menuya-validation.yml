@@ -46,11 +46,12 @@ jobs:
         run: |
           pnpm run typecheck
           pnpm --filter @workspace/menuya build
-      - name: Lint changed Edge Functions
-        run: |
-          if [ -d supabase/functions ]; then
-            npx --yes deno-bin lint supabase/functions/courier-access/index.ts supabase/functions/create-store-order/index.ts
-          fi
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Lint Edge Functions
+        run: deno lint supabase/functions/courier-access/index.ts supabase/functions/create-store-order/index.ts
         env:
           VITE_SUPABASE_URL: https://example.supabase.co
           VITE_SUPABASE_PUBLISHABLE_KEY: validation-placeholder
