@@ -1,0 +1,81 @@
+name: Storefront k6 load test
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "perf/storefront-orders-atomic"
+    paths:
+      - "tests/k6/**"
+      - ".github/workflows/storefront-k6.yml"
+      - "supabase/migrations/*atomic_storefront_order*"
+      - "tests/sql/atomic-storefront-order.setup.sql"
+
+jobs:
+  k6-load-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: menuya_k6
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d menuya_k6"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: grafana/setup-k6-action@v1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install PostgreSQL bridge dependency
+        run: npm install --no-save pg
+
+      - name: Prepare disposable database and apply migration
+        env:
+          PGPASSWORD: postgres
+        run: |
+          set -euo pipefail
+          psql -h localhost -U postgres -d menuya_k6 -v ON_ERROR_STOP=1 -f tests/sql/atomic-storefront-order.setup.sql
+          psql -h localhost -U postgres -d menuya_k6 -v ON_ERROR_STOP=1 -f supabase/migrations/20261110170000_atomic_storefront_order_creation.sql
+          psql -h localhost -U postgres -d menuya_k6 -v ON_ERROR_STOP=1 -c 'grant select, update on public.storefront_order_push_outbox to service_role;'
+
+      - name: Start local HTTP bridge
+        env:
+          DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/menuya_k6
+        run: |
+          node tests/k6/rpc-bridge.mjs > /tmp/menuya-k6-bridge.log 2>&1 &
+          echo $! > /tmp/menuya-k6-bridge.pid
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8787/health >/dev/null 2>&1; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/menuya-k6-bridge.log
+          exit 1
+
+      - name: Run k6 load profile
+        run: |
+          mkdir -p k6-results
+          k6 run --summary-export=k6-results/k6-native-summary.json tests/k6/storefront-orders.js | tee k6-results/k6-console.txt
+
+      - name: Stop local HTTP bridge
+        if: always()
+        run: |
+          if [ -f /tmp/menuya-k6-bridge.pid ]; then kill "$(cat /tmp/menuya-k6-bridge.pid)" || true; fi
+
+      - name: Upload k6 results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: menuya-storefront-k6-results
+          path: k6-results/
+          if-no-files-found: warn
