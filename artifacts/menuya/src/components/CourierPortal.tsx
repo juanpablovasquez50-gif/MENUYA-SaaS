@@ -27,7 +27,40 @@ function DeliveryMap({order,currentLocation,onSaveAddress}:{order:any;currentLoc
  useEffect(()=>{
   if(hasStoredDestination||!order?.delivery_address?.trim()){setResolvedDestination(null);setGeocodeError('');setGeocoding(false);return;}
   let cancelled=false;
-  const findAddress=async()=>{setGeocoding(true);setGeocodeError('');try{const q=encodeURIComponent(order.delivery_address.trim()+', Colombia');const response=await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&countrycodes=co&addressdetails=1&q='+q,{headers:{Accept:'application/json'}});if(!response.ok)throw new Error('No pudimos consultar el mapa. Inténtalo de nuevo.');const results=await response.json();if(!results?.length)throw new Error('No encontramos esta dirección. Pide al comercio que agregue barrio y municipio.');const latitude=Number(results[0].lat),longitude=Number(results[0].lon);if(!Number.isFinite(latitude)||!Number.isFinite(longitude))throw new Error('La dirección no devolvió una ubicación válida.');if(!cancelled)setResolvedDestination({latitude,longitude});}catch(e){if(!cancelled)setGeocodeError(e instanceof Error?e.message:'No fue posible localizar la dirección.');}finally{if(!cancelled)setGeocoding(false);}};
+  const findAddress=async()=>{setGeocoding(true);setGeocodeError('');try{
+   const parts=String(order.delivery_address||'').split(',').map((part:string)=>part.trim()).filter(Boolean);
+   const clean=(value:string)=>value.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('es');
+   const country='Colombia';
+   const cityPart=parts.length>=3?parts[parts.length-3]:'';
+   const departmentPart=parts.length>=2?parts[parts.length-2]:'';
+   const baseAddress=parts.slice(0,Math.max(0,parts.length-3)).join(', ');
+   const queries:string[]=[];
+   if(cityPart&&departmentPart)queries.push([baseAddress,cityPart,departmentPart,country].filter(Boolean).join(', '));
+   queries.push(parts.join(', ')+', '+country);
+   if(cityPart&&departmentPart)queries.push([cityPart,departmentPart,country].join(', '));
+   let results:any[]=[];
+   for(const query of [...new Set(queries)]){
+    const params=new URLSearchParams({format:'jsonv2',limit:'8',countrycodes:'co',addressdetails:'1',q:query});
+    const response=await fetch('https://nominatim.openstreetmap.org/search?'+params.toString(),{headers:{Accept:'application/json'}});
+    if(!response.ok)throw new Error('No pudimos consultar el mapa. Inténtalo de nuevo.');
+    const found=await response.json();
+    if(Array.isArray(found)&&found.length){
+     const matching=found.filter((item:any)=>{
+      const address=item.address||{};
+      const state=clean(String(address.state||address.region||''));
+      const city=clean(String(address.city||address.town||address.municipality||address.county||address.village||''));
+      return (!departmentPart||state.includes(clean(departmentPart))||clean(departmentPart).includes(state))&&(!cityPart||city.includes(clean(cityPart))||clean(cityPart).includes(city));
+     });
+     results=matching.length?matching:found;
+     if(matching.length||(!cityPart&&!departmentPart))break;
+    }
+   }
+   if(!results.length)throw new Error('No encontramos esta dirección en '+[cityPart,departmentPart].filter(Boolean).join(', ')+'. Verifica el barrio y la dirección.');
+   const best=results.find((item:any)=>{const a=item.address||{};const state=clean(String(a.state||a.region||''));const city=clean(String(a.city||a.town||a.municipality||a.county||a.village||''));return (!departmentPart||state.includes(clean(departmentPart))||clean(departmentPart).includes(state))&&(!cityPart||city.includes(clean(cityPart))||clean(cityPart).includes(city));})||results[0];
+   const latitude=Number(best.lat),longitude=Number(best.lon);
+   if(!Number.isFinite(latitude)||!Number.isFinite(longitude))throw new Error('La dirección no devolvió una ubicación válida.');
+   if(!cancelled)setResolvedDestination({latitude,longitude});
+  }catch(e){if(!cancelled)setGeocodeError(e instanceof Error?e.message:'No fue posible localizar la dirección.');}finally{if(!cancelled)setGeocoding(false);}};
   void findAddress();
   return()=>{cancelled=true;};
  },[order?.id,order?.delivery_address,hasStoredDestination]);
