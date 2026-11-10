@@ -126,7 +126,8 @@ jobs:
             begin
               if (select count(*) from public.orders) <> 5
                  or (select count(distinct order_number) from public.orders) <> 5
-                 or (select count(*) from public.storefront_order_idempotency) <> 5 then
+                 or (select count(*) from public.storefront_order_idempotency) <> 5
+                 or (select count(*) from public.storefront_order_push_outbox) <> 5 then
                 raise exception 'Dos reintentos simultáneos con la misma clave crearon más de un pedido';
               end if;
             end;
