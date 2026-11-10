@@ -67,8 +67,6 @@ create table public.order_items (
   line_total numeric not null,
   variant_name text,
   addons_snapshot jsonb not null default '[]'::jsonb,
-  constraint order_items_business_id_fkey
-    foreign key (business_id) references public.businesses(id),
   constraint order_items_product_tenant_fk
     foreign key (business_id, product_id)
     references public.products (business_id, id),
