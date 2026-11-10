@@ -32,26 +32,37 @@ function DeliveryMap({order,currentLocation,onSaveAddress}:{order:any;currentLoc
    const parts=String(order.delivery_address||'').split(',').map((part:string)=>part.trim()).filter(Boolean);
    const clean=(value:string)=>value.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('es').replace(/[^a-z0-9 ]/g,' ').replace(/\\s+/g,' ').trim();
    const country='Colombia';
-   const hasNeighborhood=parts.length>=5;
-   const cityPart=parts.length>=3?parts[parts.length-3]:'';
-   const departmentPart=parts.length>=2?parts[parts.length-2]:'';
-   const neighborhoodPart=hasNeighborhood?parts[parts.length-4]:'';
-   const baseAddress=parts.slice(0,Math.max(0,parts.length-(hasNeighborhood?4:3))).join(', ');
+   const knownCity=['monteria'];
+   const knownDepartment=['cordoba'];
+   const tail=parts.map(clean);
+   while(tail.length>1&&tail[tail.length-1]===tail[tail.length-2]){tail.pop();parts.pop();}
+   if(tail[tail.length-1]==='colombia'){tail.pop();parts.pop();}
+   let cityPart='',departmentPart='',neighborhoodPart='';
+   if(tail.length>=2&&knownCity.includes(tail[tail.length-2])&&knownDepartment.includes(tail[tail.length-1])){
+    cityPart=parts[parts.length-2];departmentPart=parts[parts.length-1];parts.splice(parts.length-2,2);
+   }else if(tail.length>=2){
+    cityPart=parts[parts.length-2];departmentPart=parts[parts.length-1];parts.splice(parts.length-2,2);
+   }
+   if(parts.length>=2)neighborhoodPart=parts.pop()||'';
+   const baseAddress=parts.join(', ');
    const neighborhoodFields=['neighbourhood','suburb','quarter','residential','hamlet','city_district'];
-   const matches=(item:any)=>{
-    const a=item.address||{};
-    const state=clean(String(a.state||a.region||''));
-    const city=clean(String(a.city||a.town||a.municipality||a.county||a.village||''));
-    const neighborhoodValues=neighborhoodFields.map((key:string)=>clean(String(a[key]||''))).filter(Boolean);
-    const locationMatches=(!departmentPart||state===clean(departmentPart)||state.includes(clean(departmentPart))||clean(departmentPart).includes(state))&&(!cityPart||city===clean(cityPart)||city.includes(clean(cityPart))||clean(cityPart).includes(city));
-    const neighborhoodMatches=!neighborhoodPart||neighborhoodValues.some((value:string)=>value===clean(neighborhoodPart)||value.includes(clean(neighborhoodPart))||clean(neighborhoodPart).includes(value));
-    return locationMatches&&neighborhoodMatches;
+   const matchesLocation=(item:any)=>{
+    const address=item.address||{};
+    const state=clean(String(address.state||address.region||''));
+    const city=clean(String(address.city||address.town||address.municipality||address.county||address.village||''));
+    return (!departmentPart||state.includes(clean(departmentPart))||clean(departmentPart).includes(state))&&(!cityPart||city.includes(clean(cityPart))||clean(cityPart).includes(city));
+   };
+   const matchesNeighborhood=(item:any)=>{
+    if(!neighborhoodPart)return true;
+    const address=item.address||{};
+    const values=neighborhoodFields.map((key:string)=>clean(String(address[key]||''))).filter(Boolean);
+    const wanted=clean(neighborhoodPart);
+    return values.some((value:string)=>value===wanted||value.includes(wanted)||wanted.includes(value))||clean(String(item.name||item.display_name||'')).includes(wanted);
    };
    const queries:string[]=[];
+   if(neighborhoodPart)queries.push([neighborhoodPart,cityPart,departmentPart,country].filter(Boolean).join(', '));
    if(baseAddress&&neighborhoodPart)queries.push([baseAddress,neighborhoodPart,cityPart,departmentPart,country].filter(Boolean).join(', '));
-   if(baseAddress)queries.push([baseAddress,cityPart,departmentPart,country].filter(Boolean).join(', '));
-   queries.push(parts.join(', ')+', '+country);
-   if(cityPart&&departmentPart)queries.push([neighborhoodPart,cityPart,departmentPart,country].filter(Boolean).join(', '));
+   if(baseAddress&&!neighborhoodPart)queries.push([baseAddress,cityPart,departmentPart,country].filter(Boolean).join(', '));
    let results:any[]=[];
    for(const query of [...new Set(queries)]){
     const params=new URLSearchParams({format:'jsonv2',limit:'10',countrycodes:'co',addressdetails:'1',q:query});
@@ -59,17 +70,13 @@ function DeliveryMap({order,currentLocation,onSaveAddress}:{order:any;currentLoc
     if(!response.ok)throw new Error('No pudimos consultar el mapa. Inténtalo de nuevo.');
     const found=await response.json();
     if(Array.isArray(found)&&found.length){
-     const matching=found.filter(matches);
+     const matching=found.filter((item:any)=>matchesLocation(item)&&matchesNeighborhood(item));
      if(matching.length){results=matching;break;}
-     if(!neighborhoodPart&&found.some((item:any)=>matches({...item,address:{...(item.address||{}),neighbourhood:'',suburb:'',quarter:'',residential:'',hamlet:'',city_district:''}}))) {
-      results=found.filter((item:any)=>matches(item));
-      if(results.length)break;
-     }
     }
    }
    if(!results.length){
-    if(neighborhoodPart)throw new Error('No pudimos confirmar que el mapa corresponda al barrio '+neighborhoodPart+'. No mostraremos una ubicación aproximada; verifica la dirección o ajusta el barrio.');
-    throw new Error('No encontramos esta dirección en '+[cityPart,departmentPart].filter(Boolean).join(', ')+'. Verifica la dirección.');
+    if(!neighborhoodPart)throw new Error('No encontramos el barrio de esta dirección. Escribe el barrio exacto (por ejemplo, Pasatiempo) para ubicar el domicilio sin enviarlo a otro sector.');
+    throw new Error('No pudimos confirmar el barrio '+neighborhoodPart+' en Montería. No mostraremos una ubicación aproximada; revisa el nombre del barrio.');
    }
    const best=results[0];
    const latitude=Number(best.lat),longitude=Number(best.lon);
@@ -121,8 +128,10 @@ function DeliveryMap({order,currentLocation,onSaveAddress}:{order:any;currentLoc
    const departmentValue=department.trim();
    if(!cityValue||!departmentValue)return;
    const parts=String(order?.delivery_address||'').split(',').map((part:string)=>part.trim()).filter(Boolean);
-   const base=parts.slice(0,Math.max(0,parts.length-(parts.length>=5?4:3))).join(', ');
-   const fullAddress=[base,neighborhoodValue,cityValue,departmentValue,'Colombia'].filter(Boolean).join(', ');
+   const clean=(value:string)=>value.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('es').replace(/[^a-z0-9 ]/g,' ').replace(/\\s+/g,' ').trim();
+   while(parts.length&&['colombia',clean(cityValue),clean(departmentValue)].includes(clean(parts[parts.length-1])))parts.pop();
+   const street=parts.filter((part:string)=>clean(part)!==clean(cityValue)&&clean(part)!==clean(departmentValue)&&clean(part)!==clean(neighborhoodValue)).join(', ');
+   const fullAddress=[street,neighborhoodValue,cityValue,departmentValue,'Colombia'].filter(Boolean).join(', ');
    setSavingAddress(true);
    setGeocodeError('');
    try{await onSaveAddress(fullAddress);setNeighborhood('');setCity('');setDepartment('');setResolvedDestination(null);}
@@ -131,9 +140,9 @@ function DeliveryMap({order,currentLocation,onSaveAddress}:{order:any;currentLoc
   };
   const cityEditor=<form className="cp-city-editor" onSubmit={handleCitySubmit}>
    <b>Corregir ubicación de entrega</b>
-   <span>Indica el barrio exacto para evitar ubicar el pedido en otro sector.</span>
-   <div className="cp-address-fields"><label>Barrio<input value={neighborhood} onChange={e=>setNeighborhood(e.target.value)} placeholder="Ej. Pasatiempo"/></label><label>Ciudad<input value={city} onChange={e=>setCity(e.target.value)} placeholder="Ej. Montería" required/></label><label>Departamento<input value={department} onChange={e=>setDepartment(e.target.value)} placeholder="Ej. Córdoba" required/></label></div>
-   <button type="submit" disabled={savingAddress||!city.trim()||!department.trim()}>{savingAddress?'Guardando…':'Guardar y actualizar mapa'}</button>
+   <span>Indica el barrio exacto para ubicar el domicilio con precisión.</span>
+   <div className="cp-address-fields"><label>Barrio<input value={neighborhood} onChange={e=>setNeighborhood(e.target.value)} placeholder="Ej. Pasatiempo" required/></label><label>Ciudad<input value={city} onChange={e=>setCity(e.target.value)} placeholder="Ej. Montería" required/></label><label>Departamento<input value={department} onChange={e=>setDepartment(e.target.value)} placeholder="Ej. Córdoba" required/></label></div>
+   <button type="submit" disabled={savingAddress||!neighborhood.trim()||!city.trim()||!department.trim()}>{savingAddress?'Guardando…':'Guardar y actualizar mapa'}</button>
   </form>;
 if(!hasDestination)return <div className="cp-map-wrap"><div className="cp-map-heading"><span><MapPinned size={17}/> Ubicación de entrega</span></div><div className="cp-map-empty"><MapPin size={25}/><b>{geocoding?'Localizando dirección…':geocodeError?'No pudimos ubicar esta dirección':'Buscando ubicación del domicilio'}</b><span>{order?.delivery_address||'Dirección no registrada'}</span><small>{geocodeError||'Estamos convirtiendo la dirección en un punto del mapa automáticamente.'}</small></div>{cityEditor}</div>;
  return <div className="cp-map-wrap"><div className="cp-map-heading"><span><MapPinned size={17}/> Ruta de entrega</span><span className="cp-route-status"><span className="cp-route-dot"/>{mapMessage}</span></div><div ref={mapRef} className="cp-live-map" role="application" aria-label="Mapa con tu ubicación y el destino de entrega"/><div className="cp-map-legend"><span><i className="cp-legend-origin"/> Tu ubicación</span><span><i className="cp-legend-destination"/> Destino del cliente</span></div><div className="cp-map-address"><MapPin size={15}/><span>{order?.delivery_address||'Dirección no registrada'}</span></div>{cityEditor}</div>;
