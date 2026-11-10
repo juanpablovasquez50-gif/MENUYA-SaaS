@@ -1,12 +1,31 @@
--- Atomic storefront checkout: customer, order and order items commit together.
+-- Atomic and idempotent storefront checkout. A repeated key with the same payload
+-- returns the original order; reusing a key with a different payload is rejected.
 -- Intended for the create-store-order Edge Function using the service-role key only.
+
+create table if not exists public.storefront_order_idempotency (
+  business_id uuid not null references public.businesses(id) on delete cascade,
+  idempotency_key uuid not null,
+  request_hash text not null,
+  order_id uuid not null,
+  created_at timestamptz not null default pg_catalog.now(),
+  primary key (business_id, idempotency_key),
+  constraint storefront_order_idempotency_order_fk
+    foreign key (business_id, order_id)
+    references public.orders (business_id, id) on delete cascade
+);
+
+revoke all on table public.storefront_order_idempotency from public, anon, authenticated;
+grant select, insert on table public.storefront_order_idempotency to service_role;
+
+drop function if exists public.create_storefront_order_atomic(uuid, text, text, jsonb, jsonb);
 
 create or replace function public.create_storefront_order_atomic(
   p_business_id uuid,
   p_customer_name text,
   p_customer_phone text,
   p_order_data jsonb,
-  p_items jsonb
+  p_items jsonb,
+  p_idempotency_key uuid
 )
 returns jsonb
 language plpgsql
@@ -22,6 +41,8 @@ declare
   v_delivery_fee numeric;
   v_items_subtotal numeric;
   v_tracking_token text;
+  v_request_hash text;
+  v_existing_hash text;
 begin
   if p_business_id is null
      or nullif(pg_catalog.btrim(p_customer_name), '') is null
@@ -34,6 +55,10 @@ begin
      or pg_catalog.jsonb_array_length(p_items) > 50
      or coalesce(p_order_data->>'fulfillment_type', '') not in ('delivery', 'pickup') then
     raise exception 'Datos del pedido incompletos.' using errcode = '22023';
+  end if;
+
+  if p_idempotency_key is null then
+    raise exception 'La clave de idempotencia es obligatoria.' using errcode = '22023';
   end if;
 
   v_subtotal := (p_order_data->>'subtotal')::numeric;
@@ -77,11 +102,43 @@ begin
     raise exception 'El subtotal no coincide con los artículos.' using errcode = '22023';
   end if;
 
-  -- Lock the business row: the waiter-order RPC uses the same lock before
-  -- allocating order_number, so both checkout paths serialize consistently.
+  -- Lock the business row before both idempotency lookup and order numbering.
+  -- It serializes simultaneous requests for this business, including retries.
   perform 1 from public.businesses b where b.id = p_business_id for update;
   if not found then
     raise exception 'Comercio no encontrado.' using errcode = '23503';
+  end if;
+
+  v_request_hash := pg_catalog.md5(pg_catalog.jsonb_build_object(
+    'customer_name', pg_catalog.btrim(p_customer_name),
+    'customer_phone', pg_catalog.btrim(p_customer_phone),
+    'order_data', p_order_data - 'tracking_token' - 'privacy_consent_at',
+    'items', p_items
+  )::text);
+
+  select i.request_hash, o.id, o.customer_id, o.order_number,
+         o.tracking_token, o.created_at
+    into v_existing_hash, v_order_id, v_customer_id, v_order_number,
+         v_tracking_token, v_created_at
+    from public.storefront_order_idempotency i
+    join public.orders o
+      on o.business_id = i.business_id and o.id = i.order_id
+   where i.business_id = p_business_id
+     and i.idempotency_key = p_idempotency_key;
+
+  if found then
+    if v_existing_hash <> v_request_hash then
+      return pg_catalog.jsonb_build_object('idempotency_conflict', true);
+    end if;
+
+    return pg_catalog.jsonb_build_object(
+      'id', v_order_id,
+      'customer_id', v_customer_id,
+      'order_number', v_order_number,
+      'tracking_token', v_tracking_token,
+      'created_at', v_created_at,
+      'replayed', true
+    );
   end if;
 
   insert into public.customers (
@@ -141,20 +198,27 @@ begin
     addons_snapshot jsonb
   );
 
+  insert into public.storefront_order_idempotency (
+    business_id, idempotency_key, request_hash, order_id
+  ) values (
+    p_business_id, p_idempotency_key, v_request_hash, v_order_id
+  );
+
   return pg_catalog.jsonb_build_object(
     'id', v_order_id,
     'customer_id', v_customer_id,
     'order_number', v_order_number,
     'tracking_token', v_tracking_token,
-    'created_at', v_created_at
+    'created_at', v_created_at,
+    'replayed', false
   );
 end;
 $$;
 
-revoke all on function public.create_storefront_order_atomic(uuid, text, text, jsonb, jsonb)
+revoke all on function public.create_storefront_order_atomic(uuid, text, text, jsonb, jsonb, uuid)
   from public, anon, authenticated;
-grant execute on function public.create_storefront_order_atomic(uuid, text, text, jsonb, jsonb)
+grant execute on function public.create_storefront_order_atomic(uuid, text, text, jsonb, jsonb, uuid)
   to service_role;
 
-comment on function public.create_storefront_order_atomic(uuid, text, text, jsonb, jsonb) is
+comment on function public.create_storefront_order_atomic(uuid, text, text, jsonb, jsonb, uuid) is
   'Atomically upserts the storefront customer and creates the order plus its items. Service-role only.';
