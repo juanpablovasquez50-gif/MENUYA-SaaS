@@ -303,7 +303,7 @@ function VeterinaryWorkspace({ businessId }: { businessId: string }) {
       </section>
       <section className="panel"><div className="panel-head"><div><span className="eyebrow">MOVIMIENTO COMERCIAL</span><h2>Ventas recientes</h2></div><Link href="/app/pos" className="text-link">Ir al POS <ArrowRight size={14}/></Link></div>
         {sales.length===0?<p className="subtle">Aún no hay ventas registradas.</p>:<div className="vet-patient-list">{sales.map(x=><article key={x.id}><span className="vet-avatar"><ShoppingCart/></span><div><b>{money(Number(x.total))}</b><small>{new Date(x.created_at).toLocaleString('es-CO',{dateStyle:'medium',timeStyle:'short'})}</small><small>{x.payment_method||'Pago registrado'}</small></div></article>)}</div>}
-        <p className="vet-pharmacy-note">Las ventas se registran en el POS general de Menuya y descuentan el inventario del producto.</p>
+        <p className="vet-pharmacy-note">Las ventas se registran en el punto de venta de CLICKOK y descuentan el inventario del producto.</p>
       </section>
     </div>
     :tab==='patients'?<div className="vet-layout"><section className="panel"><div className="panel-head"><div><span className="eyebrow">NUEVO REGISTRO</span><h2>Registrar paciente</h2></div></div><form className="vet-form" onSubmit={savePatient}>
@@ -906,7 +906,7 @@ function PlatformAdminLogin({ onLogin }: { onLogin: (email: string, password: st
       <div className="sa-login-recovery"><a href="/forgot-password">¿Olvidaste tu contraseña? Recuperar acceso</a></div>
       <div className="sa-login-secure"><ShieldCheck size={14}/> Acceso verificado por Supabase · Solo personal autorizado</div>
     </section>
-    <footer className="sa-login-footer">MENUYA <span>•</span> ATOM LABS <span>•</span> ADMINISTRACIÓN SEGURA</footer>
+    <footer className="sa-login-footer">CLICKOK <span>•</span> ATOM LABS <span>•</span> ADMINISTRACIÓN SEGURA</footer>
   </main>;
 }
 
@@ -1041,7 +1041,7 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
       })),
       plans:allPlans.some(item => item.id === plan.id) ? allPlans : [...allPlans, plan],
       subscriptions:sub ? [{id:sub.id,business_id:sub.business_id,plan_id:sub.plan_id,estado:sub.status,inicio:sub.starts_at || '',vencimiento:sub.ends_at || ''}] : [],
-      settings:[settings],audit:[],catalog_events:(catalogEventResult.data || []).map(event => ({id:event.id,business_id:event.business_id,product_id:event.product_id || undefined,tipo:event.event_type === 'visit' ? 'visita' as const : 'consulta' as const,created_at:event.created_at})),platform:{name:'MENUYA',approval:'manual',default_plan:plan.id},
+      settings:[settings],audit:[],catalog_events:(catalogEventResult.data || []).map(event => ({id:event.id,business_id:event.business_id,product_id:event.product_id || undefined,tipo:event.event_type === 'visit' ? 'visita' as const : 'consulta' as const,created_at:event.created_at})),platform:{name:'CLICKOK',approval:'manual',default_plan:plan.id},
     };
     setRemoteData(data); setLoading(false);
   };
@@ -1196,7 +1196,7 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
           .filter((part): part is string => typeof part === 'string' && part.trim().length > 0);
         const errorCode = typeof saveError?.code === 'string' ? ` [${saveError.code}]` : '';
         const message = errorParts.join(' · ') || (error instanceof Error ? error.message : 'No fue posible guardar los cambios en Supabase.');
-        console.error('MENUYA: error guardando la vitrina en Supabase', error);
+        console.error('CLICKOK: error guardando la vitrina en Supabase', error);
         setSavingError(message + errorCode);
         await loadRemoteData();
       }
@@ -1252,7 +1252,7 @@ function Router() {
   };
 
   const login = async (email: string, password: string): Promise<string | null> => {
-    if (!isSupabaseConfigured) return 'La conexión de MENUYA aún no está configurada en este entorno.';
+    if (!isSupabaseConfigured) return 'La conexión de CLICKOK aún no está configurada en este entorno.';
     try {
       await signInWithEmail(email, password);
       const authContext = await getAuthContext();
