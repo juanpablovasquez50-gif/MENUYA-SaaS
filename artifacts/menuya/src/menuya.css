@@ -2588,3 +2588,66 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 /* CLICKOK typography standard: DM Sans across the product; Archivo Black only for Atom Labs wordmark */
 .dashboard-shell,.dashboard-shell *,.clickok-world,.clickok-world :not(.atomlabs-credit>b),.waiter-login,.waiter-app{font-family:'DM Sans',sans-serif!important}
 .clickok-world .atomlabs-credit>b{font-family:'Archivo Black',sans-serif!important}
+
+
+/* CLICKOK merchant workspace — component scale audit / shared sizing tokens */
+.dashboard-shell{
+  --ck-space-1:4px;--ck-space-2:8px;--ck-space-3:12px;--ck-space-4:16px;
+  --ck-space-5:20px;--ck-space-6:24px;
+  --ck-font-xs:10px;--ck-font-sm:12px;--ck-font-md:13px;
+  --ck-control-h:40px;--ck-control-h-sm:36px;
+  --ck-card-pad:18px;--ck-card-gap:16px;
+}
+/* Main work area and page headings */
+.dashboard-shell .workspace{min-width:0}
+.dashboard-shell .workspace h1{font-size:clamp(25px,2.2vw,30px);line-height:1.16;font-weight:800;margin:0 0 7px}
+.dashboard-shell .workspace h2{font-size:17px;line-height:1.3;font-weight:800}
+.dashboard-shell .workspace h3{font-size:14px;line-height:1.35;font-weight:750}
+.dashboard-shell .workspace :where(.eyebrow,.section-label){font-size:10px;line-height:1.35;font-weight:800;letter-spacing:.14em}
+.dashboard-shell .workspace :where(p,.subtle,.fine-print){font-size:12px;line-height:1.55}
+.dashboard-shell .workspace :where(label,.field-label){font-size:11px;line-height:1.35;font-weight:700}
+/* Common cards/panels share padding, radius, border and surface */
+.dashboard-shell .workspace :where(.panel,.card,.content-card,.section-card,.dashboard-card,.stat-card,.setting-section,.ms-card,.table-wrap,.stripe-bento-card){
+  box-sizing:border-box;border:1px solid var(--ck-border);border-radius:14px;
+}
+.dashboard-shell .workspace :where(.panel,.card,.content-card,.section-card,.dashboard-card,.setting-section,.ms-card){padding:18px}
+.dashboard-shell .workspace :where(.panel-head,.card-head,.section-head,.ms-card-head){gap:12px;margin-bottom:14px}
+.dashboard-shell .workspace :where(.panel-head h2,.card-head h2,.section-head h2,.ms-card-head h2){font-size:16px;font-weight:800;line-height:1.3;margin:0}
+.dashboard-shell .workspace :where(.metrics-grid,.analytics-grid,.settings-grid,.form-grid){gap:14px}
+/* Consistent fields: text, number, search, select and textarea */
+.dashboard-shell .workspace :where(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),select,.inline-select,.search-field,textarea){
+  box-sizing:border-box;max-width:100%;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;
+  border-radius:9px;
+}
+.dashboard-shell .workspace :where(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),select,.inline-select,.search-field){
+  min-height:40px;height:40px;padding:0 11px;
+}
+.dashboard-shell .workspace textarea{min-height:88px;padding:10px 11px;line-height:1.5}
+.dashboard-shell .workspace :where(.field,.form-stack){gap:7px}
+.dashboard-shell .workspace :where(.form-grid){row-gap:13px;column-gap:14px}
+/* Button sizes are consistent; icon-only controls remain square */
+.dashboard-shell .workspace :where(button.btn,.btn,[role="button"]){
+  box-sizing:border-box;min-height:38px;height:auto;padding:0 13px;border-radius:9px;
+  font-family:'DM Sans',sans-serif;font-size:12px;line-height:1.2;font-weight:750;
+}
+.dashboard-shell .workspace :where(button.btn-large,.btn-large){min-height:42px;padding:0 17px;font-size:12px}
+.dashboard-shell .workspace :where(.icon-btn,button.icon-btn){
+  width:36px;min-width:36px;height:36px;min-height:36px;padding:0;border-radius:9px;
+}
+.dashboard-shell .workspace :where(.toolbar,.filters,.page-actions,.table-actions,.modal-actions){gap:8px}
+.dashboard-shell .workspace :where(.toolbar button,.filters button,.page-actions button,.table-actions button,.modal-actions button){
+  min-height:36px;padding:0 11px;font-size:11px;font-weight:750
+}
+/* Tables and list rows */
+.dashboard-shell .workspace :where(th){padding:11px 12px;font-size:10px;font-weight:800}
+.dashboard-shell .workspace :where(td){padding:11px 12px;font-size:12px;line-height:1.45}
+.dashboard-shell .workspace :where(.notice){padding:11px 13px;border-radius:10px;font-size:12px;line-height:1.5}
+.dashboard-shell .workspace :where(.badge,.status-badge,.pill){font-size:10px;font-weight:750;line-height:1.2}
+/* Responsive: retain consistent controls without forcing desktop columns */
+@media(max-width:700px){
+ .dashboard-shell{--ck-card-pad:15px}
+ .dashboard-shell .workspace :where(.panel,.card,.content-card,.section-card,.dashboard-card,.setting-section,.ms-card){padding:15px}
+ .dashboard-shell .workspace :where(.metrics-grid,.analytics-grid,.settings-grid,.form-grid){gap:10px}
+ .dashboard-shell .workspace :where(button.btn,.btn,[role="button"]){min-height:40px}
+ .dashboard-shell .workspace :where(.toolbar button,.filters button,.page-actions button,.table-actions button,.modal-actions button){min-height:38px}
+}
