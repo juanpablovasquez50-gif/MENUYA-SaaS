@@ -1,4 +1,4 @@
-name: Menuya validation
+name: Menuya validation (typecheck, build and Edge lint)
 
 on:
   pull_request:
