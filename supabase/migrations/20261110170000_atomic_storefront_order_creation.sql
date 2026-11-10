@@ -18,7 +18,7 @@ revoke all on table public.storefront_order_idempotency from public, anon, authe
 grant select, insert on table public.storefront_order_idempotency to service_role;
 
 drop function if exists public.create_storefront_order_atomic(uuid, text, text, jsonb, jsonb);
-drop function if exists public.create_storefront_order_atomic(uuid, text, text, jsonb, jsonb, text, uuid);
+drop function if exists public.create_storefront_order_atomic(uuid, text, text, jsonb, jsonb, uuid);
 
 create or replace function public.create_storefront_order_atomic(
   p_business_id uuid,
@@ -215,12 +215,12 @@ begin
 end;
 $$;
 
-revoke all on function public.create_storefront_order_atomic(uuid, text, text, jsonb, jsonb, uuid)
+revoke all on function public.create_storefront_order_atomic(uuid, text, text, jsonb, jsonb, text, uuid)
   from public, anon, authenticated;
-grant execute on function public.create_storefront_order_atomic(uuid, text, text, jsonb, jsonb, uuid)
+grant execute on function public.create_storefront_order_atomic(uuid, text, text, jsonb, jsonb, text, uuid)
   to service_role;
 
-comment on function public.create_storefront_order_atomic(uuid, text, text, jsonb, jsonb, uuid) is
+comment on function public.create_storefront_order_atomic(uuid, text, text, jsonb, jsonb, text, uuid) is
   'Atomically upserts the storefront customer and creates the order plus its items. Service-role only.';
  then
     raise exception 'La clave o huella de idempotencia no es válida.' using errcode = '22023';
@@ -380,10 +380,10 @@ comment on function public.create_storefront_order_atomic(uuid, text, text, json
 end;
 $$;
 
-revoke all on function public.create_storefront_order_atomic(uuid, text, text, jsonb, jsonb, uuid)
+revoke all on function public.create_storefront_order_atomic(uuid, text, text, jsonb, jsonb, text, uuid)
   from public, anon, authenticated;
-grant execute on function public.create_storefront_order_atomic(uuid, text, text, jsonb, jsonb, uuid)
+grant execute on function public.create_storefront_order_atomic(uuid, text, text, jsonb, jsonb, text, uuid)
   to service_role;
 
-comment on function public.create_storefront_order_atomic(uuid, text, text, jsonb, jsonb, uuid) is
+comment on function public.create_storefront_order_atomic(uuid, text, text, jsonb, jsonb, text, uuid) is
   'Atomically upserts the storefront customer and creates the order plus its items. Service-role only.';
