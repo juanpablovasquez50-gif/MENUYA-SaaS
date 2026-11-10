@@ -87,4 +87,4 @@ values (
 );
 
 -- Match the read access expected by the service_role integration assertions.
-grant select on public.customers, public.orders, public.order_items to service_role;
+grant select on public.customers, public.orders, public.order_items, public.storefront_order_push_outbox to service_role;
