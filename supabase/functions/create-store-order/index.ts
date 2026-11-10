@@ -9,7 +9,9 @@ Deno.serve(async(req:Request)=>{
   const url=Deno.env.get("SUPABASE_URL"),key=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if(!url||!key)return reply({error:"Servicio de pedidos no configurado."},500);
   const db=createClient(url,key,{auth:{persistSession:false}}),body=await req.json();
-  const {business_id,customer,items,fulfillment_type,delivery_address,notes,payment_method,privacy_consent,privacy_policy_version}=body??{};
+  const {business_id,customer,items,fulfillment_type,delivery_address,notes,payment_method,privacy_consent,privacy_policy_version,idempotency_key}=body??{};
+  const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if(!uuidPattern.test(String(idempotency_key||"")))return reply({error:"No se pudo validar el intento de compra. Actualiza la página e inténtalo nuevamente."},400);
   if(!business_id||!customer?.name?.trim()||!customer?.phone?.trim()||!Array.isArray(items)||!items.length||items.length>50)return reply({error:"Datos del pedido incompletos."},400);
   if(privacy_consent!==true||privacy_policy_version!=="1.0")return reply({error:"Debes aceptar la política de tratamiento de datos vigente para enviar el pedido."},400);
   if(!["delivery","pickup"].includes(fulfillment_type)||(fulfillment_type==="delivery"&&!String(delivery_address||"").trim()))return reply({error:"Dirección requerida para domicilio."},400);
@@ -24,7 +26,6 @@ Deno.serve(async(req:Request)=>{
   // Load all requested products and option values in two bounded queries,
   // instead of issuing one request per cart line/variant/add-on.
   const productIds=[...new Set(items.map((item)=>String(item.product_id||"")))];
-  const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if(productIds.some((id:string)=>!uuidPattern.test(id)))return reply({error:"Producto no válido."},400);
 
   const optionValueIds:string[]=[];
@@ -105,19 +106,21 @@ Deno.serve(async(req:Request)=>{
     total:subtotal,
     tracking_token:trackingToken
    },
-   p_items:normalized
+   p_items:normalized,
+   p_idempotency_key:idempotency_key
   });
   if(createError)throw createError;
-  if(!created?.id||!created?.customer_id||!created?.order_number)throw new Error("La base de datos no devolvió la confirmación del pedido.");
+  if(created?.idempotency_conflict)return reply({error:"Esta compra ya se había enviado con otros datos. Revisa tu carrito y vuelve a confirmar el pedido."},409);
+  if(!created?.id||!created?.customer_id||!created?.order_number||!created?.tracking_token)throw new Error("La base de datos no devolvió la confirmación del pedido.");
   const order={id:created.id,created_at:created.created_at};
   const number=Number(created.order_number);
   const customerId=created.customer_id;
   const pushSecret=Deno.env.get("CLICKOK_PUSH_DISPATCH_SECRET");
-  if(pushSecret){
+  if(pushSecret&&!created.replayed){
    try{
     EdgeRuntime.waitUntil(fetch(`${url}/functions/v1/send-store-order-push`,{method:"POST",headers:{"Content-Type":"application/json","apikey":key,"Authorization":`Bearer ${key}`,"x-clickok-push-secret":pushSecret},body:JSON.stringify({business_id,order_number:number,customer_name:String(customer.name).trim(),total:new Intl.NumberFormat("es-CO",{style:"currency",currency:"COP",maximumFractionDigits:0}).format(subtotal)})}).then(response=>{if(!response.ok)console.error("Push delivery returned",response.status);}).catch(pushError=>console.error("No se pudo despachar el aviso push; el pedido quedó registrado.",pushError)));
    }catch(pushError){console.error("No se pudo despachar el aviso push; el pedido quedó registrado.",pushError);}
   }
-  return reply({order:{id:order.id,business_id,numero:number,customer_id:customerId,tracking_token:trackingToken,items:normalized.map(x=>({product_id:x.product_id,nombre:x.product_name,precio:x.unit_price,cantidad:x.quantity,variante:x.variant_name,complementos:x.addons_snapshot})),total:subtotal,estado:"pendiente",entrega:fulfillment_type==="delivery"?"domicilio":"recoger",direccion:delivery_address,observaciones:notes||"",metodo_pago:payment_method||"Efectivo",created_at:order.created_at}});
+  return reply({order:{id:order.id,business_id,numero:number,customer_id:customerId,tracking_token:created.tracking_token,items:normalized.map(x=>({product_id:x.product_id,nombre:x.product_name,precio:x.unit_price,cantidad:x.quantity,variante:x.variant_name,complementos:x.addons_snapshot})),total:subtotal,estado:"pendiente",entrega:fulfillment_type==="delivery"?"domicilio":"recoger",direccion:delivery_address,observaciones:notes||"",metodo_pago:payment_method||"Efectivo",created_at:order.created_at}});
  }catch(e){console.error("create-store-order",e);return reply({error:"No fue posible registrar el pedido. Intenta nuevamente."},500);}
 });
