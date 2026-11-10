@@ -1,5 +1,5 @@
 /* CLICKOK unified operational portal visual system — presentation only */
-.waiter-login,.waiter-app{min-height:100vh!important;background:#f3f6fb!important;color:#172238!important;font-family:Inter,'DM Sans',sans-serif!important;box-sizing:border-box}
+.waiter-login,.waiter-app{min-height:100vh!important;background:#f3f6fb!important;color:#172238!important;font-family:'DM Sans',sans-serif!important;box-sizing:border-box}
 .waiter-login{display:grid!important;place-items:center!important;padding:24px!important;background:radial-gradient(circle at 18% 8%,#ece8ff,transparent 38%),#f3f6fb!important}
 .waiter-login form{width:min(100%,430px)!important;background:#fff!important;border:1px solid #e8edf4!important;border-radius:23px!important;padding:30px!important;box-shadow:0 18px 55px #25204412!important;display:flex!important;flex-direction:column!important;gap:13px!important}
 .waiter-mark{width:54px!important;height:54px!important;border-radius:16px!important;background:#eeeaff!important;color:#6848df!important;display:grid!important;place-items:center!important}
