@@ -40,6 +40,7 @@ create table public.orders (
   total numeric not null,
   created_at timestamptz not null default now(),
   constraint orders_business_id_order_number_key unique (business_id, order_number),
+  constraint orders_business_id_id_key unique (business_id, id),
   constraint orders_customer_tenant_fk
     foreign key (business_id, customer_id)
     references public.customers (business_id, id)
