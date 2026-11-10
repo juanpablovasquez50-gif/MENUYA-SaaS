@@ -38,7 +38,7 @@ jobs:
           deno-version: v2.x
 
       - name: Lint Edge Functions
-        run: deno lint supabase/functions/create-store-order/index.ts supabase/functions/send-store-order-push/index.ts
+        run: deno lint supabase/functions/create-store-order/index.ts supabase/functions/send-store-order-push/index.ts supabase/functions/dispatch-pending-store-order-push/index.ts
 
       - name: Install PostgreSQL client
         run: |
