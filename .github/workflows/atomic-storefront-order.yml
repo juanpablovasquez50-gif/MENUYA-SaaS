@@ -53,7 +53,9 @@ jobs:
       - name: Apply migration to disposable database
         env:
           PGPASSWORD: postgres
-        run: psql -h localhost -U postgres -d menuya_test -v ON_ERROR_STOP=1 -f supabase/migrations/20261110170000_atomic_storefront_order_creation.sql
+        run: |
+          psql -h localhost -U postgres -d menuya_test -v ON_ERROR_STOP=1 -f supabase/migrations/20261110170000_atomic_storefront_order_creation.sql
+          psql -h localhost -U postgres -d menuya_test -v ON_ERROR_STOP=1 -c 'grant select on public.storefront_order_push_outbox to service_role;'
 
       - name: Verify commit and rollback behavior
         env:
