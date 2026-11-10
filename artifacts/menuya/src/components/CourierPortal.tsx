@@ -15,7 +15,20 @@ type CourierPosition={latitude:number;longitude:number};
 function DeliveryMap({order,currentLocation}:{order:any;currentLocation:CourierPosition|null}){
  const mapRef=useRef<HTMLDivElement>(null),mapInstance=useRef<any>(null),layers=useRef<any[]>([]);
  const [mapMessage,setMapMessage]=useState('Cargando mapa…');
- const hasDestination=order?.delivery_latitude!==null&&order?.delivery_latitude!==undefined&&order?.delivery_longitude!==null&&order?.delivery_longitude!==undefined&&Number.isFinite(Number(order.delivery_latitude))&&Number.isFinite(Number(order.delivery_longitude));
+ const [resolvedDestination,setResolvedDestination]=useState<{latitude:number;longitude:number}|null>(null);
+ const [geocoding,setGeocoding]=useState(false);
+ const [geocodeError,setGeocodeError]=useState('');
+ const hasStoredDestination=order?.delivery_latitude!==null&&order?.delivery_latitude!==undefined&&order?.delivery_longitude!==null&&order?.delivery_longitude!==undefined&&Number.isFinite(Number(order.delivery_latitude))&&Number.isFinite(Number(order.delivery_longitude));
+ const destination=hasStoredDestination?{latitude:Number(order.delivery_latitude),longitude:Number(order.delivery_longitude)}:resolvedDestination;
+ const hasDestination=!!destination;
+ useEffect(()=>{
+  if(hasStoredDestination||!order?.delivery_address?.trim()){setResolvedDestination(null);setGeocodeError('');setGeocoding(false);return;}
+  let cancelled=false;
+  const findAddress=async()=>{setGeocoding(true);setGeocodeError('');try{const q=encodeURIComponent(order.delivery_address.trim()+', Colombia');const response=await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=co&q='+q,{headers:{Accept:'application/json'}});if(!response.ok)throw new Error('No pudimos consultar el mapa. Inténtalo de nuevo.');const results=await response.json();if(!results?.length)throw new Error('No encontramos esta dirección. Pide al comercio que agregue barrio y municipio.');const latitude=Number(results[0].lat),longitude=Number(results[0].lon);if(!Number.isFinite(latitude)||!Number.isFinite(longitude))throw new Error('La dirección no devolvió una ubicación válida.');if(!cancelled)setResolvedDestination({latitude,longitude});}catch(e){if(!cancelled)setGeocodeError(e instanceof Error?e.message:'No fue posible localizar la dirección.');}finally{if(!cancelled)setGeocoding(false);}};
+  void findAddress();
+  return()=>{cancelled=true;};
+ },[order?.id,order?.delivery_address,hasStoredDestination]);
+ const destinationLat=destination?.latitude,destinationLng=destination?.longitude;
  useEffect(()=>{
   if(!hasDestination||!mapRef.current)return;
   let cancelled=false;
@@ -24,33 +37,33 @@ function DeliveryMap({order,currentLocation}:{order:any;currentLocation:CourierP
    const L=window.L;
    if(!mapInstance.current){mapInstance.current=L.map(mapRef.current,{zoomControl:true}).setView([Number(order.delivery_latitude),Number(order.delivery_longitude)],15);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(mapInstance.current);}
    const map=mapInstance.current;layers.current.forEach(layer=>map.removeLayer(layer));layers.current=[];
-   const destination:[number,number]=[Number(order.delivery_latitude),Number(order.delivery_longitude)];
-   layers.current.push(L.marker(destination).addTo(map).bindPopup('Destino de entrega').openPopup());
+   const destinationPoint:[number,number]=[Number(destinationLat),Number(destinationLng)];
+   layers.current.push(L.marker(destinationPoint).addTo(map).bindPopup('Destino de entrega').openPopup());
    if(currentLocation){
     const origin:[number,number]=[currentLocation.latitude,currentLocation.longitude];
     layers.current.push(L.marker(origin).addTo(map).bindPopup('Tu ubicación actual'));
     setMapMessage('Calculando ruta hasta el cliente…');
     try{
-     const response=await fetch('https://router.project-osrm.org/route/v1/driving/'+origin[1]+','+origin[0]+';'+destination[1]+','+destination[0]+'?overview=full&geometries=geojson');
+     const response=await fetch('https://router.project-osrm.org/route/v1/driving/'+origin[1]+','+origin[0]+';'+destinationPoint[1]+','+destinationPoint[0]+'?overview=full&geometries=geojson');
      if(!response.ok)throw new Error('Ruta no disponible');
      const data=await response.json();if(cancelled)return;
      if(data.routes?.[0]){
       const route=data.routes[0];
       layers.current.push(L.geoJSON(route.geometry,{style:{color:'#6848df',weight:6,opacity:.88}}).addTo(map));
-      map.fitBounds(L.latLngBounds([origin,destination]),{padding:[35,35]});
+      map.fitBounds(L.latLngBounds([origin,destinationPoint]),{padding:[35,35]});
       const km=(route.distance/1000).toFixed(1),minutes=Math.max(1,Math.round(route.duration/60));
       setMapMessage('Ruta estimada · '+km+' km · '+minutes+' min');
      }else setMapMessage('No encontramos una ruta en carretera para este destino.');
     }catch{if(!cancelled)setMapMessage('No fue posible calcular la ruta. El mapa sigue disponible.');}
    }else{
-    map.setView(destination,15);
+    map.setView(destinationPoint,15);
     setMapMessage('Activa el GPS para mostrar tu ubicación y calcular la ruta.');
    }
    window.setTimeout(()=>map.invalidateSize(),100);
   }).catch(e=>setMapMessage(e instanceof Error?e.message:'No se pudo cargar el mapa.'));
   return()=>{cancelled=true;};
- },[hasDestination,order?.delivery_latitude,order?.delivery_longitude,currentLocation?.latitude,currentLocation?.longitude]);
- if(!hasDestination)return <div className="cp-map-wrap"><div className="cp-map-heading"><span><MapPinned size={17}/> Ubicación de entrega</span></div><div className="cp-map-empty"><MapPin size={25}/><b>Este pedido no tiene coordenadas</b><span>{order?.delivery_address||'Dirección no registrada'}</span><small>Solicita al comercio que complete la ubicación del domicilio.</small></div></div>;
+ },[hasDestination,destinationLat,destinationLng,currentLocation?.latitude,currentLocation?.longitude]);
+ if(!hasDestination)return <div className="cp-map-wrap"><div className="cp-map-heading"><span><MapPinned size={17}/> Ubicación de entrega</span></div><div className="cp-map-empty"><MapPin size={25}/><b>{geocoding?'Localizando dirección…':geocodeError?'No pudimos ubicar esta dirección':'Buscando ubicación del domicilio'}</b><span>{order?.delivery_address||'Dirección no registrada'}</span><small>{geocodeError||'Estamos convirtiendo la dirección en un punto del mapa automáticamente.'}</small></div></div>;
  return <div className="cp-map-wrap"><div className="cp-map-heading"><span><MapPinned size={17}/> Ruta de entrega</span><span className="cp-route-status"><span className="cp-route-dot"/>{mapMessage}</span></div><div ref={mapRef} className="cp-live-map" role="application" aria-label="Mapa con tu ubicación y el destino de entrega"/><div className="cp-map-legend"><span><i className="cp-legend-origin"/> Tu ubicación</span><span><i className="cp-legend-destination"/> Destino del cliente</span></div><div className="cp-map-address"><MapPin size={15}/><span>{order?.delivery_address||'Dirección no registrada'}</span></div></div>;
 }
 export default function CourierPortal(){
