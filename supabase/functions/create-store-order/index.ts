@@ -10,6 +10,9 @@ Deno.serve(async(req:Request)=>{
   if(!url||!key)return reply({error:"Servicio de pedidos no configurado."},500);
   const db=createClient(url,key,{auth:{persistSession:false}}),body=await req.json();
   const {business_id,customer,items,fulfillment_type,delivery_address,notes,payment_method,privacy_consent,privacy_policy_version,idempotency_key}=body??{};
+  const requestForHash={...(body??{})};delete requestForHash.idempotency_key;
+  const requestHashBytes=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(JSON.stringify(requestForHash)));
+  const requestHash=Array.from(new Uint8Array(requestHashBytes)).map(value=>value.toString(16).padStart(2,"0")).join("");
   const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if(!uuidPattern.test(String(idempotency_key||"")))return reply({error:"No se pudo validar el intento de compra. Actualiza la página e inténtalo nuevamente."},400);
   if(!business_id||!customer?.name?.trim()||!customer?.phone?.trim()||!Array.isArray(items)||!items.length||items.length>50)return reply({error:"Datos del pedido incompletos."},400);
@@ -107,6 +110,7 @@ Deno.serve(async(req:Request)=>{
     tracking_token:trackingToken
    },
    p_items:normalized,
+   p_request_hash:requestHash,
    p_idempotency_key:idempotency_key
   });
   if(createError)throw createError;
