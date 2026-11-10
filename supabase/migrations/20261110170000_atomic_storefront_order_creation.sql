@@ -57,6 +57,9 @@ begin
      where pg_catalog.jsonb_typeof(entry.item) <> 'object'
         or nullif(pg_catalog.btrim(entry.item->>'product_name'), '') is null
         or nullif(entry.item->>'product_id', '') is null
+        or entry.item->>'unit_price' is null
+        or entry.item->>'quantity' is null
+        or entry.item->>'line_total' is null
         or (entry.item->>'unit_price')::numeric < 0
         or (entry.item->>'quantity')::integer < 1
         or (entry.item->>'quantity')::integer > 99
