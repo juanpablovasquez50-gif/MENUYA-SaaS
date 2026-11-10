@@ -120,10 +120,19 @@ Deno.serve(async(req:Request)=>{
   const number=Number(created.order_number);
   const customerId=created.customer_id;
   const pushSecret=Deno.env.get("CLICKOK_PUSH_DISPATCH_SECRET");
-  if(pushSecret&&!created.replayed){
-   try{
-    EdgeRuntime.waitUntil(fetch(`${url}/functions/v1/send-store-order-push`,{method:"POST",headers:{"Content-Type":"application/json","apikey":key,"Authorization":`Bearer ${key}`,"x-clickok-push-secret":pushSecret},body:JSON.stringify({business_id,order_number:number,customer_name:String(customer.name).trim(),total:new Intl.NumberFormat("es-CO",{style:"currency",currency:"COP",maximumFractionDigits:0}).format(subtotal)})}).then(response=>{if(!response.ok)console.error("Push delivery returned",response.status);}).catch(pushError=>console.error("No se pudo despachar el aviso push; el pedido quedó registrado.",pushError)));
-   }catch(pushError){console.error("No se pudo despachar el aviso push; el pedido quedó registrado.",pushError);}
+  if(pushSecret&&created.push_outbox_id&&!created.replayed){
+   EdgeRuntime.waitUntil(fetch(`${url}/functions/v1/send-store-order-push`,{
+    method:"POST",
+    headers:{
+     "Content-Type":"application/json",
+     "apikey":key,
+     "Authorization":`Bearer ${key}`,
+     "x-clickok-push-secret":pushSecret
+    },
+    body:JSON.stringify({outbox_id:created.push_outbox_id})
+   }).then(async response=>{
+    if(!response.ok)console.error("Push outbox remains pending for retry; status",response.status);
+   }).catch(pushError=>console.error("No se pudo despachar el aviso push; quedó guardado en outbox.",pushError)));
   }
   return reply({order:{id:order.id,business_id,numero:number,customer_id:customerId,tracking_token:created.tracking_token,items:normalized.map(x=>({product_id:x.product_id,nombre:x.product_name,precio:x.unit_price,cantidad:x.quantity,variante:x.variant_name,complementos:x.addons_snapshot})),total:subtotal,estado:"pendiente",entrega:fulfillment_type==="delivery"?"domicilio":"recoger",direccion:delivery_address,observaciones:notes||"",metodo_pago:payment_method||"Efectivo",created_at:order.created_at}});
  }catch(e){console.error("create-store-order",e);return reply({error:"No fue posible registrar el pedido. Intenta nuevamente."},500);}
