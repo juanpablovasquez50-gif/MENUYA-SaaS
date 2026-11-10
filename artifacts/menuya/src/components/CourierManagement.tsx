@@ -23,8 +23,8 @@ export default function CourierManagement({businessId}:{businessId:string}){
   const [moduleRes,cRes,oRes,aRes]=await Promise.all([
    supabase.from('business_modules').select('enabled').eq('business_id',businessId).eq('module_key','courier_management').maybeSingle(),
    supabase.from('delivery_couriers').select('id,full_name,phone,active').eq('business_id',businessId).order('created_at',{ascending:false}),
-   supabase.from('orders').select('id,order_number,status,delivery_address,delivery_latitude,delivery_longitude,total,customer_id,customers(name,phone)').eq('business_id',businessId).eq('fulfillment_type','delivery').not('status','in','(cancelled,delivered)').order('created_at',{ascending:false}).limit(100),
-   supabase.from('delivery_assignments').select('id,order_id,courier_id,status,orders(id,order_number,status,delivery_address,delivery_latitude,delivery_longitude,total,customer_id,customers(name,phone)),delivery_couriers(id,full_name,phone,active)').eq('business_id',businessId).neq('status','cancelled').order('assigned_at',{ascending:false})
+   supabase.from('orders').select('id,order_number,status,delivery_address,delivery_latitude,delivery_longitude,total,customer_id').eq('business_id',businessId).eq('fulfillment_type','delivery').not('status','in','(cancelled,delivered)').order('created_at',{ascending:false}).limit(100),
+   supabase.from('delivery_assignments').select('id,order_id,courier_id,status,orders(id,order_number,status,delivery_address,delivery_latitude,delivery_longitude,total,customer_id),delivery_couriers(id,full_name,phone,active)').eq('business_id',businessId).neq('status','cancelled').order('assigned_at',{ascending:false})
   ]);
   const failure=[moduleRes.error,cRes.error,oRes.error,aRes.error].find(Boolean);if(failure){setError(failure.message);setLoading(false);return;}
   setEnabled(Boolean(moduleRes.data?.enabled));setCouriers(cRes.data||[]);setOrders((oRes.data||[]) as unknown as DeliveryOrder[]);setAssignments((aRes.data||[]) as unknown as Assignment[]);setLoading(false);
