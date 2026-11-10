@@ -837,9 +837,15 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
       idempotencyRef.current = { fingerprint, key: idempotencyKey };
       try { sessionStorage.setItem(storageKey, JSON.stringify({ fingerprint, key: idempotencyKey })); } catch { /* La referencia en memoria cubre reintentos en esta vista. */ }
 
+      const storefrontRequestStarted = performance.now();
       const { data: created, error: createError } = await supabase.functions.invoke('create-store-order', {
         body: { ...requestBody, idempotency_key: idempotencyKey }
       });
+      console.info('menuya_storefront_order_client_timing', JSON.stringify({
+        client_roundtrip_ms: Math.round(performance.now() - storefrontRequestStarted),
+        item_count: requestBody.items.length,
+        success: !createError && Boolean(created?.order)
+      }));
       if (createError) {
         let message = 'No fue posible registrar el pedido. Intenta nuevamente.';
         try {
