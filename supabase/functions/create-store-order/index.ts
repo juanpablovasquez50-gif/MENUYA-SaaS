@@ -20,7 +20,7 @@ Deno.serve(async(req:Request)=>{
   // Load all requested products and option values in two bounded queries,
   // instead of issuing one request per cart line/variant/add-on.
   const productIds=[...new Set(items.map((item:any)=>String(item.product_id||"")))];
-  const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if(productIds.some((id:string)=>!uuidPattern.test(id)))return reply({error:"Producto no válido."},400);
 
   const optionValueIds:string[]=[];
