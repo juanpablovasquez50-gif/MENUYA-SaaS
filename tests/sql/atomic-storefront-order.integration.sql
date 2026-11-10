@@ -171,7 +171,6 @@ begin
     ))
   ,
     'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
-    'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
     'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2'
   );
 
@@ -243,7 +242,6 @@ begin
       ))
     ,
     'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
-    'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
     'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3'
   );
     raise exception 'Se esperaba que la inserción inválida fallara';
@@ -289,7 +287,6 @@ begin
       ))
     ,
     'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-    'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
     'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4'
   );
     raise exception 'Se esperaba el rechazo de un subtotal inconsistente';
@@ -326,7 +323,6 @@ begin
         'addons_snapshot', '[]'::jsonb
       ))
     ,
-    'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
     'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
     'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa5'
   );
