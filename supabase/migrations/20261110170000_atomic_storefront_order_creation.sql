@@ -37,6 +37,7 @@ create table if not exists public.storefront_order_push_outbox (
 );
 
 revoke all on table public.storefront_order_push_outbox from public, anon, authenticated;
+grant select, update on table public.storefront_order_push_outbox to service_role;
 
 create or replace function public.claim_storefront_order_push_outbox(p_outbox_id uuid)
 returns setof public.storefront_order_push_outbox
