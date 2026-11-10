@@ -143,3 +143,63 @@
  .restaurant-ops-panel{padding:17px!important}
  .restaurant-ops-tabs button{padding:0 13px!important;min-height:45px!important}
 }
+
+
+/* Organización de sección siguiendo el sistema de páginas del panel de comercios */
+.restaurant-ops{width:100%;max-width:100%;min-width:0;display:flex!important;flex-direction:column!important;gap:22px!important}
+.restaurant-ops-head{width:100%;display:flex!important;align-items:flex-end!important;justify-content:space-between!important;gap:24px!important;padding:0 0 2px!important}
+.restaurant-ops-head>div:first-child{min-width:0}
+.restaurant-ops-head h1{margin:7px 0 8px!important;font-size:clamp(28px,3vw,36px)!important;line-height:1.12!important;font-weight:800!important;letter-spacing:-.04em!important}
+.restaurant-ops-head p{max-width:640px!important;margin:0!important;font-size:14px!important;line-height:1.55!important}
+.restaurant-ops-actions{display:flex!important;align-items:center!important;gap:9px!important;flex:0 0 auto}
+.restaurant-ops-summary{width:100%;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:14px!important}
+.restaurant-ops-summary article{min-width:0;min-height:86px!important;padding:17px 19px!important;border:1px solid #e6e9f0!important;border-radius:15px!important;background:#fff!important;box-shadow:0 3px 12px rgba(24,35,58,.035)!important}
+.restaurant-ops-summary article>div{min-width:0}
+.restaurant-ops-summary small{display:block!important;font-size:10px!important;letter-spacing:.08em!important;font-weight:750!important;color:#818b9b!important}
+.restaurant-ops-summary strong{display:block!important;margin-top:5px!important;font-size:25px!important;line-height:1.1!important;font-weight:800!important;color:#242a3b!important}
+.restaurant-ops-tabs{width:100%;display:flex!important;align-items:center!important;gap:8px!important;margin:0!important;padding:0 0 12px!important;border-bottom:1px solid #e5e8ef!important;overflow-x:auto!important}
+.restaurant-ops-tabs button{min-height:44px!important;padding:0 17px!important;border:1px solid transparent!important;border-radius:10px!important;background:transparent!important;color:#687386!important;font-size:13px!important;font-weight:750!important;white-space:nowrap!important}
+.restaurant-ops-tabs button.active{background:#f1edff!important;border-color:#e2dbfb!important;color:#6346c8!important;box-shadow:none!important}
+.restaurant-ops-tabs button.active:after{display:none!important}
+.restaurant-ops-tabs span{min-width:22px!important;height:22px!important;padding:0 6px!important;border-radius:20px!important;background:#e9edf4!important;color:#5c687c!important}
+.restaurant-ops-tabs button.active span{background:#ded6ff!important;color:#6044c5!important}
+.restaurant-ops-grid{width:100%;display:grid!important;grid-template-columns:minmax(280px,.88fr) minmax(360px,1.12fr)!important;gap:16px!important;align-items:stretch!important}
+.restaurant-ops-panel{min-width:0!important;padding:21px!important;border:1px solid #e5e9f0!important;border-radius:15px!important;background:#fff!important;box-shadow:0 3px 13px rgba(24,35,58,.035)!important}
+.restaurant-ops-panel h2{margin:0 0 7px!important;font-size:18px!important;line-height:1.3!important;font-weight:800!important;letter-spacing:-.02em!important;color:#252b3c!important}
+.restaurant-ops-panel>p,.restaurant-ops-panel-head p{margin:0!important;color:#7d8798!important;font-size:12px!important;line-height:1.55!important}
+.restaurant-ops-panel form{display:grid!important;gap:14px!important;margin-top:19px!important}
+.restaurant-ops-panel label{display:grid!important;gap:7px!important;font-size:12px!important;font-weight:700!important;color:#4d586c!important}
+.restaurant-ops-panel input,.restaurant-ops-panel select{width:100%!important;height:44px!important;padding:0 12px!important;border:1px solid #dfe4ed!important;border-radius:9px!important;background:#fff!important;color:#293347!important;font-size:13px!important}
+.restaurant-ops-panel input:focus,.restaurant-ops-panel select:focus{outline:3px solid #eeeaff!important;border-color:#9985e9!important}
+.restaurant-ops .restaurant-primary{min-height:44px!important;padding:0 16px!important;border:0!important;border-radius:10px!important;background:linear-gradient(105deg,#6545d8,#8062ed)!important;color:white!important;font-size:13px!important;font-weight:800!important;box-shadow:0 4px 10px #6948dc20!important}
+.restaurant-ops-panel-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;padding-bottom:15px!important;border-bottom:1px solid #edf0f4!important}
+.restaurant-ops-panel-head>b{flex:0 0 auto;padding:6px 10px!important;border-radius:30px!important;background:#f0edff!important;color:#6548c9!important;font-size:11px!important;font-weight:800!important}
+.restaurant-table-list{display:grid!important;margin-top:4px!important}
+.restaurant-table-list article{display:flex!important;align-items:center!important;gap:12px!important;min-width:0;padding:14px 0!important;border:0!important;border-bottom:1px solid #edf0f4!important}
+.restaurant-table-list article:last-child{border-bottom:0!important}
+.restaurant-table-list article>div{flex:1;min-width:0}
+.restaurant-table-list article>div b{font-size:13px!important;font-weight:800!important;color:#283146!important}
+.restaurant-table-list article small{font-size:11px!important;color:#818b9b!important}
+.restaurant-table-list article>button{flex:0 0 auto;min-height:34px!important;padding:0 11px!important;border:1px solid #e0daf7!important;border-radius:9px!important;background:#faf9ff!important;color:#6548c9!important;font-size:11px!important;font-weight:750!important}
+.restaurant-ops-muted{padding:18px 0!important;font-size:12px!important;color:#858fa0!important}
+.restaurant-ops-notice,.restaurant-ops-error{width:100%;border-radius:10px!important;font-size:12px!important}
+.restaurant-ops-footnote{display:block;margin-top:12px!important;font-size:11px!important;line-height:1.5!important;color:#858fa0!important}
+.restaurant-credentials{margin-top:15px!important;padding:13px!important;border:1px solid #e3ddfa!important;border-radius:11px!important;background:#f8f6ff!important}
+.restaurant-credentials>small{color:#667187!important}
+.restaurant-portal-link{display:grid;gap:7px;margin-top:14px;padding:13px;border:1px solid #e7eaf1;border-radius:11px;background:#fafbfe}
+.restaurant-portal-link>b{font-size:12px!important}
+.restaurant-portal-link a{font-size:11px;overflow-wrap:anywhere}
+@media(max-width:900px){.restaurant-ops-grid{grid-template-columns:minmax(0,1fr)!important}}
+@media(max-width:680px){
+ .restaurant-ops{gap:16px!important}
+ .restaurant-ops-head{align-items:flex-start!important;flex-direction:column!important}
+ .restaurant-ops-actions{width:100%;flex-wrap:wrap}
+ .restaurant-ops-summary{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+ .restaurant-ops-summary article{min-height:72px!important;padding:12px!important}
+ .restaurant-ops-summary article:last-child{grid-column:1/-1}
+ .restaurant-ops-tabs{gap:5px!important}
+ .restaurant-ops-tabs button{padding:0 12px!important}
+ .restaurant-ops-panel{padding:16px!important}
+ .restaurant-table-list article{flex-wrap:wrap}
+ .restaurant-table-list article>button{min-height:36px!important}
+}
