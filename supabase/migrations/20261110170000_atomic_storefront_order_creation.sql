@@ -19,6 +19,8 @@ declare
   v_order_number bigint;
   v_created_at timestamptz;
   v_subtotal numeric;
+  v_delivery_fee numeric;
+  v_items_subtotal numeric;
   v_tracking_token text;
 begin
   if p_business_id is null
@@ -29,15 +31,47 @@ begin
      or p_items is null
      or pg_catalog.jsonb_typeof(p_items) <> 'array'
      or pg_catalog.jsonb_array_length(p_items) < 1
+     or pg_catalog.jsonb_array_length(p_items) > 50
      or coalesce(p_order_data->>'fulfillment_type', '') not in ('delivery', 'pickup') then
     raise exception 'Datos del pedido incompletos.' using errcode = '22023';
   end if;
 
   v_subtotal := (p_order_data->>'subtotal')::numeric;
+  v_delivery_fee := coalesce((p_order_data->>'delivery_fee')::numeric, 0);
   v_tracking_token := p_order_data->>'tracking_token';
 
-  if v_subtotal is null or v_subtotal < 0 or nullif(v_tracking_token, '') is null then
+  if v_subtotal is null or v_subtotal < 0
+     or v_delivery_fee < 0
+     or nullif(v_tracking_token, '') is null
+     or (p_order_data->>'total')::numeric is distinct from (v_subtotal + v_delivery_fee)
+     or (p_order_data->>'fulfillment_type') = 'delivery'
+        and nullif(pg_catalog.btrim(p_order_data->>'delivery_address'), '') is null then
     raise exception 'Datos del pedido no válidos.' using errcode = '22023';
+  end if;
+
+  -- Treat the RPC as a validation boundary too: callers must not be able to
+  -- persist totals that disagree with the item snapshots.
+  if exists (
+    select 1
+      from pg_catalog.jsonb_array_elements(p_items) as entry(item)
+     where pg_catalog.jsonb_typeof(entry.item) <> 'object'
+        or nullif(pg_catalog.btrim(entry.item->>'product_name'), '') is null
+        or nullif(entry.item->>'product_id', '') is null
+        or (entry.item->>'unit_price')::numeric < 0
+        or (entry.item->>'quantity')::integer < 1
+        or (entry.item->>'quantity')::integer > 99
+        or (entry.item->>'line_total')::numeric
+           <> (entry.item->>'unit_price')::numeric * (entry.item->>'quantity')::integer
+  ) then
+    raise exception 'Artículos del pedido no válidos.' using errcode = '22023';
+  end if;
+
+  select coalesce(sum((entry.item->>'line_total')::numeric), 0)
+    into v_items_subtotal
+    from pg_catalog.jsonb_array_elements(p_items) as entry(item);
+
+  if v_items_subtotal <> v_subtotal then
+    raise exception 'El subtotal no coincide con los artículos.' using errcode = '22023';
   end if;
 
   -- Lock the business row: the waiter-order RPC uses the same lock before
@@ -81,8 +115,8 @@ begin
     p_order_data->>'privacy_policy_version',
     (p_order_data->>'privacy_consent_at')::timestamptz,
     v_subtotal,
-    coalesce((p_order_data->>'delivery_fee')::numeric, 0),
-    coalesce((p_order_data->>'total')::numeric, v_subtotal)
+    v_delivery_fee,
+    (p_order_data->>'total')::numeric
   )
   returning id, created_at into v_order_id, v_created_at;
 
