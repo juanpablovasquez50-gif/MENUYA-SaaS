@@ -1265,7 +1265,7 @@ function Router() {
   };
 
   const register = async (v: Record<string, string>): Promise<string | null> => {
-    if (!isSupabaseConfigured) return 'La conexión de MENUYA aún no está configurada en este entorno.';
+    if (!isSupabaseConfigured) return 'La conexión de CLICKOK aún no está configurada en este entorno.';
     if (v.aceptaDatos !== 'on') return 'Debes aceptar la política de tratamiento de datos y los términos para crear tu cuenta.';
     try {
       const result = await signUpWithEmail({
@@ -1291,13 +1291,13 @@ function Router() {
   };
 
   const reset = async (password: string): Promise<string | null> => {
-    if (!isSupabaseConfigured) return 'La conexión de MENUYA aún no está configurada en este entorno.';
+    if (!isSupabaseConfigured) return 'La conexión de CLICKOK aún no está configurada en este entorno.';
     try { await updatePassword(password); return null; }
     catch (error) { return error instanceof Error ? error.message : 'No fue posible actualizar la contraseña.'; }
   };
 
   const forgot = async (email: string): Promise<string | null> => {
-    if (!isSupabaseConfigured) return 'La conexión de MENUYA aún no está configurada en este entorno.';
+    if (!isSupabaseConfigured) return 'La conexión de CLICKOK aún no está configurada en este entorno.';
     try { await sendPasswordRecovery(email); return null; }
     catch (error) { return error instanceof Error ? error.message : 'No fue posible enviar las instrucciones.'; }
   };
