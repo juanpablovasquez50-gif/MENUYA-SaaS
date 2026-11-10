@@ -12,8 +12,11 @@ Deno.serve(async(req:Request)=>{
   if(!business_id||!customer?.name?.trim()||!customer?.phone?.trim()||!Array.isArray(items)||!items.length||items.length>50)return reply({error:"Datos del pedido incompletos."},400);
   if(privacy_consent!==true||privacy_policy_version!=="1.0")return reply({error:"Debes aceptar la política de tratamiento de datos vigente para enviar el pedido."},400);
   if(!["delivery","pickup"].includes(fulfillment_type)||(fulfillment_type==="delivery"&&!String(delivery_address||"").trim()))return reply({error:"Dirección requerida para domicilio."},400);
-  const {data:business}=await db.from("businesses").select("id,status,is_published").eq("id",business_id).maybeSingle();
-  const {data:settings}=await db.from("store_settings").select("is_published").eq("business_id",business_id).maybeSingle();
+  const [{data:business,error:businessError},{data:settings,error:settingsError}]=await Promise.all([
+   db.from("businesses").select("id,status,is_published").eq("id",business_id).maybeSingle(),
+   db.from("store_settings").select("is_published").eq("business_id",business_id).maybeSingle()
+  ]);
+  if(businessError||settingsError)throw businessError||settingsError;
   if(!business||business.status!=="active"||!business.is_published||!settings?.is_published)return reply({error:"La vitrina no está disponible."},409);
   const normalized=[];let subtotal=0;
 
