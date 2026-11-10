@@ -1,0 +1,59 @@
+/* CLICKOK unified operational portal visual system — presentation only */
+.waiter-login,.waiter-app{min-height:100vh!important;background:#f3f6fb!important;color:#172238!important;font-family:Inter,'DM Sans',sans-serif!important;box-sizing:border-box}
+.waiter-login{display:grid!important;place-items:center!important;padding:24px!important;background:radial-gradient(circle at 18% 8%,#ece8ff,transparent 38%),#f3f6fb!important}
+.waiter-login form{width:min(100%,430px)!important;background:#fff!important;border:1px solid #e8edf4!important;border-radius:23px!important;padding:30px!important;box-shadow:0 18px 55px #25204412!important;display:flex!important;flex-direction:column!important;gap:13px!important}
+.waiter-mark{width:54px!important;height:54px!important;border-radius:16px!important;background:#eeeaff!important;color:#6848df!important;display:grid!important;place-items:center!important}
+.waiter-login form>span,.waiter-app header span{font-size:10px!important;font-weight:900!important;letter-spacing:.16em!important;color:#8067d9!important}
+.waiter-login h1,.waiter-app h1{font-size:clamp(27px,5vw,36px)!important;letter-spacing:-.04em!important;font-weight:850!important;color:#172238!important;margin:5px 0!important}
+.waiter-login p,.waiter-app header p{font-size:13px!important;color:#7b8799!important;line-height:1.55!important}
+.waiter-login label,.waiter-work label{display:flex!important;flex-direction:column!important;gap:7px!important;font-size:11px!important;font-weight:800!important;color:#4f5b70!important}
+.waiter-login input,.waiter-work input,.waiter-work select,.waiter-work textarea{min-height:44px!important;border:1px solid #dfe5ef!important;border-radius:11px!important;padding:10px 13px!important;background:#fff!important;color:#26344b!important;font:inherit!important}
+.waiter-login button,.waiter-send,.chef-ticket footer button{min-height:46px!important;border:0!important;border-radius:12px!important;background:linear-gradient(100deg,#6748dc,#8062ed)!important;color:#fff!important;font-weight:800!important;cursor:pointer!important;box-shadow:0 7px 15px #6848dc25!important}
+.waiter-app{padding:0 0 38px!important}
+.waiter-app>header{max-width:1000px!important;margin:0 auto 22px!important;padding:25px max(20px,calc((100% - 960px)/2))!important;min-height:132px!important;background:linear-gradient(115deg,#21194d,#4930a4 62%,#7155df)!important;color:#fff!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:18px!important;border-radius:0 0 23px 23px!important;box-shadow:0 15px 35px #4530a526!important}
+.waiter-app>header h1{color:#fff!important;margin:7px 0 4px!important}
+.waiter-app>header p{color:#d7d1f4!important;margin:0!important}
+.waiter-app>header button{display:inline-flex!important;align-items:center!important;gap:7px!important;border:1px solid #ffffff40!important;background:#ffffff18!important;color:#fff!important;border-radius:11px!important;padding:10px 13px!important;font-weight:800!important;cursor:pointer!important}
+.waiter-app>nav,.waiter-section-head,.waiter-work,.waiter-orders,.chef-order-list,.waiter-notice,.waiter-error{max-width:960px!important;margin-left:auto!important;margin-right:auto!important}
+.waiter-app>nav{display:flex!important;gap:9px!important;padding:0 0 17px!important;border-bottom:1px solid #e4e9f1!important}
+.waiter-app>nav button{border:1px solid #e4e9f1!important;background:#fff!important;color:#66738a!important;border-radius:11px!important;padding:11px 15px!important;font-size:12px!important;font-weight:800!important;cursor:pointer!important}
+.waiter-app>nav button.active{background:#eeeaff!important;color:#6848df!important;border-color:#d8ceff!important}
+.waiter-section-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;margin:18px auto 13px!important}
+.waiter-section-head h2,.waiter-work h2,.waiter-orders h2{font-size:21px!important;font-weight:850!important;letter-spacing:-.03em!important;color:#202c42!important}
+.waiter-section-head button{display:inline-flex!important;align-items:center!important;gap:7px!important;border:1px solid #e4e9f1!important;background:#fff!important;color:#536176!important;border-radius:10px!important;padding:9px 12px!important;font-weight:800!important}
+.waiter-work{display:grid!important;grid-template-columns:minmax(0,1fr) 330px!important;gap:17px!important;padding:0!important}
+.waiter-work>section,.waiter-work>aside,.waiter-orders>article,.chef-ticket{background:#fff!important;border:1px solid #e8edf4!important;border-radius:18px!important;padding:17px!important;box-shadow:0 5px 20px #17223808!important}
+.waiter-work>aside{align-self:start!important;position:sticky!important;top:16px!important}
+.waiter-products{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(145px,1fr))!important;gap:11px!important}
+.waiter-products>button{min-width:0!important;border:1px solid #e8edf4!important;background:#fff!important;border-radius:14px!important;padding:11px!important;display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:6px!important;text-align:left!important;color:#26344b!important;cursor:pointer!important}
+.waiter-products>button>span{width:100%!important;height:104px!important;border-radius:10px!important;background:#f3f5fa!important;display:grid!important;place-items:center!important;overflow:hidden!important;color:#8067d9!important}
+.waiter-products img{width:100%!important;height:100%!important;object-fit:cover!important}
+.waiter-products b{font-size:12px!important}.waiter-products strong{font-size:13px!important;color:#6848df!important}.waiter-products small{font-size:10px!important;color:#8995a7!important}
+.waiter-work>aside>h2{font-size:20px!important;margin:0 0 14px!important}
+.waiter-work>aside>article,.waiter-orders>article{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;padding:12px 0!important;border-bottom:1px solid #edf0f5!important}
+.waiter-work>aside>article b,.waiter-orders>article b{font-size:12px!important;color:#26344b!important}.waiter-work>aside>article small,.waiter-orders>article small{display:block!important;font-size:10px!important;color:#8792a4!important;margin-top:4px!important}
+.waiter-qty{display:flex!important;align-items:center!important;gap:9px!important;font-weight:800!important}.waiter-qty button{width:28px!important;height:28px!important;border:1px solid #e2e7ef!important;border-radius:8px!important;background:#f8f9fc!important;color:#6848df!important}
+.waiter-total{display:flex!important;justify-content:space-between!important;align-items:center!important;padding:15px 0!important;color:#526077!important}.waiter-total b{font-size:20px!important;color:#202c42!important}
+.waiter-send{width:100%!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important}
+.waiter-notice,.waiter-error{padding:12px 15px!important;border-radius:12px!important;font-size:12px!important}.waiter-notice{background:#e7f8ef!important;color:#137c50!important}.waiter-error{background:#fff0ef!important;color:#b83e38!important}
+.chef-app{padding-bottom:40px!important}.chef-app .waiter-section-head{padding:0!important}
+.chef-order-list{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))!important;gap:14px!important}
+.chef-ticket{padding:17px!important;display:flex!important;flex-direction:column!important;gap:12px!important}
+.chef-ticket>header{display:flex!important;justify-content:space-between!important;align-items:flex-start!important;gap:10px!important}
+.chef-ticket>header b{font-size:16px!important;color:#202c42!important}.chef-ticket>header small{display:block!important;margin-top:5px!important;font-size:10px!important;color:#8792a4!important}
+.chef-ticket>header>span{font-size:10px!important;font-weight:850!important;border-radius:30px!important;padding:7px 10px!important;background:#fff2dc!important;color:#9a641b!important;white-space:nowrap!important}
+.chef-ticket.chef-preparing>header>span{background:#eeeaff!important;color:#6848df!important}.chef-ticket.chef-ready>header>span{background:#e3f8ed!important;color:#168453!important}
+.chef-ticket-items{display:grid!important;gap:8px!important;padding:12px!important;background:#f7f8fc!important;border-radius:12px!important}
+.chef-ticket-items>div{display:flex!important;flex-direction:column!important;gap:4px!important}.chef-ticket-items b{font-size:12px!important;color:#354158!important}.chef-ticket-items small,.chef-ticket-notes{font-size:10px!important;color:#78859a!important}
+.chef-ticket footer button{width:100%!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important}
+.chef-order-list>.waiter-orders{grid-column:1/-1!important;background:#fff!important;border:1px dashed #d9dfeb!important;border-radius:18px!important;padding:35px!important;text-align:center!important;color:#8490a2!important}
+.tracking-page{background:radial-gradient(circle at 18% 8%,#ece8ff,transparent 38%),#f3f6fb!important;padding:34px 16px!important}
+.tracking-card{width:min(100%,620px)!important;border:1px solid #e8edf4!important;border-radius:23px!important;padding:clamp(20px,4vw,32px)!important;box-shadow:0 18px 55px #25204412!important;gap:15px!important}
+.tracking-card h1{font-weight:850!important;letter-spacing:-.04em!important;color:#172238!important}
+.tracking-card>.eyebrow{font-size:10px!important;font-weight:900!important;letter-spacing:.16em!important;color:#8067d9!important}
+.tracking-form{gap:10px!important}.tracking-form input{min-height:46px!important;border:1px solid #dfe5ef!important;border-radius:11px!important;padding:0 13px!important}
+.tracking-form button,.tracking-success-actions .btn{border-radius:12px!important;font-weight:800!important}
+.tracking-result{border-top-color:#edf0f5!important}.tracking-code-panel{background:#f7f6ff!important;border-color:#e6e0fb!important}
+.tracking-current-state{border-radius:14px!important;box-shadow:0 4px 14px #17223808!important}
+@media(max-width:1000px){.waiter-app>header{margin-left:14px!important;margin-right:14px!important;padding:22px 20px!important}.waiter-app>nav,.waiter-section-head,.waiter-work,.waiter-orders,.chef-order-list,.waiter-notice,.waiter-error{margin-left:16px!important;margin-right:16px!important}}
+@media(max-width:700px){.waiter-work{grid-template-columns:1fr!important}.waiter-work>aside{position:static!important}.waiter-app>header{min-height:118px!important;border-radius:0 0 19px 19px!important}.waiter-products{grid-template-columns:repeat(2,minmax(0,1fr))!important}.waiter-products>button>span{height:90px!important}.chef-order-list{grid-template-columns:1fr!important}.waiter-app>nav{overflow-x:auto!important}.waiter-app>nav button{white-space:nowrap!important}.waiter-login form{padding:24px 20px!important}}
