@@ -743,7 +743,7 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
     });
   }, [slug]);
   if (!business) return <NotFound />;
-  const settings = data.settings.find(s => s.business_id === business.id);
+  const settings: StoreSettings = data.settings.find(s => s.business_id === business.id) ?? { business_id: business.id, portada: '', logo: '', color: '#e7785d', background_color: '#f7f7f5', card_background_color: '#ffffff', fuente: 'Manrope', contacto: business.telefono, redes: '', pagos: 'Efectivo, Nequi', entrega: 'Domicilio y recoger en tienda', direccion: '', tiempo_entrega: '', publicado: false, tagline: '', layout: 'grid', card_style: 'classic', button_style: 'rounded' };
   const cats = data.categories.filter(c => c.business_id === business.id && c.activo).sort((a, b) => a.orden - b.orden);
   const products = data.products.filter(p => p.business_id === business.id && p.activo && p.disponible && (category === 'todos' || p.category_id === category) && `${p.nombre} ${p.descripcion}`.toLowerCase().includes(search.toLowerCase()));
   const featuredProducts = category === 'todos' && !search ? products.filter(p => p.destacado) : [];
