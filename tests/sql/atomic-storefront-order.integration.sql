@@ -12,6 +12,8 @@ declare
   v_before_items bigint;
   v_customer_orders integer;
   v_customer_spent numeric;
+  v_push_outbox_id uuid;
+  v_claim_count integer;
 begin
   -- First order: pickup creates the customer and its first order atomically.
   v_result := public.create_storefront_order_atomic(
@@ -59,6 +61,33 @@ begin
      or v_result->>'push_outbox_id' is null then
     raise exception 'El pedido, cliente y artículo no se guardaron juntos';
   end if;
+
+  -- The push event must be committed in the same transaction and can be
+  -- claimed again after a failed delivery/backoff.
+  v_push_outbox_id := (v_result->>'push_outbox_id')::uuid;
+  select count(*) into v_claim_count
+    from public.claim_storefront_order_push_outbox(v_push_outbox_id);
+  if v_claim_count <> 1 then
+    raise exception 'El evento push no pudo reclamarse inicialmente';
+  end if;
+
+  update public.storefront_order_push_outbox
+     set status = 'failed',
+         available_at = now() - interval '1 minute',
+         locked_until = null,
+         last_error = 'simulated transient failure'
+   where id = v_push_outbox_id;
+
+  select count(*) into v_claim_count
+    from public.claim_storefront_order_push_outbox(v_push_outbox_id);
+  if v_claim_count <> 1
+     or (select attempts from public.storefront_order_push_outbox where id = v_push_outbox_id) <> 2 then
+    raise exception 'El evento push no pudo reclamarse para reintento';
+  end if;
+
+  update public.storefront_order_push_outbox
+     set status = 'sent', delivered_at = now(), locked_until = null
+   where id = v_push_outbox_id;
 
   -- Retry with the same key and same business payload must replay the first
   -- order, even though the request generated a fresh consent timestamp/token.
