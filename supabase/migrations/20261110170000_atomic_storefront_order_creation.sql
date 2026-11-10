@@ -17,6 +17,52 @@ create table if not exists public.storefront_order_idempotency (
 
 revoke all on table public.storefront_order_idempotency from public, anon, authenticated;
 
+create table if not exists public.storefront_order_push_outbox (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references public.businesses(id) on delete cascade,
+  order_id uuid not null,
+  payload jsonb not null,
+  status text not null default 'pending'
+    check (status in ('pending', 'processing', 'sent', 'failed')),
+  attempts integer not null default 0 check (attempts >= 0),
+  available_at timestamptz not null default pg_catalog.now(),
+  locked_until timestamptz,
+  last_error text,
+  delivered_at timestamptz,
+  created_at timestamptz not null default pg_catalog.now(),
+  constraint storefront_order_push_outbox_order_key unique (business_id, order_id),
+  constraint storefront_order_push_outbox_order_fk
+    foreign key (business_id, order_id)
+    references public.orders (business_id, id) on delete cascade
+);
+
+revoke all on table public.storefront_order_push_outbox from public, anon, authenticated;
+
+create or replace function public.claim_storefront_order_push_outbox(p_outbox_id uuid)
+returns setof public.storefront_order_push_outbox
+language sql
+security definer
+set search_path = ''
+as $claim$
+  update public.storefront_order_push_outbox
+     set status = 'processing',
+         attempts = attempts + 1,
+         locked_until = pg_catalog.now() + interval '2 minutes',
+         last_error = null
+   where id = p_outbox_id
+     and available_at <= pg_catalog.now()
+     and (
+       status in ('pending', 'failed')
+       or (status = 'processing' and locked_until < pg_catalog.now())
+     )
+   returning *;
+$claim$;
+
+revoke all on function public.claim_storefront_order_push_outbox(uuid)
+  from public, anon, authenticated;
+grant execute on function public.claim_storefront_order_push_outbox(uuid)
+  to service_role;
+
 drop function if exists public.create_storefront_order_atomic(uuid, text, text, jsonb, jsonb);
 drop function if exists public.create_storefront_order_atomic(uuid, text, text, jsonb, jsonb, uuid);
 
@@ -45,6 +91,7 @@ declare
   v_tracking_token text;
   v_existing_tracking_token text;
   v_existing_hash text;
+  v_push_outbox_id uuid;
 begin
   if p_business_id is null
      or nullif(pg_catalog.btrim(p_customer_name), '') is null
@@ -115,12 +162,14 @@ begin
   v_existing_hash := pg_catalog.lower(p_request_hash);
 
   select i.request_hash, o.id, o.customer_id, o.order_number,
-         o.tracking_token, o.created_at
+         o.tracking_token, o.created_at, p.id
     into v_existing_hash, v_order_id, v_customer_id, v_order_number,
-         v_existing_tracking_token, v_created_at
+         v_existing_tracking_token, v_created_at, v_push_outbox_id
     from public.storefront_order_idempotency i
     join public.orders o
       on o.business_id = i.business_id and o.id = i.order_id
+    left join public.storefront_order_push_outbox p
+      on p.business_id = i.business_id and p.order_id = i.order_id
    where i.business_id = p_business_id
      and i.idempotency_key = p_idempotency_key;
 
@@ -135,6 +184,7 @@ begin
       'order_number', v_order_number,
       'tracking_token', v_existing_tracking_token,
       'created_at', v_created_at,
+      'push_outbox_id', v_push_outbox_id,
       'replayed', true
     );
   end if;
@@ -202,12 +252,27 @@ begin
     p_business_id, p_idempotency_key, pg_catalog.lower(p_request_hash), v_order_id
   );
 
+  insert into public.storefront_order_push_outbox (
+    business_id, order_id, payload
+  ) values (
+    p_business_id,
+    v_order_id,
+    pg_catalog.jsonb_build_object(
+      'business_id', p_business_id,
+      'order_number', v_order_number,
+      'customer_name', pg_catalog.btrim(p_customer_name),
+      'total', v_subtotal + v_delivery_fee
+    )
+  )
+  returning id into v_push_outbox_id;
+
   return pg_catalog.jsonb_build_object(
     'id', v_order_id,
     'customer_id', v_customer_id,
     'order_number', v_order_number,
     'tracking_token', v_tracking_token,
     'created_at', v_created_at,
+    'push_outbox_id', v_push_outbox_id,
     'replayed', false
   );
 end;
