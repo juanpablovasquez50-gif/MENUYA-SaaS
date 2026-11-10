@@ -50,8 +50,8 @@ Deno.serve(async(req:Request)=>{
     : Promise.resolve({data:[],error:null})
   ]);
   if(productsError||optionsError)throw productsError||optionsError;
-  const productsById=new Map((products||[]).map((product:any)=>[product.id,product]));
-  const optionsById=new Map((optionValues||[]).map((value:any)=>[value.id,value]));
+  const productsById=new Map<string,any>((products||[]).map((product:any)=>[product.id,product] as [string,any]));
+  const optionsById=new Map<string,any>((optionValues||[]).map((value:any)=>[value.id,value] as [string,any]));
 
   for(const item of items){
    const qty=Number(item.quantity);
