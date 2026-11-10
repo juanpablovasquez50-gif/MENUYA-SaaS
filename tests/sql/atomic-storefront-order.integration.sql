@@ -71,17 +71,17 @@ begin
       'payment_method', 'Efectivo',
       'privacy_policy_version', '1.0',
       'privacy_consent_at', now() + interval '1 minute',
-      'subtotal', 25000,
+      'subtotal', 26000,
       'delivery_fee', 0,
-      'total', 25000,
+      'total', 26000,
       'tracking_token', 'a-different-retry-token'
     ),
     jsonb_build_array(jsonb_build_object(
       'product_id', '22222222-2222-4222-8222-222222222222',
       'product_name', 'Producto de prueba',
-      'unit_price', 25000,
+      'unit_price', 26000,
       'quantity', 1,
-      'line_total', 25000,
+      'line_total', 26000,
       'variant_name', null,
       'addons_snapshot', '[]'::jsonb
     )),
