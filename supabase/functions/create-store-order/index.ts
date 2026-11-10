@@ -44,23 +44,37 @@ Deno.serve(async(req:Request)=>{
    }
    subtotal+=price*qty;normalized.push({business_id,product_id:p.id,product_name:p.name,unit_price:price,quantity:qty,line_total:price*qty,variant_name:variantName,addons_snapshot:addons});
   }
-  const phone=String(customer.phone).trim();
-  let {data:saved}=await db.from("customers").select("id,total_orders,total_spent").eq("business_id",business_id).eq("phone",phone).maybeSingle();
-  if(saved){const {data,error}=await db.from("customers").update({name:String(customer.name).trim(),total_orders:(saved.total_orders||0)+1,total_spent:Number(saved.total_spent||0)+subtotal,last_order_at:new Date().toISOString()}).eq("id",saved.id).select("id").single();if(error)throw error;saved={...saved,id:data.id};}
-  else{const {data,error}=await db.from("customers").insert({business_id,name:String(customer.name).trim(),phone,total_orders:1,total_spent:subtotal,last_order_at:new Date().toISOString()}).select("id,total_orders,total_spent").single();if(error)throw error;saved=data;}
-  const {data:last}=await db.from("orders").select("order_number").eq("business_id",business_id).order("order_number",{ascending:false}).limit(1).maybeSingle();
-  const number=Number(last?.order_number||0)+1;
   const trackingToken=crypto.randomUUID();
-  const {data:order,error:oe}=await db.from("orders").insert({business_id,customer_id:saved.id,order_number:number,status:"pending",tracking_token:trackingToken,fulfillment_type,delivery_address:fulfillment_type==="delivery"?String(delivery_address).trim():null,notes:String(notes||"").trim()||null,payment_method:String(payment_method||"Efectivo"),privacy_policy_version,privacy_consent_at:new Date().toISOString(),subtotal,delivery_fee:0,total:subtotal}).select("id,created_at").single();
-  if(oe)throw oe;
-  const {error:ie}=await db.from("order_items").insert(normalized.map(x=>({...x,order_id:order.id})));
-  if(ie){await db.from("orders").delete().eq("id",order.id).eq("business_id",business_id);throw ie;}
+  const consentAt=new Date().toISOString();
+  const {data:created,error:createError}=await db.rpc("create_storefront_order_atomic",{
+   p_business_id:business_id,
+   p_customer_name:String(customer.name).trim(),
+   p_customer_phone:String(customer.phone).trim(),
+   p_order_data:{
+    fulfillment_type,
+    delivery_address:fulfillment_type==="delivery"?String(delivery_address).trim():null,
+    notes:String(notes||"").trim()||null,
+    payment_method:String(payment_method||"Efectivo"),
+    privacy_policy_version,
+    privacy_consent_at:consentAt,
+    subtotal,
+    delivery_fee:0,
+    total:subtotal,
+    tracking_token:trackingToken
+   },
+   p_items:normalized
+  });
+  if(createError)throw createError;
+  if(!created?.id||!created?.customer_id||!created?.order_number)throw new Error("La base de datos no devolvió la confirmación del pedido.");
+  const order={id:created.id,created_at:created.created_at};
+  const number=Number(created.order_number);
+  const customerId=created.customer_id;
   const pushSecret=Deno.env.get("CLICKOK_PUSH_DISPATCH_SECRET");
   if(pushSecret){
    try{
     EdgeRuntime.waitUntil(fetch(`${url}/functions/v1/send-store-order-push`,{method:"POST",headers:{"Content-Type":"application/json","apikey":key,"Authorization":`Bearer ${key}`,"x-clickok-push-secret":pushSecret},body:JSON.stringify({business_id,order_number:number,customer_name:String(customer.name).trim(),total:new Intl.NumberFormat("es-CO",{style:"currency",currency:"COP",maximumFractionDigits:0}).format(subtotal)})}).then(response=>{if(!response.ok)console.error("Push delivery returned",response.status);}).catch(pushError=>console.error("No se pudo despachar el aviso push; el pedido quedó registrado.",pushError)));
    }catch(pushError){console.error("No se pudo despachar el aviso push; el pedido quedó registrado.",pushError);}
   }
-  return reply({order:{id:order.id,business_id,numero:number,customer_id:saved.id,tracking_token:trackingToken,items:normalized.map(x=>({product_id:x.product_id,nombre:x.product_name,precio:x.unit_price,cantidad:x.quantity,variante:x.variant_name,complementos:x.addons_snapshot})),total:subtotal,estado:"pendiente",entrega:fulfillment_type==="delivery"?"domicilio":"recoger",direccion:delivery_address,observaciones:notes||"",metodo_pago:payment_method||"Efectivo",created_at:order.created_at}});
+  return reply({order:{id:order.id,business_id,numero:number,customer_id:customerId,tracking_token:trackingToken,items:normalized.map(x=>({product_id:x.product_id,nombre:x.product_name,precio:x.unit_price,cantidad:x.quantity,variante:x.variant_name,complementos:x.addons_snapshot})),total:subtotal,estado:"pendiente",entrega:fulfillment_type==="delivery"?"domicilio":"recoger",direccion:delivery_address,observaciones:notes||"",metodo_pago:payment_method||"Efectivo",created_at:order.created_at}});
  }catch(e){console.error("create-store-order",e);return reply({error:"No fue posible registrar el pedido. Intenta nuevamente."},500);}
 });
