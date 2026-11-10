@@ -17,7 +17,10 @@ function DeliveryMap({order,currentLocation,onSaveAddress}:{order:any;currentLoc
  const [mapMessage,setMapMessage]=useState('Cargando mapa…');
  const [resolvedDestination,setResolvedDestination]=useState<{latitude:number;longitude:number}|null>(null);
  const [geocoding,setGeocoding]=useState(false);
- const [geocodeError,setGeocodeError]=useState('');\n const [city,setCity]=useState('');\n const [department,setDepartment]=useState('');\n const [savingAddress,setSavingAddress]=useState(false);
+ const [geocodeError,setGeocodeError]=useState('');
+ const [city,setCity]=useState('');
+ const [department,setDepartment]=useState('');
+ const [savingAddress,setSavingAddress]=useState(false);
  const hasStoredDestination=order?.delivery_latitude!==null&&order?.delivery_latitude!==undefined&&order?.delivery_longitude!==null&&order?.delivery_longitude!==undefined&&Number.isFinite(Number(order.delivery_latitude))&&Number.isFinite(Number(order.delivery_longitude));
  const destination=hasStoredDestination?{latitude:Number(order.delivery_latitude),longitude:Number(order.delivery_longitude)}:resolvedDestination;
  const hasDestination=!!destination;
