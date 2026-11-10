@@ -8,7 +8,8 @@ const businessId = "11111111-1111-4111-8111-111111111111";
 const productId = "22222222-2222-4222-8222-222222222222";
 const server = createServer(async (req, res) => {
   res.setHeader("content-type", "application/json");
-  if (req.method === "GET" && req.url === "/health") { res.writeHead(200).end("ok"); return; }\n  if (req.method !== "POST" || req.url !== "/orders") {
+  if (req.method === "GET" && req.url === "/health") { res.writeHead(200).end("ok"); return; }
+  if (req.method !== "POST" || req.url !== "/orders") {
     res.writeHead(404).end(JSON.stringify({ error: "not_found" }));
     return;
   }
