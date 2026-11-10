@@ -68,17 +68,27 @@ Deno.serve(async (req: Request) => {
       tag: `clickok-order-${orderNumber}`,
     });
 
-    const results = await Promise.allSettled((subscriptions || [])
-      .filter((item: any) => item.preferences?.new_order !== false)
-      .map(async (item: any) => {
+    type PushSubscriptionRow = {
+      id: string;
+      endpoint: string;
+      p256dh: string;
+      auth: string;
+      preferences: { new_order?: boolean } | null;
+    };
+    const results = await Promise.allSettled(((subscriptions || []) as PushSubscriptionRow[])
+      .filter((item) => item.preferences?.new_order !== false)
+      .map(async (item) => {
         try {
           await webpush.sendNotification({
             endpoint: item.endpoint,
             keys: { p256dh: item.p256dh, auth: item.auth },
           }, payload, { TTL: 60 * 60 });
           return "sent";
-        } catch (pushError: any) {
-          if (pushError?.statusCode === 404 || pushError?.statusCode === 410) {
+        } catch (pushError: unknown) {
+          const statusCode = typeof pushError === "object" && pushError !== null && "statusCode" in pushError
+            ? Number((pushError as { statusCode?: unknown }).statusCode)
+            : undefined;
+          if (statusCode === 404 || statusCode === 410) {
             await db.from("push_subscriptions").delete().eq("id", item.id);
             return "expired";
           }
