@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-import-prefix -- Supabase Edge Runtime supports npm and esm.sh imports.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import webpush from "npm:web-push@3.6.7";
 
