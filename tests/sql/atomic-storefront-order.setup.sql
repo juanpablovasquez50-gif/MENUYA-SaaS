@@ -39,6 +39,7 @@ create table public.orders (
   delivery_fee numeric not null default 0,
   total numeric not null,
   created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
   constraint orders_business_id_order_number_key unique (business_id, order_number),
   constraint orders_business_id_id_key unique (business_id, id),
   constraint orders_customer_tenant_fk
@@ -88,3 +89,26 @@ values (
 
 -- Match the read access expected by the service_role integration assertions.
 grant select on public.customers, public.orders, public.order_items to service_role;
+
+
+-- Minimal courier tables used only by the isolated courier RPC integration test.
+create table public.delivery_couriers (
+  id uuid primary key,
+  business_id uuid not null references public.businesses(id),
+  full_name text not null,
+  phone text not null,
+  active boolean not null default true
+);
+
+create table public.delivery_assignments (
+  id uuid primary key,
+  business_id uuid not null references public.businesses(id),
+  order_id uuid not null references public.orders(id),
+  courier_id uuid not null references public.delivery_couriers(id),
+  status text not null default 'assigned',
+  assigned_at timestamptz not null default now(),
+  picked_up_at timestamptz,
+  delivered_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
