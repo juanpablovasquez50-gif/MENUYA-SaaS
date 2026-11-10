@@ -264,3 +264,36 @@
  .restaurant-ops-panel{padding:16px!important}
  .restaurant-ops-head h1{font-size:30px!important}
 }
+
+
+/* Las pestañas usan exactamente las variantes compartidas del panel */
+.restaurant-ops .restaurant-ops-tabs{
+  display:flex!important;align-items:center!important;gap:8px!important;
+  border:0!important;padding:0 0 12px!important;
+}
+.dashboard-shell .restaurant-ops .restaurant-ops-tabs button.btn{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  gap:8px!important;width:auto!important;min-width:0!important;
+  min-height:38px!important;height:38px!important;padding:0 13px!important;
+  border:1px solid #dcd5f5!important;border-radius:10px!important;
+  background:#fff!important;color:#6045c7!important;
+  box-shadow:none!important;font:750 12px/1.2 inherit!important;
+}
+.dashboard-shell .restaurant-ops .restaurant-ops-tabs button.btn.btn-solid{
+  border-color:#6848df!important;
+  background:linear-gradient(105deg,#6040d4,#7959e8 58%,#8d72ed)!important;
+  color:#fff!important;box-shadow:0 4px 12px #6848df20!important;
+}
+.dashboard-shell .restaurant-ops .restaurant-ops-tabs button.btn.btn-outline{
+  border-color:#dcd5f5!important;background:#fff!important;color:#6045c7!important;
+}
+.dashboard-shell .restaurant-ops .restaurant-ops-tabs button.btn:hover{transform:translateY(-1px)}
+.dashboard-shell .restaurant-ops .restaurant-ops-tabs button.btn span{
+  display:inline-grid!important;place-items:center!important;
+  min-width:19px!important;height:19px!important;padding:0 5px!important;
+  border-radius:20px!important;background:#eeeaff!important;color:#6045c7!important;
+  font-size:10px!important;font-weight:800!important;
+}
+.dashboard-shell .restaurant-ops .restaurant-ops-tabs button.btn.btn-solid span{
+  background:#ffffff30!important;color:#fff!important;
+}
