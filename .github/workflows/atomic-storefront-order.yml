@@ -70,7 +70,8 @@ jobs:
               '11111111-1111-4111-8111-111111111111',
               'Concurrente A', '3000000001',
               jsonb_build_object('fulfillment_type','pickup','subtotal',1000,'total',1000,'tracking_token','concurrent-token-a'),
-              jsonb_build_array(jsonb_build_object('product_id','22222222-2222-4222-8222-222222222222','product_name','Prueba','unit_price',1000,'quantity',1,'line_total',1000,'addons_snapshot','[]'::jsonb))
+              jsonb_build_array(jsonb_build_object('product_id','22222222-2222-4222-8222-222222222222','product_name','Prueba','unit_price',1000,'quantity',1,'line_total',1000,'addons_snapshot','[]'::jsonb)),
+              'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1'
             );" > /tmp/order-a.json &
           pid_a=$!
           psql -h localhost -U postgres -d menuya_test -v ON_ERROR_STOP=1 -c "
@@ -78,7 +79,8 @@ jobs:
               '11111111-1111-4111-8111-111111111111',
               'Concurrente B', '3000000002',
               jsonb_build_object('fulfillment_type','pickup','subtotal',1000,'total',1000,'tracking_token','concurrent-token-b'),
-              jsonb_build_array(jsonb_build_object('product_id','22222222-2222-4222-8222-222222222222','product_name','Prueba','unit_price',1000,'quantity',1,'line_total',1000,'addons_snapshot','[]'::jsonb))
+              jsonb_build_array(jsonb_build_object('product_id','22222222-2222-4222-8222-222222222222','product_name','Prueba','unit_price',1000,'quantity',1,'line_total',1000,'addons_snapshot','[]'::jsonb)),
+              'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2'
             );" > /tmp/order-b.json &
           pid_b=$!
           wait "$pid_a"
