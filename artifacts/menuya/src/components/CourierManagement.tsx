@@ -1,0 +1,72 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import { Bike, MapPin, Plus, RefreshCw, Truck, UserRound, Navigation, CheckCircle2 } from 'lucide-react';
+
+type Courier={id:string;full_name:string;phone:string;active:boolean};
+type DeliveryOrder={id:string;order_number:number;status:string;delivery_address:string|null;delivery_latitude:number|null;delivery_longitude:number|null;total:number;customer_id:string|null;customers?:{name:string;phone:string|null}|null};
+type Assignment={id:string;order_id:string;courier_id:string;status:string;orders:DeliveryOrder|null;delivery_couriers:Courier|null};
+declare global { interface Window { L?: any } }
+const loadLeaflet=()=>new Promise<void>((resolve,reject)=>{
+ if(window.L){resolve();return;}
+ if(!document.querySelector('link[data-leaflet]')){const link=document.createElement('link');link.rel='stylesheet';link.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';link.dataset.leaflet='1';document.head.appendChild(link);}
+ const existing=document.querySelector('script[data-leaflet]') as HTMLScriptElement|null;
+ if(existing){existing.addEventListener('load',()=>resolve(),{once:true});existing.addEventListener('error',()=>reject(new Error('No se pudo cargar el mapa.')),{once:true});return;}
+ const script=document.createElement('script');script.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';script.dataset.leaflet='1';script.onload=()=>resolve();script.onerror=()=>reject(new Error('No se pudo cargar el mapa.'));document.head.appendChild(script);
+});
+export default function CourierManagement({businessId}:{businessId:string}){
+ const [enabled,setEnabled]=useState(false),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[error,setError]=useState(''),[couriers,setCouriers]=useState<Courier[]>([]),[orders,setOrders]=useState<DeliveryOrder[]>([]),[assignments,setAssignments]=useState<Assignment[]>([]);
+ const [name,setName]=useState(''),[phone,setPhone]=useState(''),[courierId,setCourierId]=useState(''),[orderId,setOrderId]=useState('');
+ const [mapError,setMapError]=useState(''),[selected,setSelected]=useState<Assignment|null>(null);
+ const mapRef=useRef<HTMLDivElement>(null),mapInstance=useRef<any>(null),routeLayer=useRef<any>(null),markers=useRef<any[]>([]);
+ const refresh=async()=>{
+  setLoading(true);setError('');
+  const [moduleRes,cRes,oRes,aRes]=await Promise.all([
+   supabase.from('business_modules').select('enabled').eq('business_id',businessId).eq('module_key','courier_management').maybeSingle(),
+   supabase.from('delivery_couriers').select('id,full_name,phone,active').eq('business_id',businessId).order('created_at',{ascending:false}),
+   supabase.from('orders').select('id,order_number,status,delivery_address,delivery_latitude,delivery_longitude,total,customer_id,customers(name,phone)').eq('business_id',businessId).eq('fulfillment_type','delivery').not('status','in','(cancelled,delivered)').order('created_at',{ascending:false}).limit(100),
+   supabase.from('delivery_assignments').select('id,order_id,courier_id,status,orders(id,order_number,status,delivery_address,delivery_latitude,delivery_longitude,total,customer_id,customers(name,phone)),delivery_couriers(id,full_name,phone,active)').eq('business_id',businessId).neq('status','cancelled').order('assigned_at',{ascending:false})
+  ]);
+  const failure=[moduleRes.error,cRes.error,oRes.error,aRes.error].find(Boolean);if(failure){setError(failure.message);setLoading(false);return;}
+  setEnabled(Boolean(moduleRes.data?.enabled));setCouriers(cRes.data||[]);setOrders((oRes.data||[]) as unknown as DeliveryOrder[]);setAssignments((aRes.data||[]) as unknown as Assignment[]);setLoading(false);
+ };
+ useEffect(()=>{void refresh();},[businessId]);
+ const unassigned=useMemo(()=>orders.filter(o=>!assignments.some(a=>a.order_id===o.id)),[orders,assignments]);
+ const toggle=async(next:boolean)=>{setSaving(true);setError('');const {error}=await supabase.from('business_modules').upsert({business_id:businessId,module_key:'courier_management',enabled:next,activation_source:'manual'},{onConflict:'business_id,module_key'});if(error)setError(error.message);else setEnabled(next);setSaving(false);};
+ const addCourier=async(e:React.FormEvent)=>{e.preventDefault();if(!name.trim()||!phone.trim())return;setSaving(true);const {error}=await supabase.from('delivery_couriers').insert({business_id:businessId,full_name:name.trim(),phone:phone.trim()});if(error)setError(error.message);else{name&&setName('');setPhone('');await refresh();}setSaving(false);};
+ const assign=async()=>{if(!courierId||!orderId)return;setSaving(true);setError('');const {error}=await supabase.from('delivery_assignments').insert({business_id:businessId,courier_id:courierId,order_id:orderId});if(error)setError(error.message);else{setCourierId('');setOrderId('');await refresh();}setSaving(false);};
+ const updateStatus=async(a:Assignment,status:string)=>{const patch:any={status,updated_at:new Date().toISOString()};if(status==='picked_up')patch.picked_up_at=new Date().toISOString();if(status==='delivered')patch.delivered_at=new Date().toISOString();const {error}=await supabase.from('delivery_assignments').update(patch).eq('id',a.id).eq('business_id',businessId);if(error)setError(error.message);else await refresh();};
+ useEffect(()=>{
+  if(!enabled||!mapRef.current||!selected?.orders?.delivery_latitude||!selected.orders.delivery_longitude)return;
+  let cancelled=false;
+  void loadLeaflet().then(async()=>{
+   if(cancelled||!mapRef.current)return;const L=window.L;if(!mapInstance.current){mapInstance.current=L.map(mapRef.current).setView([selected.orders!.delivery_latitude,selected.orders!.delivery_longitude],14);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(mapInstance.current);}
+   const map=mapInstance.current;markers.current.forEach(m=>map.removeLayer(m));markers.current=[];if(routeLayer.current){map.removeLayer(routeLayer.current);routeLayer.current=null;}
+   const dest:[number,number]=[selected.orders!.delivery_latitude!,selected.orders!.delivery_longitude!];markers.current.push(L.marker(dest).addTo(map).bindPopup('Destino del pedido #'+selected.orders!.order_number).openPopup());map.setView(dest,14);
+   try{
+    const {data:loc}=await supabase.from('delivery_courier_locations').select('latitude,longitude,recorded_at').eq('courier_id',selected.courier_id).maybeSingle();
+    if(cancelled)return;
+    if(loc){const start:[number,number]=[loc.latitude,loc.longitude];markers.current.push(L.marker(start).addTo(map).bindPopup('Última ubicación del domiciliario'));const response=await fetch('https://router.project-osrm.org/route/v1/driving/'+start[1]+','+start[0]+';'+dest[1]+','+dest[0]+'?overview=full&geometries=geojson');if(!response.ok)throw new Error('No se pudo calcular la ruta.');const json=await response.json();if(json.routes?.[0]){routeLayer.current=L.geoJSON(json.routes[0].geometry,{style:{color:'#7656ed',weight:5,opacity:.85}}).addTo(map);map.fitBounds(routeLayer.current.getBounds(),{padding:[30,30]});}}
+    else setMapError('Aún no hay GPS compartido por este domiciliario. Se muestra el destino; la ruta aparecerá cuando comparta su ubicación.');
+   }catch{setMapError('No fue posible calcular la ruta en este momento. Revisa la conexión.');}
+  }).catch(e=>setMapError(e.message));
+  return()=>{cancelled=true;};
+ },[enabled,selected?.id]);
+ const statusText=(s:string)=>({assigned:'Asignado',picked_up:'En camino',delivered:'Entregado',cancelled:'Cancelado'} as Record<string,string>)[s]||s;
+ if(loading)return <div className="panel"><p>Cargando módulo de domiciliarios…</p></div>;
+ return <section className="courier-page">
+  <div className="page-title"><div><span className="eyebrow">LOGÍSTICA · TODOS LOS SECTORES</span><h1>Domiciliarios</h1><p>Administra repartidores, asigna pedidos y consulta rutas desde un solo lugar.</p></div><button className="btn btn-outline" onClick={()=>void refresh()}><RefreshCw size={15}/> Actualizar</button></div>
+  {error&&<div className="notice notice-error">{error}</div>}
+  <div className="panel courier-enable"><div><b>Activar gestión de domiciliarios</b><p>Disponible para restaurantes, tiendas, veterinarias, tecnología y cualquier otro comercio. Es opcional y no registra ventas.</p></div><button className={enabled?'btn btn-soft':'btn btn-solid'} disabled={saving} onClick={()=>void toggle(!enabled)}>{enabled?'Módulo activo · Desactivar':'Activar módulo'}</button></div>
+  {!enabled&&<div className="panel"><p className="subtle">Activa el módulo para crear tu equipo y comenzar a asignar entregas.</p></div>}
+  {enabled&&<>
+   <div className="courier-columns">
+    <section className="panel"><div className="panel-head"><div><span className="eyebrow">EQUIPO DE ENTREGA</span><h2>Agregar domiciliario</h2></div><Bike/></div><form className="courier-form" onSubmit={addCourier}><label>Nombre completo<input value={name} onChange={e=>setName(e.target.value)} required maxLength={120} placeholder="Nombre del domiciliario"/></label><label>Teléfono<input value={phone} onChange={e=>setPhone(e.target.value)} required maxLength={30} placeholder="300 000 0000"/></label><button className="btn btn-solid" disabled={saving}><Plus size={15}/> Guardar domiciliario</button></form><div className="courier-list">{couriers.map(c=><article key={c.id}><span className="courier-avatar"><UserRound size={18}/></span><div><b>{c.full_name}</b><small>{c.phone}</small></div><span className={c.active?'courier-active':'courier-inactive'}>{c.active?'Activo':'Inactivo'}</span></article>)}{!couriers.length&&<p className="subtle">Todavía no agregas domiciliarios.</p>}</div></section>
+    <section className="panel"><div className="panel-head"><div><span className="eyebrow">DESPACHO</span><h2>Asignar pedido</h2></div><Truck/></div><div className="courier-form"><label>Pedido por entregar<select value={orderId} onChange={e=>setOrderId(e.target.value)}><option value="">Selecciona un pedido</option>{unassigned.map(o=><option key={o.id} value={o.id}>#{o.order_number} · {o.delivery_address||'Sin dirección'} · {Number(o.total).toLocaleString('es-CO')} COP</option>)}</select></label><label>Domiciliario<select value={courierId} onChange={e=>setCourierId(e.target.value)}><option value="">Selecciona domiciliario</option>{couriers.filter(c=>c.active).map(c=><option key={c.id} value={c.id}>{c.full_name} · {c.phone}</option>)}</select></label><button className="btn btn-solid" onClick={()=>void assign()} disabled={saving||!courierId||!orderId}><Bike size={15}/> Asignar entrega</button></div><p className="fine-print">Solo aparecen pedidos de domicilio pendientes. La asignación no crea ni modifica ventas en el POS.</p></section>
+   </div>
+   <section className="panel"><div className="panel-head"><div><span className="eyebrow">SEGUIMIENTO</span><h2>Entregas asignadas</h2></div><span className="courier-count">{assignments.length} activas / recientes</span></div>
+    {!assignments.length?<p className="subtle">Aún no hay entregas asignadas.</p>:<div className="courier-assignment-list">{assignments.map(a=><article key={a.id} className={selected?.id===a.id?'courier-selected':''}><button className="courier-assignment-main" onClick={()=>{setSelected(a);setMapError('');}}><span className="courier-avatar"><MapPin size={18}/></span><span><b>Pedido #{a.orders?.order_number??'—'} · {a.delivery_couriers?.full_name||'Domiciliario'}</b><small>{a.orders?.delivery_address||'Dirección no registrada'} · {a.orders?.customers?.name||'Cliente'}</small></span><strong>{statusText(a.status)}</strong></button><div className="courier-actions">{a.status==='assigned'&&<button className="btn btn-outline" onClick={()=>void updateStatus(a,'picked_up')}>Marcar en camino</button>}{a.status==='picked_up'&&<button className="btn btn-soft" onClick={()=>void updateStatus(a,'delivered')}><CheckCircle2 size={14}/> Marcar entregado</button>}{a.orders?.delivery_latitude&&a.orders?.delivery_longitude&&<button className="btn btn-ghost" onClick={()=>{setSelected(a);setMapError('');}}>Ver mapa <Navigation size={14}/></button>}</div></article>)}</div>}
+   </section>
+   {selected&&<section className="panel"><div className="panel-head"><div><span className="eyebrow">MAPA Y RUTA</span><h2>Pedido #{selected.orders?.order_number??'—'}</h2></div><button className="btn btn-outline" onClick={()=>setSelected(null)}>Cerrar mapa</button></div>{selected.orders?.delivery_latitude&&selected.orders?.delivery_longitude?<><div ref={mapRef} className="courier-map"/><p className="fine-print">Mapa © OpenStreetMap · Ruta calculada con OSRM. La ruta requiere que el domiciliario comparta su ubicación GPS desde un dispositivo autorizado.</p>{mapError&&<div className="notice">{mapError}</div>}</>:<div className="notice">Este pedido no tiene coordenadas de destino. Añade latitud y longitud del domicilio en el registro del pedido para trazar la ruta.</div>}</section>}
+  </>}
+ </section>;
+}
