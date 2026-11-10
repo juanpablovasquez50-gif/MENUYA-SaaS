@@ -29,7 +29,7 @@ begin
      or p_items is null
      or pg_catalog.jsonb_typeof(p_items) <> 'array'
      or pg_catalog.jsonb_array_length(p_items) < 1
-     or p_order_data->>'fulfillment_type' not in ('delivery', 'pickup') then
+     or coalesce(p_order_data->>'fulfillment_type', '') not in ('delivery', 'pickup') then
     raise exception 'Datos del pedido incompletos.' using errcode = '22023';
   end if;
 
