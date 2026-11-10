@@ -11,9 +11,20 @@ const loadLeaflet=()=>new Promise<void>((resolve,reject)=>{
  if(existing){existing.addEventListener('load',()=>resolve(),{once:true});existing.addEventListener('error',()=>reject(new Error('No se pudo cargar el mapa.')),{once:true});return;}
  const script=document.createElement('script');script.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';script.dataset.courierLeaflet='1';script.onload=()=>resolve();script.onerror=()=>reject(new Error('No se pudo cargar el mapa.'));document.head.appendChild(script);
 });
-type CourierPosition={latitude:number;longitude:number};
+type CourierPosition={latitude:number;longitude:number;heading:number|null;accuracy:number};
+type NavStep={instruction:string;distance:number;modifier?:string;name?:string;type?:string;location?:[number,number]};
+const formatDistance=(meters:number)=>meters<1000?`${Math.max(0,Math.round(meters/10)*10)} m`:`${(meters/1000).toFixed(1).replace('.',',')} km`;
+const maneuverText=(m:any,name:string)=>{
+ const type=String(m?.type||''),mod=String(m?.modifier||'');
+ const road=name? ` hacia ${name}`:'';
+ if(type==='arrive')return 'Has llegado a tu destino';
+ if(type==='depart')return name?`Continúa por ${name}`:'Inicia el recorrido';
+ if(type==='roundabout'||type==='rotary')return 'Entra a la glorieta y toma la salida indicada'+road;
+ const words:Record<string,string>={left:'gira a la izquierda',slight_left:'mantente a la izquierda',sharp_left:'gira cerradamente a la izquierda',right:'gira a la derecha',slight_right:'mantente a la derecha',sharp_right:'gira cerradamente a la derecha',straight:'continúa derecho',uturn:'haz un retorno'};
+ return (words[mod]||'Continúa por la vía')+road;
+};
 function DeliveryMap({order,currentLocation,onSaveAddress}:{order:any;currentLocation:CourierPosition|null;onSaveAddress:(address:string)=>Promise<void>}){
- const mapRef=useRef<HTMLDivElement>(null),mapInstance=useRef<any>(null),layers=useRef<any[]>([]);
+ const mapRef=useRef<HTMLDivElement>(null),mapInstance=useRef<any>(null),layers=useRef<any[]>([]),originMarker=useRef<any>(null),routeLayer=useRef<any>(null),routeRef=useRef<any>(null),lastRouteAt=useRef(0),lastSpoken=useRef(''),lastPosition=useRef<CourierPosition|null>(null),voiceRef=useRef(true);
  const [mapMessage,setMapMessage]=useState('Cargando mapa…');
  const [resolvedDestination,setResolvedDestination]=useState<{latitude:number;longitude:number}|null>(null);
  const [geocoding,setGeocoding]=useState(false);
@@ -22,6 +33,12 @@ function DeliveryMap({order,currentLocation,onSaveAddress}:{order:any;currentLoc
  const [city,setCity]=useState('');
  const [department,setDepartment]=useState('');
  const [savingAddress,setSavingAddress]=useState(false);
+ const [navStep,setNavStep]=useState<NavStep|null>(null);
+ const [stepDistance,setStepDistance]=useState(0);
+ const [routeSummary,setRouteSummary]=useState<{distance:number;duration:number}|null>(null);
+ const [voiceEnabled,setVoiceEnabled]=useState(true);
+ const [rerouting,setRerouting]=useState(false);
+ useEffect(()=>{voiceRef.current=voiceEnabled;},[voiceEnabled]);
  const hasStoredDestination=order?.delivery_latitude!==null&&order?.delivery_latitude!==undefined&&order?.delivery_longitude!==null&&order?.delivery_longitude!==undefined&&Number.isFinite(Number(order.delivery_latitude))&&Number.isFinite(Number(order.delivery_longitude));
  const destination=hasStoredDestination?{latitude:Number(order.delivery_latitude),longitude:Number(order.delivery_longitude)}:resolvedDestination;
  const hasDestination=!!destination;
@@ -31,96 +48,79 @@ function DeliveryMap({order,currentLocation,onSaveAddress}:{order:any;currentLoc
   const findAddress=async()=>{setGeocoding(true);setGeocodeError('');try{
    const parts=String(order.delivery_address||'').split(',').map((part:string)=>part.trim()).filter(Boolean);
    const clean=(value:string)=>value.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('es').replace(/[^a-z0-9 ]/g,' ').replace(/\\s+/g,' ').trim();
-   const country='Colombia';
-   const knownCity=['monteria'];
-   const knownDepartment=['cordoba'];
+   const country='Colombia',knownCity=['monteria'],knownDepartment=['cordoba'];
    const tail=parts.map(clean);
    while(tail.length>1&&tail[tail.length-1]===tail[tail.length-2]){tail.pop();parts.pop();}
    if(tail[tail.length-1]==='colombia'){tail.pop();parts.pop();}
    let cityPart='',departmentPart='',neighborhoodPart='';
-   if(tail.length>=2&&knownCity.includes(tail[tail.length-2])&&knownDepartment.includes(tail[tail.length-1])){
-    cityPart=parts[parts.length-2];departmentPart=parts[parts.length-1];parts.splice(parts.length-2,2);
-   }else if(tail.length>=2){
-    cityPart=parts[parts.length-2];departmentPart=parts[parts.length-1];parts.splice(parts.length-2,2);
-   }
-   for(let i=parts.length-1;i>=0;i--){if(['monteria','cordoba','colombia'].includes(clean(parts[i])))parts.splice(i,1);}\n   if(parts.length>=2)neighborhoodPart=parts.pop()||'';
+   if(tail.length>=2&&knownCity.includes(tail[tail.length-2])&&knownDepartment.includes(tail[tail.length-1])){cityPart=parts[parts.length-2];departmentPart=parts[parts.length-1];parts.splice(parts.length-2,2);}
+   else if(tail.length>=2){cityPart=parts[parts.length-2];departmentPart=parts[parts.length-1];parts.splice(parts.length-2,2);}
+   for(let i=parts.length-1;i>=0;i--){if(['monteria','cordoba','colombia'].includes(clean(parts[i])))parts.splice(i,1);}
+   if(parts.length>=2)neighborhoodPart=parts.pop()||'';
    const baseAddress=parts.join(', ');
    const neighborhoodFields=['neighbourhood','suburb','quarter','residential','hamlet','city_district'];
-   const matchesLocation=(item:any)=>{
-    const address=item.address||{};
-    const state=clean(String(address.state||address.region||''));
-    const city=clean(String(address.city||address.town||address.municipality||address.county||address.village||''));
-    return (!departmentPart||state.includes(clean(departmentPart))||clean(departmentPart).includes(state))&&(!cityPart||city.includes(clean(cityPart))||clean(cityPart).includes(city));
-   };
-   const matchesNeighborhood=(item:any)=>{
-    if(!neighborhoodPart)return true;
-    const address=item.address||{};
-    const values=neighborhoodFields.map((key:string)=>clean(String(address[key]||''))).filter(Boolean);
-    const wanted=clean(neighborhoodPart);
-    return values.some((value:string)=>value===wanted||value.includes(wanted)||wanted.includes(value))||clean(String(item.name||item.display_name||'')).includes(wanted);
-   };
-   const queries:string[]=[];
-   if(neighborhoodPart)queries.push([neighborhoodPart,cityPart,departmentPart,country].filter(Boolean).join(', '));
-   if(baseAddress&&neighborhoodPart)queries.push([baseAddress,neighborhoodPart,cityPart,departmentPart,country].filter(Boolean).join(', '));
-   if(baseAddress&&!neighborhoodPart)queries.push([baseAddress,cityPart,departmentPart,country].filter(Boolean).join(', '));
+   const matchesLocation=(item:any)=>{const address=item.address||{};const state=clean(String(address.state||address.region||''));const city=clean(String(address.city||address.town||address.municipality||address.county||address.village||''));return (!departmentPart||state.includes(clean(departmentPart))||clean(departmentPart).includes(state))&&(!cityPart||city.includes(clean(cityPart))||clean(cityPart).includes(city));};
+   const matchesNeighborhood=(item:any)=>{if(!neighborhoodPart)return true;const address=item.address||{};const values=neighborhoodFields.map((key:string)=>clean(String(address[key]||''))).filter(Boolean);const wanted=clean(neighborhoodPart);return values.some((value:string)=>value===wanted||value.includes(wanted)||wanted.includes(value))||clean(String(item.name||item.display_name||'')).includes(wanted);};
+   const queries:string[]=[];if(neighborhoodPart)queries.push([neighborhoodPart,cityPart,departmentPart,country].filter(Boolean).join(', '));if(baseAddress&&neighborhoodPart)queries.push([baseAddress,neighborhoodPart,cityPart,departmentPart,country].filter(Boolean).join(', '));if(baseAddress&&!neighborhoodPart)queries.push([baseAddress,cityPart,departmentPart,country].filter(Boolean).join(', '));
    let results:any[]=[];
-   for(const query of [...new Set(queries)]){
-    const params=new URLSearchParams({format:'jsonv2',limit:'10',countrycodes:'co',addressdetails:'1',q:query});
-    const response=await fetch('https://nominatim.openstreetmap.org/search?'+params.toString(),{headers:{Accept:'application/json'}});
-    if(!response.ok)throw new Error('No pudimos consultar el mapa. Inténtalo de nuevo.');
-    const found=await response.json();
-    if(Array.isArray(found)&&found.length){
-     const matching=found.filter((item:any)=>matchesLocation(item)&&matchesNeighborhood(item));
-     if(matching.length){results=matching;break;}
-    }
-   }
-   if(!results.length){
-    if(!neighborhoodPart)throw new Error('No encontramos el barrio de esta dirección. Escribe el barrio exacto (por ejemplo, Pasatiempo) para ubicar el domicilio sin enviarlo a otro sector.');
-    throw new Error('No pudimos confirmar el barrio '+neighborhoodPart+' en Montería. No mostraremos una ubicación aproximada; revisa el nombre del barrio.');
-   }
-   const best=results[0];
-   const latitude=Number(best.lat),longitude=Number(best.lon);
-   if(!Number.isFinite(latitude)||!Number.isFinite(longitude))throw new Error('La dirección no devolvió una ubicación válida.');
-   if(!cancelled)setResolvedDestination({latitude,longitude});
+   for(const query of [...new Set(queries)]){const params=new URLSearchParams({format:'jsonv2',limit:'10',countrycodes:'co',addressdetails:'1',q:query});const response=await fetch('https://nominatim.openstreetmap.org/search?'+params.toString(),{headers:{Accept:'application/json'}});if(!response.ok)throw new Error('No pudimos consultar el mapa. Inténtalo de nuevo.');const found=await response.json();if(Array.isArray(found)&&found.length){const matching=found.filter((item:any)=>matchesLocation(item)&&matchesNeighborhood(item));if(matching.length){results=matching;break;}}}
+   if(!results.length){if(!neighborhoodPart)throw new Error('No encontramos el barrio de esta dirección. Escribe el barrio exacto para ubicar el domicilio.');throw new Error('No pudimos confirmar el barrio '+neighborhoodPart+'. Revisa el nombre o confirma el punto en el mapa.');}
+   const best=results[0],latitude=Number(best.lat),longitude=Number(best.lon);if(!Number.isFinite(latitude)||!Number.isFinite(longitude))throw new Error('La dirección no devolvió una ubicación válida.');if(!cancelled)setResolvedDestination({latitude,longitude});
   }catch(e){if(!cancelled)setGeocodeError(e instanceof Error?e.message:'No fue posible localizar la dirección.');}finally{if(!cancelled)setGeocoding(false);}};
-  void findAddress();
-  return()=>{cancelled=true;};
+  void findAddress();return()=>{cancelled=true;};
  },[order?.id,order?.delivery_address,hasStoredDestination]);
  const destinationLat=destination?.latitude,destinationLng=destination?.longitude;
  useEffect(()=>{
-  if(!hasDestination||!mapRef.current)return;
-  let cancelled=false;
-  void loadLeaflet().then(async()=>{
-   if(cancelled||!mapRef.current)return;
-   const L=window.L;
-   if(!mapInstance.current){mapInstance.current=L.map(mapRef.current,{zoomControl:true}).setView([Number(destinationLat),Number(destinationLng)],15);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(mapInstance.current);}
+  if(!hasDestination||!mapRef.current)return;let cancelled=false;
+  void loadLeaflet().then(()=>{if(cancelled||!mapRef.current)return;const L=window.L;
+   if(!mapInstance.current){mapInstance.current=L.map(mapRef.current,{zoomControl:true}).setView([Number(destinationLat),Number(destinationLng)],16);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(mapInstance.current);}
    const map=mapInstance.current;layers.current.forEach(layer=>map.removeLayer(layer));layers.current=[];
-   const destinationPoint:[number,number]=[Number(destinationLat),Number(destinationLng)];
-   layers.current.push(L.marker(destinationPoint).addTo(map).bindPopup('Destino de entrega').openPopup());
-   if(currentLocation){
-    const origin:[number,number]=[currentLocation.latitude,currentLocation.longitude];
-    layers.current.push(L.marker(origin).addTo(map).bindPopup('Tu ubicación actual'));
-    setMapMessage('Calculando ruta hasta el cliente…');
-    try{
-     const response=await fetch('https://router.project-osrm.org/route/v1/driving/'+origin[1]+','+origin[0]+';'+destinationPoint[1]+','+destinationPoint[0]+'?overview=full&geometries=geojson');
-     if(!response.ok)throw new Error('Ruta no disponible');
-     const data=await response.json();if(cancelled)return;
-     if(data.routes?.[0]){
-      const route=data.routes[0];
-      layers.current.push(L.geoJSON(route.geometry,{style:{color:'#6848df',weight:6,opacity:.88}}).addTo(map));
-      map.fitBounds(L.latLngBounds([origin,destinationPoint]),{padding:[35,35]});
-      const km=(route.distance/1000).toFixed(1),minutes=Math.max(1,Math.round(route.duration/60));
-      setMapMessage('Ruta estimada · '+km+' km · '+minutes+' min');
-     }else setMapMessage('No encontramos una ruta en carretera para este destino.');
-    }catch{if(!cancelled)setMapMessage('No fue posible calcular la ruta. El mapa sigue disponible.');}
-   }else{
-    map.setView(destinationPoint,15);
-    setMapMessage('Activa el GPS para mostrar tu ubicación y calcular la ruta.');
-   }
-   window.setTimeout(()=>map.invalidateSize(),100);
+   const dest=L.latLng(Number(destinationLat),Number(destinationLng));layers.current.push(L.marker(dest).addTo(map).bindPopup('Destino de entrega'));
+   if(currentLocation){const origin=L.latLng(currentLocation.latitude,currentLocation.longitude);originMarker.current=L.circleMarker(origin,{radius:9,color:'#fff',weight:3,fillColor:'#6848df',fillOpacity:1}).addTo(map).bindPopup('Ubicación GPS del domiciliario');map.fitBounds(L.latLngBounds([origin,dest]),{padding:[35,35]});}
+   else{originMarker.current=null;map.setView(dest,16);setMapMessage('Permite el GPS para iniciar la navegación.');}
+   window.setTimeout(()=>map.invalidateSize(),150);
   }).catch(e=>setMapMessage(e instanceof Error?e.message:'No se pudo cargar el mapa.'));
   return()=>{cancelled=true;};
- },[hasDestination,destinationLat,destinationLng,currentLocation?.latitude,currentLocation?.longitude]);
+ },[hasDestination,destinationLat,destinationLng]);
+ const distanceToRoute=(point:[number,number],coordinates:any[])=>{
+  const lat=point[0],lng=point[1];let best=Infinity;
+  for(const c of coordinates||[]){const dLat=(Number(c[1])-lat)*111320,dLng=(Number(c[0])-lng)*111320*Math.cos(lat*Math.PI/180);const d=Math.sqrt(dLat*dLat+dLng*dLng);if(d<best)best=d;}
+  return best;
+ };
+ const announce=(message:string)=>{if(!voiceRef.current||!('speechSynthesis'in window)||!message||lastSpoken.current===message)return;window.speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(message);utterance.lang='es-CO';utterance.rate=1;window.speechSynthesis.speak(utterance);lastSpoken.current=message;};
+ useEffect(()=>{
+  if(!hasDestination||!currentLocation||!mapInstance.current)return;
+  const map=mapInstance.current,L=window.L,position=L.latLng(currentLocation.latitude,currentLocation.longitude);
+  if(originMarker.current)originMarker.current.setLatLng(position);
+  else originMarker.current=L.circleMarker(position,{radius:9,color:'#fff',weight:3,fillColor:'#6848df',fillOpacity:1}).addTo(map);
+  const heading=currentLocation.heading;
+  if(Number.isFinite(heading))map.setView(position,Math.max(map.getZoom(),16),{animate:true,duration:.45});
+  else map.panTo(position,{animate:true,duration:.45});
+  const route=routeRef.current,offRoute=route?distanceToRoute([currentLocation.latitude,currentLocation.longitude],route.geometry.coordinates):Infinity;
+  const shouldRequest=!route||offRoute>55;
+  const now=Date.now();
+  if(shouldRequest&&now-lastRouteAt.current>12000){
+   lastRouteAt.current=now;setRerouting(!!route);setMapMessage(route?'Te saliste de la ruta. Recalculando…':'Calculando navegación…');
+   const url='https://router.project-osrm.org/route/v1/driving/'+currentLocation.longitude+','+currentLocation.latitude+';'+Number(destinationLng)+','+Number(destinationLat)+'?overview=full&geometries=geojson&steps=true';
+   void fetch(url).then(r=>{if(!r.ok)throw new Error('No fue posible calcular la ruta');return r.json();}).then(data=>{
+    if(!data.routes?.[0])throw new Error('No encontramos una ruta por carretera.');
+    const next=data.routes[0];routeRef.current=next;setRouteSummary({distance:next.distance,duration:next.duration});
+    if(routeLayer.current)map.removeLayer(routeLayer.current);
+    routeLayer.current=L.geoJSON(next.geometry,{style:{color:'#6848df',weight:7,opacity:.92}}).addTo(map);
+    const steps=(next.legs||[]).flatMap((leg:any)=>leg.steps||[]).filter((step:any)=>step.maneuver?.type!=='depart');
+    const first=steps[0];if(first){const name=first.name||'';setNavStep({instruction:maneuverText(first.maneuver,name),distance:first.distance,modifier:first.maneuver?.modifier,name,type:first.maneuver?.type,location:first.maneuver?.location});setStepDistance(first.distance);}
+    setMapMessage('Navegación activa · GPS conectado');setRerouting(false);
+    map.fitBounds(routeLayer.current.getBounds(),{padding:[35,35]});
+   }).catch(e=>{setRerouting(false);setMapMessage(e instanceof Error?e.message:'Ruta temporalmente no disponible.');});
+  }
+  if(routeRef.current){
+   const steps=(routeRef.current.legs||[]).flatMap((leg:any)=>leg.steps||[]).filter((step:any)=>step.maneuver?.type!=='depart');
+   const next=steps.find((step:any)=>{const loc=step.maneuver?.location;if(!loc)return false;const d=distanceToRoute([currentLocation.latitude,currentLocation.longitude],[loc]);return d>22;})||steps[steps.length-1];
+   if(next){const loc=next.maneuver?.location;const d=loc?distanceToRoute([currentLocation.latitude,currentLocation.longitude],[loc]):next.distance;const message=maneuverText(next.maneuver,next.name||'');setNavStep({instruction:message,distance:d,modifier:next.maneuver?.modifier,name:next.name,type:next.maneuver?.type,location:loc});setStepDistance(d);if(d<230)announce(`En ${formatDistance(d)}, ${message.toLocaleLowerCase('es')}`);}
+  }
+  lastPosition.current=currentLocation;
+ },[hasDestination,currentLocation?.latitude,currentLocation?.longitude,currentLocation?.heading,destinationLat,destinationLng]);
+ const handleCitySubmit=async(e:React.FormEvent<HTMLFormElement>)=>{
   const handleCitySubmit=async(e:React.FormEvent<HTMLFormElement>)=>{
    e.preventDefault();
    const neighborhoodValue=neighborhood.trim();
@@ -145,7 +145,7 @@ function DeliveryMap({order,currentLocation,onSaveAddress}:{order:any;currentLoc
    <button type="submit" disabled={savingAddress||!neighborhood.trim()||!city.trim()||!department.trim()}>{savingAddress?'Guardando…':'Guardar y actualizar mapa'}</button>
   </form>;
 if(!hasDestination)return <div className="cp-map-wrap"><div className="cp-map-heading"><span><MapPinned size={17}/> Ubicación de entrega</span></div><div className="cp-map-empty"><MapPin size={25}/><b>{geocoding?'Localizando dirección…':geocodeError?'No pudimos ubicar esta dirección':'Buscando ubicación del domicilio'}</b><span>{order?.delivery_address||'Dirección no registrada'}</span><small>{geocodeError||'Estamos convirtiendo la dirección en un punto del mapa automáticamente.'}</small></div>{cityEditor}</div>;
- return <div className="cp-map-wrap"><div className="cp-map-heading"><span><MapPinned size={17}/> Ruta de entrega</span><span className="cp-route-status"><span className="cp-route-dot"/>{mapMessage}</span></div><div ref={mapRef} className="cp-live-map" role="application" aria-label="Mapa con tu ubicación y el destino de entrega"/><div className="cp-map-legend"><span><i className="cp-legend-origin"/> Tu ubicación</span><span><i className="cp-legend-destination"/> Destino del cliente</span></div><div className="cp-map-address"><MapPin size={15}/><span>{order?.delivery_address||'Dirección no registrada'}</span></div>{cityEditor}</div>;
+ return <div className="cp-map-wrap"><div className="cp-map-heading"><span><MapPinned size={17}/> Navegación del repartidor</span><span className="cp-route-status"><span className="cp-route-dot"/>{rerouting?'Recalculando ruta':mapMessage}</span></div>{navStep&&<div className="cp-nav-guidance"><div className="cp-nav-arrow"><Navigation size={25}/></div><div className="cp-nav-copy"><b>{navStep.instruction}</b><small>Próxima maniobra</small></div><strong>{formatDistance(stepDistance)}</strong></div>}<div ref={mapRef} className="cp-live-map" role="application" aria-label="Mapa con ubicación GPS en vivo y ruta de entrega"/><div className="cp-nav-controls"><button type="button" onClick={()=>{const map=mapInstance.current;if(map&&currentLocation)map.setView([currentLocation.latitude,currentLocation.longitude],17,{animate:true});}}>Centrar en mí</button><button type="button" className={voiceEnabled?'is-on':''} onClick={()=>{setVoiceEnabled(v=>!v);if(voiceEnabled&&'speechSynthesis'in window)window.speechSynthesis.cancel();}}>{voiceEnabled?'Voz activada':'Activar voz'}</button></div>{routeSummary&&<div className="cp-nav-summary"><div><b>{formatDistance(routeSummary.distance)}</b><small>Distancia de ruta</small></div><div><b>{Math.max(1,Math.round(routeSummary.duration/60))} min</b><small>Tiempo estimado</small></div><div><b>{currentLocation?Math.round(currentLocation.accuracy)+' m':'—'}</b><small>Precisión GPS</small></div></div>}<div className="cp-map-legend"><span><i className="cp-legend-origin"/> Tu ubicación GPS</span><span><i className="cp-legend-destination"/> Destino del cliente</span></div><div className="cp-map-address"><MapPin size={15}/><span>{order?.delivery_address||'Dirección no registrada'}</span></div>{cityEditor}</div>;
 }
 export default function CourierPortal(){
  const [token,setToken]=useState(()=>sessionStorage.getItem('menuya-courier-token')||''),[courier,setCourier]=useState<any>(()=>{try{return JSON.parse(sessionStorage.getItem('menuya-courier-profile')||'null')}catch{return null}}),[code,setCode]=useState(''),[pin,setPin]=useState(''),[assignments,setAssignments]=useState<Assignment[]>([]),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[sharing,setSharing]=useState(false),[currentLocation,setCurrentLocation]=useState<CourierPosition|null>(null);
@@ -155,7 +155,7 @@ export default function CourierPortal(){
  const login=async(e:React.FormEvent)=>{e.preventDefault();setBusy(true);setError('');try{const {data,error}=await supabase.functions.invoke('courier-access',{body:{action:'login',code,pin}});if(error)throw error;if(data?.error)throw new Error(data.error);sessionStorage.setItem('menuya-courier-token',data.token);sessionStorage.setItem('menuya-courier-profile',JSON.stringify(data.courier));setToken(data.token);setCourier(data.courier);setPin('');}catch(e){setError(e instanceof Error?e.message:'No fue posible ingresar.');}finally{setBusy(false);}};
  const saveDeliveryAddress=useCallback(async(a:Assignment,address:string)=>{await call('update_delivery_address',{assignment_id:a.id,delivery_address:address});await load();},[call,load]);
  const update=async(a:Assignment,status:string)=>{setBusy(true);setError('');try{await call('status',{assignment_id:a.id,status});setNotice(status==='picked_up'?'¡Vamos! La entrega está en camino. Tu GPS se compartirá durante el recorrido.':'¡Entrega completada! Gracias por tu trabajo.');await load();}catch(e){setError(e instanceof Error?e.message:'No fue posible actualizar.');}finally{setBusy(false);}};
- useEffect(()=>{if(!token||!assignments.some(a=>a.status==='picked_up')){setSharing(false);return;}if(!navigator.geolocation){setError('Este dispositivo no permite compartir GPS.');return;}const id=navigator.geolocation.watchPosition(async p=>{try{setCurrentLocation({latitude:p.coords.latitude,longitude:p.coords.longitude});await call('location',{latitude:p.coords.latitude,longitude:p.coords.longitude,accuracy:p.coords.accuracy});setSharing(true);}catch(e){setError(e instanceof Error?e.message:'No fue posible enviar ubicación.');}},e=>setError(e.message==='User denied Geolocation'?'Debes permitir la ubicación para compartir tu recorrido.':'No fue posible obtener el GPS: '+e.message),{enableHighAccuracy:true,maximumAge:5000,timeout:15000});return()=>navigator.geolocation.clearWatch(id);},[token,assignments,call]);
+ useEffect(()=>{if(!token||!assignments.some(a=>a.status==='picked_up')){setSharing(false);return;}if(!navigator.geolocation){setError('Este dispositivo no permite compartir GPS.');return;}const id=navigator.geolocation.watchPosition(async p=>{try{setCurrentLocation({latitude:p.coords.latitude,longitude:p.coords.longitude,heading:Number.isFinite(p.coords.heading)?p.coords.heading:null,accuracy:p.coords.accuracy});await call('location',{latitude:p.coords.latitude,longitude:p.coords.longitude,accuracy:p.coords.accuracy});setSharing(true);}catch(e){setError(e instanceof Error?e.message:'No fue posible enviar ubicación.');}},e=>setError(e.message==='User denied Geolocation'?'Debes permitir la ubicación para compartir tu recorrido.':'No fue posible obtener el GPS: '+e.message),{enableHighAccuracy:true,maximumAge:5000,timeout:15000});return()=>navigator.geolocation.clearWatch(id);},[token,assignments,call]);
  const logout=async()=>{try{await call('logout')}catch{}sessionStorage.removeItem('menuya-courier-token');sessionStorage.removeItem('menuya-courier-profile');setToken('');setCourier(null);setAssignments([]);};
  const active=useMemo(()=>assignments.filter(a=>a.status==='picked_up').length,[assignments]),pending=assignments.length-active;
  if(!token)return <main className="cp-login"><style>{courierStyles}</style><form className="cp-login-card" onSubmit={login}><div className="cp-brand"><span className="cp-brand-icon"><Bike size={27}/></span><span>MENUYA <small>DELIVERY</small></span></div><span className="cp-eyebrow">PORTAL DE DOMICILIARIOS</span><h1>Tu ruta comienza aquí.</h1><p>Ingresa con los datos de acceso que te entregó el comercio.</p><label>Código de acceso<input value={code} onChange={e=>setCode(e.target.value)} required inputMode="numeric" placeholder="Código de 6 dígitos"/></label><label>PIN de seguridad<input type="password" value={pin} onChange={e=>setPin(e.target.value)} required minLength={4} maxLength={8} inputMode="numeric" placeholder="Tu PIN"/></label>{error&&<div className="cp-error">{error}</div>}<button className="cp-primary" disabled={busy}>{busy?'Verificando…':'Ingresar al panel'}</button><small className="cp-login-foot">Acceso privado para el equipo de entregas</small></form></main>;
@@ -172,7 +172,7 @@ const courierStyles=`
 .cp-section-head,.cp-deliveries{max-width:900px;margin-left:auto;margin-right:auto}.cp-section-head{display:flex;align-items:end;justify-content:space-between;margin-bottom:13px}.cp-section-head h2{font-size:24px;margin:5px 0 0;font-weight:850;letter-spacing:-.03em}.cp-refresh{font-size:12px;padding:9px 11px}
 .cp-gps{max-width:900px;margin:0 auto 14px;padding:13px 16px;background:#fff8e9;border:1px solid #f8e4bd;border-radius:14px;display:flex;align-items:center;gap:11px;color:#9a641b}.cp-gps>div{flex:1;display:flex;flex-direction:column;gap:3px}.cp-gps b{font-size:12px}.cp-gps small{font-size:11px;color:#9c835e}.cp-gps.is-live{background:#eafaf2;border-color:#c9efdc;color:#168453}.cp-gps.is-live small{color:#578d73}.cp-gps-dot{width:9px;height:9px;border-radius:50%;background:#e0a13c;box-shadow:0 0 0 4px #e0a13c22}.is-live .cp-gps-dot{background:#19a66a;box-shadow:0 0 0 4px #19a66a22}
 .cp-deliveries{display:grid;grid-template-columns:1fr;gap:16px}.cp-delivery{background:#fff;border:1px solid #e8edf4;border-radius:19px;padding:19px;box-shadow:0 5px 20px #17223808}.cp-delivery-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px}.cp-order-label{font-size:9px;font-weight:900;letter-spacing:.16em;color:#929db0}.cp-delivery-head h3{font-size:21px;margin:3px 0 0}.cp-status{font-size:10px;font-weight:800;color:#9a641b;background:#fff2dc;border-radius:30px;padding:7px 11px}.cp-status.on-route{color:#168453;background:#e3f8ed}
-.cp-map-wrap{border:1px solid #e8edf4;border-radius:15px;overflow:hidden;background:#f4f7fb}.cp-map-heading{height:43px;padding:0 12px;display:flex;align-items:center;justify-content:space-between;color:#58667a;font-size:11px;font-weight:800}.cp-map-heading span,.cp-map-heading a{display:flex;align-items:center;gap:6px}.cp-map-heading a{color:#6345d8;text-decoration:none}.cp-live-map{display:block;width:100%;height:270px;background:#e9eef4;z-index:0}.cp-route-status{display:flex;align-items:center;gap:6px;color:#6b55bb;font-size:10px;font-weight:700}.cp-route-dot{width:7px;height:7px;border-radius:50%;background:#19a66a;box-shadow:0 0 0 3px #19a66a20}.cp-map-legend{display:flex;gap:18px;padding:9px 12px 2px;font-size:10px;color:#657186}.cp-map-legend span{display:flex;align-items:center;gap:6px}.cp-map-legend i{width:8px;height:8px;border-radius:50%;display:inline-block}.cp-legend-origin{background:#6848df}.cp-legend-destination{background:#e45d52}.cp-map-address{padding:10px 12px;display:flex;align-items:flex-start;gap:7px;font-size:11px;color:#5c687a}.cp-map-address svg{flex:none;color:#7255dc}.cp-map-empty{height:150px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:7px;color:#77849a;font-size:11px}.cp-map-empty svg{color:#7656df}.cp-map-empty b{color:#354158}.cp-map-empty a{color:#6848df;font-weight:800;text-decoration:none}.cp-city-editor{padding:12px;border-top:1px solid #e8edf4;display:flex;flex-direction:column;gap:8px}.cp-city-editor>b{font-size:11px;color:#344158}.cp-city-editor>span{font-size:10px;color:#8490a2}.cp-city-editor>div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.cp-city-editor label{display:flex;flex-direction:column;gap:5px;font-size:10px;font-weight:800;color:#59667a}.cp-city-editor input{height:39px;min-width:0;border:1px solid #dfe5ef;border-radius:9px;padding:0 10px;font-size:12px}.cp-city-editor button{height:40px;border:0;border-radius:9px;background:#6848df;color:#fff;font-size:11px;font-weight:800;cursor:pointer}.cp-city-editor button:disabled{opacity:.55;cursor:wait}
+.cp-nav-guidance{display:flex;align-items:center;gap:11px;padding:12px;background:#21194d;color:#fff}.cp-nav-arrow{width:42px;height:42px;border-radius:12px;background:#ffffff20;display:grid;place-items:center;flex:none}.cp-nav-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}.cp-nav-copy b{font-size:13px}.cp-nav-copy small{font-size:10px;color:#d4cef2}.cp-nav-guidance>strong{font-size:17px;white-space:nowrap}.cp-nav-controls{display:flex;gap:8px;padding:9px 12px}.cp-nav-controls button{border:1px solid #e0e5ef;background:#fff;border-radius:9px;padding:8px 11px;font-size:10px;font-weight:800;color:#59667a}.cp-nav-controls button.is-on{background:#eeeaff;color:#6848df;border-color:#d9d0ff}.cp-nav-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 12px;background:#f8f9fc}.cp-nav-summary div{display:flex;flex-direction:column;gap:3px}.cp-nav-summary b{font-size:14px;color:#27334a}.cp-nav-summary small{font-size:9px;color:#8490a2}.cp-map-wrap{border:1px solid #e8edf4;border-radius:15px;overflow:hidden;background:#f4f7fb}.cp-map-heading{height:43px;padding:0 12px;display:flex;align-items:center;justify-content:space-between;color:#58667a;font-size:11px;font-weight:800}.cp-map-heading span,.cp-map-heading a{display:flex;align-items:center;gap:6px}.cp-map-heading a{color:#6345d8;text-decoration:none}.cp-live-map{display:block;width:100%;height:270px;background:#e9eef4;z-index:0}.cp-route-status{display:flex;align-items:center;gap:6px;color:#6b55bb;font-size:10px;font-weight:700}.cp-route-dot{width:7px;height:7px;border-radius:50%;background:#19a66a;box-shadow:0 0 0 3px #19a66a20}.cp-map-legend{display:flex;gap:18px;padding:9px 12px 2px;font-size:10px;color:#657186}.cp-map-legend span{display:flex;align-items:center;gap:6px}.cp-map-legend i{width:8px;height:8px;border-radius:50%;display:inline-block}.cp-legend-origin{background:#6848df}.cp-legend-destination{background:#e45d52}.cp-map-address{padding:10px 12px;display:flex;align-items:flex-start;gap:7px;font-size:11px;color:#5c687a}.cp-map-address svg{flex:none;color:#7255dc}.cp-map-empty{height:150px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:7px;color:#77849a;font-size:11px}.cp-map-empty svg{color:#7656df}.cp-map-empty b{color:#354158}.cp-map-empty a{color:#6848df;font-weight:800;text-decoration:none}.cp-city-editor{padding:12px;border-top:1px solid #e8edf4;display:flex;flex-direction:column;gap:8px}.cp-city-editor>b{font-size:11px;color:#344158}.cp-city-editor>span{font-size:10px;color:#8490a2}.cp-city-editor>div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.cp-city-editor label{display:flex;flex-direction:column;gap:5px;font-size:10px;font-weight:800;color:#59667a}.cp-city-editor input{height:39px;min-width:0;border:1px solid #dfe5ef;border-radius:9px;padding:0 10px;font-size:12px}.cp-city-editor button{height:40px;border:0;border-radius:9px;background:#6848df;color:#fff;font-size:11px;font-weight:800;cursor:pointer}.cp-city-editor button:disabled{opacity:.55;cursor:wait}
 .cp-order-info{display:flex;gap:36px;padding:14px 2px}.cp-order-info div{display:flex;flex-direction:column;gap:4px}.cp-order-info small{font-size:10px;color:#8995a7}.cp-order-info b{font-size:14px}.cp-notes{font-size:12px;color:#68758a;background:#f6f7fb;padding:10px 12px;border-radius:10px}.cp-delivery footer{margin-top:12px}.cp-primary,.cp-complete{width:100%;min-height:47px;border:0;border-radius:12px;background:linear-gradient(100deg,#6748dc,#8062ed);color:white;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;box-shadow:0 7px 15px #6848dc25}.cp-complete{background:linear-gradient(100deg,#128453,#20aa70);box-shadow:0 7px 15px #12845320}.cp-primary:disabled,.cp-complete:disabled{opacity:.6;cursor:wait}
 .cp-empty{background:#fff;border:1px dashed #d9dfeb;border-radius:20px;padding:40px 22px;text-align:center}.cp-empty>span{width:62px;height:62px;border-radius:20px;background:#eeeaff;color:#7051df;display:grid;place-items:center;margin:0 auto 14px}.cp-empty h3{margin:0 0 6px;font-size:18px}.cp-empty p{max-width:330px;margin:0 auto;color:#8490a2;font-size:12px;line-height:1.6}.cp-notice,.cp-error{max-width:900px;margin:0 auto 13px;padding:12px 14px;border-radius:12px;font-size:12px;display:flex;align-items:center;gap:8px}.cp-notice{background:#e7f8ef;color:#137c50}.cp-error{background:#fff0ef;color:#b83e38}.cp-footer-note{text-align:center;color:#9aa4b3;font-size:10px;margin:25px 0}.cp-footer-note b{color:#7355dc}
 .cp-login{display:grid;place-items:center;padding:22px;background:radial-gradient(circle at 20% 10%,#ece8ff,transparent 38%),#f3f6fb}.cp-login-card{width:min(100%,420px);background:#fff;border:1px solid #e8edf4;border-radius:23px;padding:30px;box-shadow:0 18px 55px #25204412;display:flex;flex-direction:column;gap:13px}.cp-login-card .cp-brand{margin-bottom:13px}.cp-login-card h1{font-size:29px;line-height:1.1;letter-spacing:-.04em;margin:0}.cp-login-card>p{font-size:13px;color:#7b8799;line-height:1.5;margin:0 0 7px}.cp-login-card label{font-size:11px;font-weight:800;color:#4f5b70;display:flex;flex-direction:column;gap:7px}.cp-login-card input{height:46px;border:1px solid #dfe5ef;border-radius:11px;padding:0 13px;font-size:14px;outline:none}.cp-login-card input:focus{border-color:#7656df;box-shadow:0 0 0 3px #7656df18}.cp-login-foot{text-align:center;color:#a0a9b7;font-size:10px;margin-top:4px}
