@@ -40,6 +40,9 @@ begin
       'addons_snapshot', '[]'::jsonb
     ))
   ,
+    'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+    'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
     'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1'
   );
 
@@ -167,6 +170,7 @@ begin
       ))
     ))
   ,
+    'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
     'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2'
   );
 
@@ -237,6 +241,7 @@ begin
         'addons_snapshot', '[]'::jsonb
       ))
     ,
+    'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
     'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3'
   );
     raise exception 'Se esperaba que la inserción inválida fallara';
@@ -281,6 +286,7 @@ begin
         'addons_snapshot', '[]'::jsonb
       ))
     ,
+    'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
     'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4'
   );
     raise exception 'Se esperaba el rechazo de un subtotal inconsistente';
@@ -317,6 +323,7 @@ begin
         'addons_snapshot', '[]'::jsonb
       ))
     ,
+    'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
     'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa5'
   );
     raise exception 'Se esperaba el rechazo de domicilio sin dirección';
