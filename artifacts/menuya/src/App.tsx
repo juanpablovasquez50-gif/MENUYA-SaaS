@@ -717,6 +717,9 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
   const [variantQuantities, setVariantQuantities] = useState<Record<string, number>>({});
   const [addonQuantities, setAddonQuantities] = useState<Record<string, number>>({});
   const [checkout, setCheckout] = useState(false);
+  const [orderSubmitting, setOrderSubmitting] = useState(false);
+  const orderSubmittingRef = React.useRef(false);
+  const idempotencyRef = React.useRef<{ fingerprint: string; key: string } | null>(null);
   const [delivery, setDelivery] = useState<'domicilio' | 'recoger'>('domicilio');
   const [success, setSuccess] = useState(false);
   const [trackingToken, setTrackingToken] = useState('');
@@ -787,31 +790,55 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
     finally { setServiceBusy(false); }
   };
   const submitOrder = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); setError('');
+    e.preventDefault();
+    if (orderSubmittingRef.current) return;
+    setError('');
     const form = new FormData(e.currentTarget);
     const nombre = String(form.get('nombre') || '').trim(), telefono = String(form.get('telefono') || '').trim();
     const entrega = String(form.get('entrega') || 'domicilio') as 'domicilio' | 'recoger';
     const direccion = String(form.get('direccion') || '').trim();
     if (!nombre || !telefono || (entrega === 'domicilio' && !direccion)) { setError('Completa tu nombre, teléfono y dirección para el domicilio.'); return; }
     if (!cartItems.length) { setError('Agrega al menos un producto al pedido.'); return; }
+
+    orderSubmittingRef.current = true;
+    setOrderSubmitting(true);
+    const requestBody = {
+      business_id: business.id,
+      customer: { name: nombre, phone: telefono },
+      fulfillment_type: entrega === 'domicilio' ? 'delivery' : 'pickup',
+      delivery_address: entrega === 'domicilio' ? direccion : null,
+      notes: String(form.get('observaciones') || '').trim(),
+      payment_method: String(form.get('metodo_pago') || 'Efectivo'),
+      privacy_consent: form.get('aceptaPrivacidad') === 'on',
+      privacy_policy_version: '1.0',
+      items: cartItems.map(x => ({
+        product_id: x.p.id,
+        quantity: x.cantidad,
+        variant_selections: x.variantes.map(selected => ({ value_id: selected.choice.id, quantity: selected.cantidad })),
+        addon_value_ids: x.complementos.map(choice => choice.id)
+      }))
+    };
+    let idempotencyKey = '';
+    let storageKey = '';
     try {
+      // Persist only a SHA-256 fingerprint and the UUID, never customer PII.
+      const fingerprintBytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(requestBody)));
+      const fingerprint = Array.from(new Uint8Array(fingerprintBytes)).map(value => value.toString(16).padStart(2, '0')).join('');
+      storageKey = `menuya:storefront-order:${business.id}`;
+      let saved: { fingerprint?: string; key?: string } | null = null;
+      try { saved = JSON.parse(sessionStorage.getItem(storageKey) || 'null'); } catch { saved = null; }
+      if (saved?.fingerprint === fingerprint && typeof saved.key === 'string' && /^[0-9a-f-]{36}$/i.test(saved.key)) {
+        idempotencyKey = saved.key;
+      } else if (idempotencyRef.current?.fingerprint === fingerprint) {
+        idempotencyKey = idempotencyRef.current.key;
+      } else {
+        idempotencyKey = crypto.randomUUID();
+      }
+      idempotencyRef.current = { fingerprint, key: idempotencyKey };
+      try { sessionStorage.setItem(storageKey, JSON.stringify({ fingerprint, key: idempotencyKey })); } catch { /* La referencia en memoria cubre reintentos en esta vista. */ }
+
       const { data: created, error: createError } = await supabase.functions.invoke('create-store-order', {
-        body: {
-          business_id: business.id,
-          customer: { name: nombre, phone: telefono },
-          fulfillment_type: entrega === 'domicilio' ? 'delivery' : 'pickup',
-          delivery_address: entrega === 'domicilio' ? direccion : null,
-          notes: String(form.get('observaciones') || '').trim(),
-          payment_method: String(form.get('metodo_pago') || 'Efectivo'),
-          privacy_consent: form.get('aceptaPrivacidad') === 'on',
-          privacy_policy_version: '1.0',
-          items: cartItems.map(x => ({
-            product_id: x.p.id,
-            quantity: x.cantidad,
-            variant_selections: x.variantes.map(selected => ({ value_id: selected.choice.id, quantity: selected.cantidad })),
-            addon_value_ids: x.complementos.map(choice => choice.id)
-          }))
-        }
+        body: { ...requestBody, idempotency_key: idempotencyKey }
       });
       if (createError) {
         let message = 'No fue posible registrar el pedido. Intenta nuevamente.';
@@ -836,10 +863,18 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
           : [...d.customers, { id: order.customer_id || repository.id(), business_id: business.id, nombre, telefono, total_pedidos: 1, total_compras: order.total, ultimo_pedido: order.created_at }],
         orders: [order, ...d.orders.filter(existing => existing.id !== order.id)]
       }), `Pedido #${String(order.numero).padStart(3, '0')} recibido`, business.nombre);
+      try {
+        const saved = JSON.parse(sessionStorage.getItem(storageKey) || 'null');
+        if (saved?.key === idempotencyKey) sessionStorage.removeItem(storageKey);
+      } catch { /* No bloquea la confirmación del pedido. */ }
+      idempotencyRef.current = null;
       setCart({}); setCartChoices({}); setCheckout(false); setSuccess(true);
     } catch (err) {
-      console.error('CLICKOK: error registrando pedido de vitrina', err);
+      console.error('Menuya: error registrando pedido de vitrina', err);
       setError(err instanceof Error ? err.message : 'No fue posible registrar el pedido. Intenta nuevamente.');
+    } finally {
+      orderSubmittingRef.current = false;
+      setOrderSubmitting(false);
     }
   };
   const renderStoreProduct = (p: Product, i: number) => <article className={"public-product public-product-" + settings.card_style} key={p.id} data-testid={"card-store-product-" + p.id}><div className={"public-product-art public-art-" + (i % 5)} role="button" tabIndex={0} aria-label={"Ver " + p.nombre} onClick={() => openProduct(p)} onKeyDown={e => { if(e.key === 'Enter' || e.key === ' '){e.preventDefault();openProduct(p);} }}>{p.imagen ? <img className="public-product-image" src={p.imagen} alt={p.nombre} loading="lazy"/> : <b className="public-product-placeholder">{p.nombre.slice(0, 1)}</b>}<span>{p.destacado ? 'DESTACADO' : cats.find(c => c.id === p.category_id)?.nombre}</span><button onClick={e => {e.stopPropagation();addItem(p)}} aria-label={"Agregar " + p.nombre} data-testid={"button-add-" + p.id}><Plus size={19} /></button><em className="product-view-hint">Ver producto <ArrowRight size={13}/></em></div><div className="public-product-info"><div><button className="product-title-button" onClick={() => openProduct(p)}>{p.nombre}</button><p>{p.descripcion}</p><b className="product-current-price">{money(p.precio)}</b>{p.precio_anterior && <del>{money(p.precio_anterior)}</del>}</div>{cart[p.id] ? <div className="quantity-control"><button onClick={() => setQty(p.id, cart[p.id] - 1)} aria-label="Quitar uno">−</button><b>{cart[p.id]}</b><button onClick={() => addItem(p)} aria-label="Agregar uno más">+</button></div> : <button className="add-mobile" onClick={() => addItem(p)}>Agregar <Plus size={14} /></button>}</div></article>;
@@ -871,7 +906,7 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
         <label className="field"><span>Observaciones</span><textarea name="observaciones" placeholder="¿Alguna indicación para tu pedido?" data-testid="input-checkout-notes" /></label>
       </div>
       <label className="legal-consent"><input type="checkbox" name="aceptaPrivacidad" required/><span>He leído la <Link href="/legal/privacidad" target="_blank">Política de tratamiento de datos de CLICKOK</Link>. Entiendo que mis datos del pedido serán compartidos con <strong>{business.nombre}</strong> para gestionar la compra, entrega y atención.</span></label><p className="fine-print">No necesitas crear una cuenta. {business.nombre} confirmará contigo los detalles de pago y entrega.</p>
-      <div className="modal-actions"><Button kind="ghost" onClick={() => setCheckout(false)}>Seguir mirando</Button><Button type="submit" testId="button-submit-order">Confirmar pedido · {money(subtotal)} <ArrowRight size={15} /></Button></div>
+      <div className="modal-actions"><Button kind="ghost" onClick={() => setCheckout(false)}>Seguir mirando</Button><Button type="submit" disabled={orderSubmitting} testId="button-submit-order">{orderSubmitting ? 'Enviando pedido…' : <>Confirmar pedido · {money(subtotal)} <ArrowRight size={15} /></>}</Button></div>
     </form></Modal>}
   </div>;
 }
