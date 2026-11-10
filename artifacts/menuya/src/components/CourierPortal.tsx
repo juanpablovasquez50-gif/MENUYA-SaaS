@@ -18,6 +18,7 @@ function DeliveryMap({order,currentLocation,onSaveAddress}:{order:any;currentLoc
  const [resolvedDestination,setResolvedDestination]=useState<{latitude:number;longitude:number}|null>(null);
  const [geocoding,setGeocoding]=useState(false);
  const [geocodeError,setGeocodeError]=useState('');
+ const [neighborhood,setNeighborhood]=useState('');
  const [city,setCity]=useState('');
  const [department,setDepartment]=useState('');
  const [savingAddress,setSavingAddress]=useState(false);
@@ -29,34 +30,48 @@ function DeliveryMap({order,currentLocation,onSaveAddress}:{order:any;currentLoc
   let cancelled=false;
   const findAddress=async()=>{setGeocoding(true);setGeocodeError('');try{
    const parts=String(order.delivery_address||'').split(',').map((part:string)=>part.trim()).filter(Boolean);
-   const clean=(value:string)=>value.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('es');
+   const clean=(value:string)=>value.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('es').replace(/[^a-z0-9 ]/g,' ').replace(/\\s+/g,' ').trim();
    const country='Colombia';
+   const hasNeighborhood=parts.length>=5;
    const cityPart=parts.length>=3?parts[parts.length-3]:'';
    const departmentPart=parts.length>=2?parts[parts.length-2]:'';
-   const baseAddress=parts.slice(0,Math.max(0,parts.length-3)).join(', ');
+   const neighborhoodPart=hasNeighborhood?parts[parts.length-4]:'';
+   const baseAddress=parts.slice(0,Math.max(0,parts.length-(hasNeighborhood?4:3))).join(', ');
+   const neighborhoodFields=['neighbourhood','suburb','quarter','residential','hamlet','city_district'];
+   const matches=(item:any)=>{
+    const a=item.address||{};
+    const state=clean(String(a.state||a.region||''));
+    const city=clean(String(a.city||a.town||a.municipality||a.county||a.village||''));
+    const neighborhoodValues=neighborhoodFields.map((key:string)=>clean(String(a[key]||''))).filter(Boolean);
+    const locationMatches=(!departmentPart||state===clean(departmentPart)||state.includes(clean(departmentPart))||clean(departmentPart).includes(state))&&(!cityPart||city===clean(cityPart)||city.includes(clean(cityPart))||clean(cityPart).includes(city));
+    const neighborhoodMatches=!neighborhoodPart||neighborhoodValues.some((value:string)=>value===clean(neighborhoodPart)||value.includes(clean(neighborhoodPart))||clean(neighborhoodPart).includes(value));
+    return locationMatches&&neighborhoodMatches;
+   };
    const queries:string[]=[];
-   if(cityPart&&departmentPart)queries.push([baseAddress,cityPart,departmentPart,country].filter(Boolean).join(', '));
+   if(baseAddress&&neighborhoodPart)queries.push([baseAddress,neighborhoodPart,cityPart,departmentPart,country].filter(Boolean).join(', '));
+   if(baseAddress)queries.push([baseAddress,cityPart,departmentPart,country].filter(Boolean).join(', '));
    queries.push(parts.join(', ')+', '+country);
-   if(cityPart&&departmentPart)queries.push([cityPart,departmentPart,country].join(', '));
+   if(cityPart&&departmentPart)queries.push([neighborhoodPart,cityPart,departmentPart,country].filter(Boolean).join(', '));
    let results:any[]=[];
    for(const query of [...new Set(queries)]){
-    const params=new URLSearchParams({format:'jsonv2',limit:'8',countrycodes:'co',addressdetails:'1',q:query});
+    const params=new URLSearchParams({format:'jsonv2',limit:'10',countrycodes:'co',addressdetails:'1',q:query});
     const response=await fetch('https://nominatim.openstreetmap.org/search?'+params.toString(),{headers:{Accept:'application/json'}});
     if(!response.ok)throw new Error('No pudimos consultar el mapa. Inténtalo de nuevo.');
     const found=await response.json();
     if(Array.isArray(found)&&found.length){
-     const matching=found.filter((item:any)=>{
-      const address=item.address||{};
-      const state=clean(String(address.state||address.region||''));
-      const city=clean(String(address.city||address.town||address.municipality||address.county||address.village||''));
-      return (!departmentPart||state.includes(clean(departmentPart))||clean(departmentPart).includes(state))&&(!cityPart||city.includes(clean(cityPart))||clean(cityPart).includes(city));
-     });
-     results=matching.length?matching:found;
-     if(matching.length||(!cityPart&&!departmentPart))break;
+     const matching=found.filter(matches);
+     if(matching.length){results=matching;break;}
+     if(!neighborhoodPart&&found.some((item:any)=>matches({...item,address:{...(item.address||{}),neighbourhood:'',suburb:'',quarter:'',residential:'',hamlet:'',city_district:''}}))) {
+      results=found.filter((item:any)=>matches(item));
+      if(results.length)break;
+     }
     }
    }
-   if(!results.length)throw new Error('No encontramos esta dirección en '+[cityPart,departmentPart].filter(Boolean).join(', ')+'. Verifica el barrio y la dirección.');
-   const best=results.find((item:any)=>{const a=item.address||{};const state=clean(String(a.state||a.region||''));const city=clean(String(a.city||a.town||a.municipality||a.county||a.village||''));return (!departmentPart||state.includes(clean(departmentPart))||clean(departmentPart).includes(state))&&(!cityPart||city.includes(clean(cityPart))||clean(cityPart).includes(city));})||results[0];
+   if(!results.length){
+    if(neighborhoodPart)throw new Error('No pudimos confirmar que el mapa corresponda al barrio '+neighborhoodPart+'. No mostraremos una ubicación aproximada; verifica la dirección o ajusta el barrio.');
+    throw new Error('No encontramos esta dirección en '+[cityPart,departmentPart].filter(Boolean).join(', ')+'. Verifica la dirección.');
+   }
+   const best=results[0];
    const latitude=Number(best.lat),longitude=Number(best.lon);
    if(!Number.isFinite(latitude)||!Number.isFinite(longitude))throw new Error('La dirección no devolvió una ubicación válida.');
    if(!cancelled)setResolvedDestination({latitude,longitude});
@@ -101,22 +116,23 @@ function DeliveryMap({order,currentLocation,onSaveAddress}:{order:any;currentLoc
  },[hasDestination,destinationLat,destinationLng,currentLocation?.latitude,currentLocation?.longitude]);
   const handleCitySubmit=async(e:React.FormEvent<HTMLFormElement>)=>{
    e.preventDefault();
+   const neighborhoodValue=neighborhood.trim();
    const cityValue=city.trim();
    const departmentValue=department.trim();
    if(!cityValue||!departmentValue)return;
    const parts=String(order?.delivery_address||'').split(',').map((part:string)=>part.trim()).filter(Boolean);
-   const base=parts.filter((part:string)=>part.toLocaleLowerCase('es')!==cityValue.toLocaleLowerCase('es')&&part.toLocaleLowerCase('es')!==departmentValue.toLocaleLowerCase('es')&&part.toLocaleLowerCase('es')!=='colombia').join(', ');
-   const fullAddress=[base,cityValue,departmentValue,'Colombia'].filter(Boolean).join(', ');
+   const base=parts.slice(0,Math.max(0,parts.length-(parts.length>=5?4:3))).join(', ');
+   const fullAddress=[base,neighborhoodValue,cityValue,departmentValue,'Colombia'].filter(Boolean).join(', ');
    setSavingAddress(true);
    setGeocodeError('');
-   try{await onSaveAddress(fullAddress);setCity('');setDepartment('');setResolvedDestination(null);}
+   try{await onSaveAddress(fullAddress);setNeighborhood('');setCity('');setDepartment('');setResolvedDestination(null);}
    catch(err){setGeocodeError(err instanceof Error?err.message:'No fue posible guardar la ciudad y el departamento.');}
    finally{setSavingAddress(false);}
   };
   const cityEditor=<form className="cp-city-editor" onSubmit={handleCitySubmit}>
-   <b>¿Falta la ciudad o el departamento?</b>
-   <span>Complétalos para ubicar el domicilio con mayor precisión.</span>
-   <div><label>Ciudad<input value={city} onChange={e=>setCity(e.target.value)} placeholder="Ej. Montería" required/></label><label>Departamento<input value={department} onChange={e=>setDepartment(e.target.value)} placeholder="Ej. Córdoba" required/></label></div>
+   <b>Corregir ubicación de entrega</b>
+   <span>Indica el barrio exacto para evitar ubicar el pedido en otro sector.</span>
+   <div className="cp-address-fields"><label>Barrio<input value={neighborhood} onChange={e=>setNeighborhood(e.target.value)} placeholder="Ej. Pasatiempo"/></label><label>Ciudad<input value={city} onChange={e=>setCity(e.target.value)} placeholder="Ej. Montería" required/></label><label>Departamento<input value={department} onChange={e=>setDepartment(e.target.value)} placeholder="Ej. Córdoba" required/></label></div>
    <button type="submit" disabled={savingAddress||!city.trim()||!department.trim()}>{savingAddress?'Guardando…':'Guardar y actualizar mapa'}</button>
   </form>;
 if(!hasDestination)return <div className="cp-map-wrap"><div className="cp-map-heading"><span><MapPinned size={17}/> Ubicación de entrega</span></div><div className="cp-map-empty"><MapPin size={25}/><b>{geocoding?'Localizando dirección…':geocodeError?'No pudimos ubicar esta dirección':'Buscando ubicación del domicilio'}</b><span>{order?.delivery_address||'Dirección no registrada'}</span><small>{geocodeError||'Estamos convirtiendo la dirección en un punto del mapa automáticamente.'}</small></div>{cityEditor}</div>;
@@ -147,10 +163,10 @@ const courierStyles=`
 .cp-section-head,.cp-deliveries{max-width:900px;margin-left:auto;margin-right:auto}.cp-section-head{display:flex;align-items:end;justify-content:space-between;margin-bottom:13px}.cp-section-head h2{font-size:24px;margin:5px 0 0;font-weight:850;letter-spacing:-.03em}.cp-refresh{font-size:12px;padding:9px 11px}
 .cp-gps{max-width:900px;margin:0 auto 14px;padding:13px 16px;background:#fff8e9;border:1px solid #f8e4bd;border-radius:14px;display:flex;align-items:center;gap:11px;color:#9a641b}.cp-gps>div{flex:1;display:flex;flex-direction:column;gap:3px}.cp-gps b{font-size:12px}.cp-gps small{font-size:11px;color:#9c835e}.cp-gps.is-live{background:#eafaf2;border-color:#c9efdc;color:#168453}.cp-gps.is-live small{color:#578d73}.cp-gps-dot{width:9px;height:9px;border-radius:50%;background:#e0a13c;box-shadow:0 0 0 4px #e0a13c22}.is-live .cp-gps-dot{background:#19a66a;box-shadow:0 0 0 4px #19a66a22}
 .cp-deliveries{display:grid;grid-template-columns:1fr;gap:16px}.cp-delivery{background:#fff;border:1px solid #e8edf4;border-radius:19px;padding:19px;box-shadow:0 5px 20px #17223808}.cp-delivery-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px}.cp-order-label{font-size:9px;font-weight:900;letter-spacing:.16em;color:#929db0}.cp-delivery-head h3{font-size:21px;margin:3px 0 0}.cp-status{font-size:10px;font-weight:800;color:#9a641b;background:#fff2dc;border-radius:30px;padding:7px 11px}.cp-status.on-route{color:#168453;background:#e3f8ed}
-.cp-map-wrap{border:1px solid #e8edf4;border-radius:15px;overflow:hidden;background:#f4f7fb}.cp-map-heading{height:43px;padding:0 12px;display:flex;align-items:center;justify-content:space-between;color:#58667a;font-size:11px;font-weight:800}.cp-map-heading span,.cp-map-heading a{display:flex;align-items:center;gap:6px}.cp-map-heading a{color:#6345d8;text-decoration:none}.cp-live-map{display:block;width:100%;height:270px;background:#e9eef4;z-index:0}.cp-route-status{display:flex;align-items:center;gap:6px;color:#6b55bb;font-size:10px;font-weight:700}.cp-route-dot{width:7px;height:7px;border-radius:50%;background:#19a66a;box-shadow:0 0 0 3px #19a66a20}.cp-map-legend{display:flex;gap:18px;padding:9px 12px 2px;font-size:10px;color:#657186}.cp-map-legend span{display:flex;align-items:center;gap:6px}.cp-map-legend i{width:8px;height:8px;border-radius:50%;display:inline-block}.cp-legend-origin{background:#6848df}.cp-legend-destination{background:#e45d52}.cp-map-address{padding:10px 12px;display:flex;align-items:flex-start;gap:7px;font-size:11px;color:#5c687a}.cp-map-address svg{flex:none;color:#7255dc}.cp-map-empty{height:150px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:7px;color:#77849a;font-size:11px}.cp-map-empty svg{color:#7656df}.cp-map-empty b{color:#354158}.cp-map-empty a{color:#6848df;font-weight:800;text-decoration:none}.cp-city-editor{padding:12px;border-top:1px solid #e8edf4;display:flex;flex-direction:column;gap:8px}.cp-city-editor>b{font-size:11px;color:#344158}.cp-city-editor>span{font-size:10px;color:#8490a2}.cp-city-editor>div{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cp-city-editor label{display:flex;flex-direction:column;gap:5px;font-size:10px;font-weight:800;color:#59667a}.cp-city-editor input{height:39px;min-width:0;border:1px solid #dfe5ef;border-radius:9px;padding:0 10px;font-size:12px}.cp-city-editor button{height:40px;border:0;border-radius:9px;background:#6848df;color:#fff;font-size:11px;font-weight:800;cursor:pointer}.cp-city-editor button:disabled{opacity:.55;cursor:wait}
+.cp-map-wrap{border:1px solid #e8edf4;border-radius:15px;overflow:hidden;background:#f4f7fb}.cp-map-heading{height:43px;padding:0 12px;display:flex;align-items:center;justify-content:space-between;color:#58667a;font-size:11px;font-weight:800}.cp-map-heading span,.cp-map-heading a{display:flex;align-items:center;gap:6px}.cp-map-heading a{color:#6345d8;text-decoration:none}.cp-live-map{display:block;width:100%;height:270px;background:#e9eef4;z-index:0}.cp-route-status{display:flex;align-items:center;gap:6px;color:#6b55bb;font-size:10px;font-weight:700}.cp-route-dot{width:7px;height:7px;border-radius:50%;background:#19a66a;box-shadow:0 0 0 3px #19a66a20}.cp-map-legend{display:flex;gap:18px;padding:9px 12px 2px;font-size:10px;color:#657186}.cp-map-legend span{display:flex;align-items:center;gap:6px}.cp-map-legend i{width:8px;height:8px;border-radius:50%;display:inline-block}.cp-legend-origin{background:#6848df}.cp-legend-destination{background:#e45d52}.cp-map-address{padding:10px 12px;display:flex;align-items:flex-start;gap:7px;font-size:11px;color:#5c687a}.cp-map-address svg{flex:none;color:#7255dc}.cp-map-empty{height:150px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:7px;color:#77849a;font-size:11px}.cp-map-empty svg{color:#7656df}.cp-map-empty b{color:#354158}.cp-map-empty a{color:#6848df;font-weight:800;text-decoration:none}.cp-city-editor{padding:12px;border-top:1px solid #e8edf4;display:flex;flex-direction:column;gap:8px}.cp-city-editor>b{font-size:11px;color:#344158}.cp-city-editor>span{font-size:10px;color:#8490a2}.cp-city-editor>div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.cp-city-editor label{display:flex;flex-direction:column;gap:5px;font-size:10px;font-weight:800;color:#59667a}.cp-city-editor input{height:39px;min-width:0;border:1px solid #dfe5ef;border-radius:9px;padding:0 10px;font-size:12px}.cp-city-editor button{height:40px;border:0;border-radius:9px;background:#6848df;color:#fff;font-size:11px;font-weight:800;cursor:pointer}.cp-city-editor button:disabled{opacity:.55;cursor:wait}
 .cp-order-info{display:flex;gap:36px;padding:14px 2px}.cp-order-info div{display:flex;flex-direction:column;gap:4px}.cp-order-info small{font-size:10px;color:#8995a7}.cp-order-info b{font-size:14px}.cp-notes{font-size:12px;color:#68758a;background:#f6f7fb;padding:10px 12px;border-radius:10px}.cp-delivery footer{margin-top:12px}.cp-primary,.cp-complete{width:100%;min-height:47px;border:0;border-radius:12px;background:linear-gradient(100deg,#6748dc,#8062ed);color:white;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;box-shadow:0 7px 15px #6848dc25}.cp-complete{background:linear-gradient(100deg,#128453,#20aa70);box-shadow:0 7px 15px #12845320}.cp-primary:disabled,.cp-complete:disabled{opacity:.6;cursor:wait}
 .cp-empty{background:#fff;border:1px dashed #d9dfeb;border-radius:20px;padding:40px 22px;text-align:center}.cp-empty>span{width:62px;height:62px;border-radius:20px;background:#eeeaff;color:#7051df;display:grid;place-items:center;margin:0 auto 14px}.cp-empty h3{margin:0 0 6px;font-size:18px}.cp-empty p{max-width:330px;margin:0 auto;color:#8490a2;font-size:12px;line-height:1.6}.cp-notice,.cp-error{max-width:900px;margin:0 auto 13px;padding:12px 14px;border-radius:12px;font-size:12px;display:flex;align-items:center;gap:8px}.cp-notice{background:#e7f8ef;color:#137c50}.cp-error{background:#fff0ef;color:#b83e38}.cp-footer-note{text-align:center;color:#9aa4b3;font-size:10px;margin:25px 0}.cp-footer-note b{color:#7355dc}
 .cp-login{display:grid;place-items:center;padding:22px;background:radial-gradient(circle at 20% 10%,#ece8ff,transparent 38%),#f3f6fb}.cp-login-card{width:min(100%,420px);background:#fff;border:1px solid #e8edf4;border-radius:23px;padding:30px;box-shadow:0 18px 55px #25204412;display:flex;flex-direction:column;gap:13px}.cp-login-card .cp-brand{margin-bottom:13px}.cp-login-card h1{font-size:29px;line-height:1.1;letter-spacing:-.04em;margin:0}.cp-login-card>p{font-size:13px;color:#7b8799;line-height:1.5;margin:0 0 7px}.cp-login-card label{font-size:11px;font-weight:800;color:#4f5b70;display:flex;flex-direction:column;gap:7px}.cp-login-card input{height:46px;border:1px solid #dfe5ef;border-radius:11px;padding:0 13px;font-size:14px;outline:none}.cp-login-card input:focus{border-color:#7656df;box-shadow:0 0 0 3px #7656df18}.cp-login-foot{text-align:center;color:#a0a9b7;font-size:10px;margin-top:4px}
 @media(max-width:940px){.cp-hero,.cp-stats,.cp-section-head,.cp-deliveries,.cp-gps{margin-left:16px;margin-right:16px}.cp-topbar{padding:0 17px}}
-@media(max-width:560px){.cp-topbar{height:62px}.cp-brand-icon{width:37px;height:37px}.cp-hero{margin-top:16px;padding:22px 19px;border-radius:19px}.cp-hero-art{width:88px;height:88px}.cp-hero-art svg{width:52px}.cp-hero-art span{font-size:7px}.cp-hero h1{font-size:27px}.cp-hero p{font-size:12px;max-width:205px}.cp-stats{gap:8px;margin-bottom:23px}.cp-stats article{padding:12px 9px;grid-template-columns:30px 1fr;column-gap:6px}.cp-stat-icon{width:29px;height:29px;border-radius:9px}.cp-stats b{font-size:19px}.cp-stats small{font-size:9px}.cp-section-head h2{font-size:22px}.cp-delivery{padding:13px;border-radius:16px}.cp-live-map{height:230px}.cp-login-card{padding:24px 20px}}
+@media(max-width:560px){.cp-city-editor .cp-address-fields{grid-template-columns:1fr}.cp-topbar{height:62px}.cp-brand-icon{width:37px;height:37px}.cp-hero{margin-top:16px;padding:22px 19px;border-radius:19px}.cp-hero-art{width:88px;height:88px}.cp-hero-art svg{width:52px}.cp-hero-art span{font-size:7px}.cp-hero h1{font-size:27px}.cp-hero p{font-size:12px;max-width:205px}.cp-stats{gap:8px;margin-bottom:23px}.cp-stats article{padding:12px 9px;grid-template-columns:30px 1fr;column-gap:6px}.cp-stat-icon{width:29px;height:29px;border-radius:9px}.cp-stats b{font-size:19px}.cp-stats small{font-size:9px}.cp-section-head h2{font-size:22px}.cp-delivery{padding:13px;border-radius:16px}.cp-live-map{height:230px}.cp-login-card{padding:24px 20px}}
 `;
