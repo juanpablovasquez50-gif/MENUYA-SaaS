@@ -11,6 +11,7 @@ const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body)
 });
 
 Deno.serve(async (req: Request) => {
+  let claimedOutboxId: string | null = null;
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return reply({ error: "Método no permitido." }, 405);
 
@@ -30,6 +31,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const { outbox_id } = await req.json();
+    claimedOutboxId = String(outbox_id || "");
     if (!outbox_id || !/^[0-9a-f-]{36}$/i.test(String(outbox_id))) {
       return reply({ error: "Referencia de notificación no válida." }, 400);
     }
@@ -117,6 +119,22 @@ Deno.serve(async (req: Request) => {
     return reply({ sent, failed: 0 });
   } catch (error) {
     console.error("send-store-order-push", error);
+    if (claimedOutboxId) {
+      try {
+        await createClient(url!, serviceKey!, { auth: { persistSession: false } })
+          .from("storefront_order_push_outbox")
+          .update({
+            status: "failed",
+            available_at: new Date(Date.now() + 30_000).toISOString(),
+            locked_until: null,
+            last_error: error instanceof Error ? error.message.slice(0, 500) : "Push dispatch failed",
+          })
+          .eq("id", claimedOutboxId)
+          .eq("status", "processing");
+      } catch (updateError) {
+        console.error("Could not release failed push outbox claim", updateError);
+      }
+    }
     return reply({ error: "No fue posible enviar las notificaciones." }, 500);
   }
 });
