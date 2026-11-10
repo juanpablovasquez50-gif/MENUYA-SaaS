@@ -173,7 +173,75 @@ begin
   if v_customer_orders <> 2 or v_customer_spent <> 55000 then
     raise exception 'El rollback no revirtió los acumulados del cliente';
   end if;
+
+  -- The RPC must reject a subtotal that does not match the persisted item lines.
+  begin
+    perform public.create_storefront_order_atomic(
+      '11111111-1111-4111-8111-111111111111',
+      'Cliente de prueba',
+      '3000000000',
+      jsonb_build_object(
+        'fulfillment_type', 'pickup',
+        'subtotal', 999,
+        'delivery_fee', 0,
+        'total', 999,
+        'tracking_token', 'test-tracking-token-mismatch'
+      ),
+      jsonb_build_array(jsonb_build_object(
+        'product_id', '22222222-2222-4222-8222-222222222222',
+        'product_name', 'Producto de prueba',
+        'unit_price', 1000,
+        'quantity', 1,
+        'line_total', 1000,
+        'addons_snapshot', '[]'::jsonb
+      ))
+    );
+    raise exception 'Se esperaba el rechazo de un subtotal inconsistente';
+  exception
+    when invalid_parameter_value then
+      null;
+  end;
+
+  if (select count(*) from public.orders) <> v_before_orders
+     or (select count(*) from public.order_items) <> v_before_items then
+    raise exception 'La validación de subtotal inconsistente dejó escrituras';
+  end if;
+
+  -- A delivery order cannot be persisted without a delivery address.
+  begin
+    perform public.create_storefront_order_atomic(
+      '11111111-1111-4111-8111-111111111111',
+      'Cliente de prueba',
+      '3000000000',
+      jsonb_build_object(
+        'fulfillment_type', 'delivery',
+        'delivery_address', '   ',
+        'subtotal', 1000,
+        'delivery_fee', 0,
+        'total', 1000,
+        'tracking_token', 'test-tracking-token-no-address'
+      ),
+      jsonb_build_array(jsonb_build_object(
+        'product_id', '22222222-2222-4222-8222-222222222222',
+        'product_name', 'Producto de prueba',
+        'unit_price', 1000,
+        'quantity', 1,
+        'line_total', 1000,
+        'addons_snapshot', '[]'::jsonb
+      ))
+    );
+    raise exception 'Se esperaba el rechazo de domicilio sin dirección';
+  exception
+    when invalid_parameter_value then
+      null;
+  end;
+
+  if (select count(*) from public.orders) <> v_before_orders
+     or (select count(*) from public.order_items) <> v_before_items then
+    raise exception 'La validación de dirección dejó escrituras';
+  end if;
+
 end;
-$$;
+$;
 
 reset role;
