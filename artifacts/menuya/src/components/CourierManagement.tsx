@@ -10,9 +10,14 @@ const loadGoogleMaps=async()=>{
  if(window.google?.maps){await window.google.maps.importLibrary('geocoding');return;}
  const key=import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
  if(!key)throw new Error('Falta configurar VITE_GOOGLE_MAPS_API_KEY en Render.');
- const existing=document.querySelector('script[data-clickok-google-maps]') as HTMLScriptElement|null;
- if(existing){if(!window.google?.maps)await new Promise<void>((resolve,reject)=>{existing.addEventListener('load',()=>resolve(),{once:true});existing.addEventListener('error',()=>reject(new Error('No se pudo cargar Google Maps.')),{once:true});});await window.google.maps.importLibrary('geocoding');return;}
- const script=document.createElement('script');script.src='https://maps.googleapis.com/maps/api/js?key='+encodeURIComponent(key)+'&libraries=geometry&language=es&region=CO';script.async=true;script.defer=true;script.dataset.clickokGoogleMaps='1';script.onload=()=>resolve();script.onerror=()=>reject(new Error('No se pudo cargar Google Maps.'));document.head.appendChild(script);});await window.google.maps.importLibrary('geocoding');
+ await new Promise<void>((resolve,reject)=>{
+  const script=document.createElement('script');
+  script.src='https://maps.googleapis.com/maps/api/js?key='+encodeURIComponent(key)+'&libraries=geometry&language=es&region=CO';
+  script.async=true;script.defer=true;script.dataset.clickokGoogleMaps='1';
+  script.onload=()=>resolve();script.onerror=()=>reject(new Error('No se pudo cargar Google Maps.'));
+  document.head.appendChild(script);
+ });
+ await window.google.maps.importLibrary('geocoding');
 };
 export default function CourierManagement({businessId}:{businessId:string}){
  const [enabled,setEnabled]=useState(false),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[error,setError]=useState(''),[couriers,setCouriers]=useState<Courier[]>([]),[orders,setOrders]=useState<DeliveryOrder[]>([]),[assignments,setAssignments]=useState<Assignment[]>([]);
