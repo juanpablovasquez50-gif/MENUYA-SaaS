@@ -2,3 +2,66 @@
 .waiter-login{min-height:100vh;display:grid;place-items:center;padding:24px;background:#f4f5fb;color:#24243a;font-family:inherit}.waiter-login form{width:min(100%,420px);background:white;border:1px solid #e7e7ef;border-radius:22px;padding:30px;box-shadow:0 18px 55px #24243a12;display:grid;gap:15px}.waiter-mark{width:48px;height:48px;border-radius:14px;background:#eee9ff;color:#7654e8;display:grid;place-items:center}.waiter-login form>span,.waiter-app header span{font-size:11px;letter-spacing:1.5px;color:#8064db;font-weight:800}.waiter-login h1,.waiter-app h1{font-size:28px;margin:0}.waiter-login p{margin:0;color:#737386}.waiter-login label,.waiter-app label{display:grid;gap:7px;font-size:13px;font-weight:700}.waiter-login input,.waiter-app input,.waiter-app select,.waiter-app textarea{width:100%;padding:12px;border:1px solid #dedee8;border-radius:10px;background:#fff;color:#25253a;font:inherit}.waiter-login form>button,.waiter-send{border:0;border-radius:11px;padding:14px;background:#7654e8;color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;gap:9px}.waiter-error{padding:11px;border-radius:9px;background:#fff0ee;color:#a83e32;font-size:13px}.waiter-notice{padding:11px;border-radius:9px;background:#effaf2;color:#28794b;font-size:13px}.waiter-app{min-height:100vh;background:#f5f6fb;color:#24243a;padding:22px;max-width:1500px;margin:auto}.waiter-app header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:22px}.waiter-app header button,.waiter-orders .waiter-section-head button{display:flex;align-items:center;gap:7px;padding:10px 13px;border:1px solid #e0e0eb;background:#fff;border-radius:9px}.waiter-app nav{display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid #dedee8}.waiter-app nav button{display:flex;align-items:center;gap:8px;padding:12px 16px;border:0;background:transparent;color:#6c6c80;font-weight:700}.waiter-app nav button.active{color:#7654e8;border-bottom:3px solid #7654e8}.waiter-work{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:18px;align-items:start}.waiter-work>section,.waiter-work>aside,.waiter-orders{background:white;border:1px solid #e7e7ef;border-radius:16px;padding:20px}.waiter-section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px}.waiter-section-head h2,.waiter-work aside h2{margin:0;font-size:20px}.waiter-section-head input{max-width:240px}.waiter-products{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px}.waiter-products>button{display:grid;gap:7px;text-align:left;border:1px solid #e8e8ef;background:white;border-radius:12px;padding:10px;color:inherit}.waiter-products>button>span{height:100px;background:#f4f3fa;border-radius:8px;display:grid;place-items:center;overflow:hidden;color:#8b78cf}.waiter-products img{width:100%;height:100%;object-fit:cover}.waiter-products strong{color:#7654e8}.waiter-products small,.waiter-work aside article small,.waiter-orders article small{color:#77778a;font-size:12px}.waiter-work aside{display:grid;gap:14px}.waiter-work aside article,.waiter-orders article{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #eeeef3}.waiter-work aside article>div:first-child,.waiter-orders article>div{display:grid;gap:4px}.waiter-qty{display:flex;align-items:center;gap:10px}.waiter-qty button{border:1px solid #e2e2eb;background:#fff;border-radius:7px;padding:6px}.waiter-total{display:flex;justify-content:space-between;font-size:17px;padding-top:8px}.waiter-send:disabled{opacity:.5}.waiter-orders article{padding:16px 0}.waiter-orders article>div{flex:1}.waiter-orders article strong{white-space:nowrap}@media(max-width:850px){.waiter-app{padding:14px}.waiter-work{grid-template-columns:1fr}.waiter-work>aside{order:-1}.waiter-products{grid-template-columns:repeat(2,minmax(0,1fr))}.waiter-section-head{align-items:flex-start;flex-direction:column}.waiter-section-head input{max-width:none}}
 .restaurant-portal-link{margin-top:14px;padding:12px;border:1px solid #e6e3f3;border-radius:10px;display:grid;gap:6px}.restaurant-portal-link a{font-size:12px;overflow-wrap:anywhere;color:#7654e8;text-decoration:underline}
 .chef-app>header p{margin:6px 0 0;color:#77778a;font-size:13px}.chef-order-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}.chef-ticket{background:#fff;border:1px solid #e5e5ed;border-radius:15px;padding:17px;display:grid;gap:13px;align-content:start}.chef-ticket>header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin:0 0 2px}.chef-ticket>header>div{display:grid;gap:5px}.chef-ticket>header b{font-size:18px}.chef-ticket>header small,.chef-ticket-items small{font-size:12px;color:#77778a}.chef-ticket>header>span{font-size:11px;font-weight:800;border-radius:20px;padding:6px 9px;background:#f2efff;color:#7254d6;white-space:nowrap}.chef-ticket-items{display:grid;gap:10px}.chef-ticket-items>div{display:grid;gap:3px;padding-bottom:9px;border-bottom:1px solid #eeeef3}.chef-ticket-items b{font-size:14px}.chef-ticket-notes{margin:0;padding:10px;border-radius:8px;background:#fff8e9;color:#76551c;font-size:13px}.chef-ticket>footer{display:flex;gap:8px}.chef-ticket>footer button{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:9px;padding:12px;background:#7654e8;color:#fff;font-weight:800;cursor:pointer}.chef-ticket>footer button:disabled{opacity:.55}.chef-ticket.chef-ready{opacity:.75}.chef-ticket.chef-ready>header>span{background:#eaf7ef;color:#267348}@media(max-width:600px){.chef-order-list{grid-template-columns:1fr}.chef-ticket{padding:14px}}
+
+
+/* CLICKOK — botones consistentes en Mesas y meseros */
+.restaurant-ops button{
+  font-family:inherit;
+  font-weight:750;
+  letter-spacing:-.01em;
+  border-radius:11px;
+  transition:background .18s ease,border-color .18s ease,color .18s ease,box-shadow .18s ease,transform .18s ease;
+}
+.restaurant-ops button:focus-visible{outline:3px solid #9c8af3;outline-offset:2px}
+.restaurant-ops button:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
+.restaurant-ops .restaurant-primary{
+  min-height:46px;
+  padding:0 18px;
+  color:#fff!important;
+  border:1px solid #6848df!important;
+  border-radius:12px!important;
+  background:linear-gradient(105deg,#6040d4 0%,#7959e8 55%,#9278f2 100%)!important;
+  box-shadow:0 5px 13px #6848df26;
+  font-size:13px;
+  font-weight:800;
+}
+.restaurant-ops .restaurant-primary:hover{background:linear-gradient(105deg,#5333c4 0%,#6b4bd9 55%,#8469e8 100%)!important;box-shadow:0 7px 17px #6848df35;transform:translateY(-1px)}
+.restaurant-ops .restaurant-table-list article>button,
+.restaurant-ops .restaurant-credentials>div button{
+  min-height:36px;
+  padding:0 12px;
+  color:#6045c7!important;
+  border:1px solid #d9d0fa!important;
+  border-radius:10px!important;
+  background:linear-gradient(110deg,#fff 0%,#f8f6ff 100%)!important;
+  box-shadow:0 2px 7px #6045c70a;
+  font-size:11px;
+  font-weight:800;
+}
+.restaurant-ops .restaurant-table-list article>button:hover,
+.restaurant-ops .restaurant-credentials>div button:hover{border-color:#a99aeb!important;background:linear-gradient(110deg,#f7f4ff 0%,#eeeaff 100%)!important}
+.restaurant-ops .restaurant-refresh{
+  width:40px;height:40px;min-height:40px;padding:0;
+  display:grid;place-items:center;
+  color:#6653ad!important;
+  border:1px solid #e5defb!important;
+  border-radius:11px!important;
+  background:linear-gradient(110deg,#f7f5ff 0%,#eeeaff 100%)!important;
+}
+.restaurant-ops .restaurant-refresh:hover{background:linear-gradient(110deg,#eeeaff 0%,#e4ddff 100%)!important}
+.restaurant-ops-tabs button{
+  border-radius:11px 11px 0 0!important;
+  font-size:13px;
+  font-weight:800!important;
+}
+.restaurant-ops-tabs button.active{
+  color:#6045c7!important;
+  border-bottom:3px solid #7959e8!important;
+  background:linear-gradient(180deg,#f5f2ff 0%,#fff 100%)!important;
+}
+.restaurant-ops-tabs button:not(.active):hover{color:#6045c7!important;background:#f7f5ff!important}
+.restaurant-ops .restaurant-credentials>div button{width:34px;min-width:34px;padding:0;display:grid;place-items:center}
+@media(max-width:640px){
+  .restaurant-ops .restaurant-primary{min-height:44px}
+  .restaurant-ops .restaurant-table-list article>button{min-height:38px;padding:0 10px}
+}
