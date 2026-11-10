@@ -2388,3 +2388,105 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 
 .courier-coordinate-form{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;padding:12px 0}.courier-coordinate-form p{grid-column:1/-1;margin:0;color:var(--muted);font-size:12px}.courier-coordinate-form label{display:grid;gap:5px;font-size:12px;font-weight:700}.courier-coordinate-form input{min-height:40px;border:1px solid var(--line);border-radius:7px;padding:8px}.courier-gps-state{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;background:#effaf4;color:#26754d;font-size:13px}.courier-order-detail{display:grid;gap:6px;margin:12px 0}.courier-order-detail small{color:var(--muted)}.courier-portal .chef-ticket>a{display:inline-flex;align-items:center;gap:7px;text-decoration:none;margin:8px 0}
 @media(max-width:620px){.courier-coordinate-form{grid-template-columns:1fr}.courier-coordinate-form p{grid-column:auto}}
+
+
+/* CLICKOK — unified commerce dashboard button system */
+.dashboard-shell button,
+.dashboard-shell .btn,
+.dashboard-shell [role="button"]{
+  font-family:inherit;
+  font-weight:750;
+  letter-spacing:-.01em;
+  border-radius:11px;
+  transition:background .18s ease,border-color .18s ease,color .18s ease,box-shadow .18s ease,transform .18s ease;
+}
+.dashboard-shell button:focus-visible,
+.dashboard-shell .btn:focus-visible,
+.dashboard-shell [role="button"]:focus-visible{
+  outline:3px solid #9c8af3;
+  outline-offset:2px;
+}
+.dashboard-shell button:disabled,
+.dashboard-shell .btn:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
+.dashboard-shell .btn{min-height:40px;padding:0 15px;font-size:12px;font-weight:800;border-radius:11px}
+.dashboard-shell .btn-solid,
+.dashboard-shell button.btn-solid{
+  color:#fff!important;
+  border:1px solid #6848df!important;
+  background:linear-gradient(105deg,#6040d4 0%,#7959e8 55%,#9278f2 100%)!important;
+  box-shadow:0 5px 13px #6848df26;
+}
+.dashboard-shell .btn-solid:hover,
+.dashboard-shell button.btn-solid:hover{
+  background:linear-gradient(105deg,#5333c4 0%,#6b4bd9 55%,#8469e8 100%)!important;
+  box-shadow:0 7px 17px #6848df35;
+  transform:translateY(-1px);
+}
+.dashboard-shell .btn-outline,
+.dashboard-shell button.btn-outline{
+  color:#6045c7!important;
+  border:1px solid #d9d0fa!important;
+  background:linear-gradient(110deg,#fff 0%,#f8f6ff 100%)!important;
+  box-shadow:0 2px 7px #6045c70a;
+}
+.dashboard-shell .btn-outline:hover,
+.dashboard-shell button.btn-outline:hover{
+  border-color:#a99aeb!important;
+  background:linear-gradient(110deg,#f7f4ff 0%,#eeeaff 100%)!important;
+}
+.dashboard-shell .btn-soft,
+.dashboard-shell button.btn-soft,
+.dashboard-shell .btn-light,
+.dashboard-shell button.btn-light{
+  color:#6045c7!important;
+  border:1px solid #e5defb!important;
+  background:linear-gradient(110deg,#f7f5ff 0%,#eeeaff 100%)!important;
+}
+.dashboard-shell .btn-soft:hover,
+.dashboard-shell button.btn-soft:hover,
+.dashboard-shell .btn-light:hover,
+.dashboard-shell button.btn-light:hover{
+  background:linear-gradient(110deg,#eeeaff 0%,#e4ddff 100%)!important;
+}
+.dashboard-shell .btn-ghost,
+.dashboard-shell button.btn-ghost{
+  color:#6653ad!important;
+  border:1px solid transparent!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.dashboard-shell .btn-ghost:hover,
+.dashboard-shell button.btn-ghost:hover{
+  background:#f1eeff!important;
+  border-color:#e5defb!important;
+}
+.dashboard-shell .icon-btn,
+.dashboard-shell button.icon-btn{
+  width:36px;min-width:36px;height:36px;min-height:36px;padding:0!important;
+  display:inline-grid;place-items:center;border-radius:10px!important;
+  color:#6653ad;background:#f6f4ff;border:1px solid #e9e3fc;
+}
+.dashboard-shell .icon-btn:hover,
+.dashboard-shell button.icon-btn:hover{background:#eeeaff;border-color:#d8ceff}
+.dashboard-shell .btn-danger,
+.dashboard-shell button.btn-danger,
+.dashboard-shell button[class*="delete"],
+.dashboard-shell button[class*="remove"]{
+  font-weight:800;
+}
+.dashboard-shell .toolbar button,
+.dashboard-shell .modal-actions button,
+.dashboard-shell .table-actions button{
+  min-height:36px;font-size:11px;font-weight:800;border-radius:10px;
+}
+.dashboard-shell button:not(.icon-btn):not(.sidebar *):not(.side-nav *){
+  font-weight:700;
+}
+.dashboard-shell .side-nav button,
+.dashboard-shell .sidebar button{font-weight:650}
+@media(max-width:640px){
+  .dashboard-shell .btn{min-height:42px}
+  .dashboard-shell .toolbar button,
+  .dashboard-shell .modal-actions button,
+  .dashboard-shell .table-actions button{min-height:40px}
+}
