@@ -71,6 +71,7 @@ jobs:
               'Concurrente A', '3000000001',
               jsonb_build_object('fulfillment_type','pickup','subtotal',1000,'total',1000,'tracking_token','concurrent-token-a'),
               jsonb_build_array(jsonb_build_object('product_id','22222222-2222-4222-8222-222222222222','product_name','Prueba','unit_price',1000,'quantity',1,'line_total',1000,'addons_snapshot','[]'::jsonb)),
+              '1111111111111111111111111111111111111111111111111111111111111111',
               'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1'
             );" > /tmp/order-a.json &
           pid_a=$!
@@ -80,6 +81,7 @@ jobs:
               'Concurrente B', '3000000002',
               jsonb_build_object('fulfillment_type','pickup','subtotal',1000,'total',1000,'tracking_token','concurrent-token-b'),
               jsonb_build_array(jsonb_build_object('product_id','22222222-2222-4222-8222-222222222222','product_name','Prueba','unit_price',1000,'quantity',1,'line_total',1000,'addons_snapshot','[]'::jsonb)),
+              '2222222222222222222222222222222222222222222222222222222222222222',
               'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2'
             );" > /tmp/order-b.json &
           pid_b=$!
