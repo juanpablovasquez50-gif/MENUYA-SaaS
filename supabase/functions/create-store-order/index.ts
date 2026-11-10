@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"};
 const reply=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{...cors,"Content-Type":"application/json"}});
 Deno.serve(async(req:Request)=>{
+ const requestStarted=performance.now();let phaseStarted=requestStarted;let businessMs=0,catalogMs=0,rpcMs=0;
  if(req.method==="OPTIONS")return new Response("ok",{headers:cors});
  if(req.method!=="POST")return reply({error:"Método no permitido."},405);
  try{
@@ -23,6 +24,7 @@ Deno.serve(async(req:Request)=>{
    db.from("store_settings").select("is_published").eq("business_id",business_id).maybeSingle()
   ]);
   if(businessError||settingsError)throw businessError||settingsError;
+  businessMs=performance.now()-phaseStarted;phaseStarted=performance.now();
   if(!business||business.status!=="active"||!business.is_published||!settings?.is_published)return reply({error:"La vitrina no está disponible."},409);
   const normalized=[];let subtotal=0;
 
@@ -91,6 +93,7 @@ Deno.serve(async(req:Request)=>{
    subtotal+=price*qty;
    normalized.push({business_id,product_id:p.id,product_name:p.name,unit_price:price,quantity:qty,line_total:price*qty,variant_name:variantName,addons_snapshot:addons});
   }
+  catalogMs=performance.now()-phaseStarted;phaseStarted=performance.now();
   const trackingToken=crypto.randomUUID();
   const consentAt=new Date().toISOString();
   const {data:created,error:createError}=await db.rpc("create_storefront_order_atomic",{
@@ -113,6 +116,7 @@ Deno.serve(async(req:Request)=>{
    p_request_hash:requestHash,
    p_idempotency_key:idempotency_key
   });
+  rpcMs=performance.now()-phaseStarted;
   if(createError)throw createError;
   if(created?.idempotency_conflict)return reply({error:"Esta compra ya se había enviado con otros datos. Revisa tu carrito y vuelve a confirmar el pedido."},409);
   if(!created?.id||!created?.customer_id||!created?.order_number||!created?.tracking_token)throw new Error("La base de datos no devolvió la confirmación del pedido.");
@@ -147,6 +151,7 @@ Deno.serve(async(req:Request)=>{
    };
    EdgeRuntime.waitUntil(dispatchPush());
   }
+  console.info("storefront_order_timing",JSON.stringify({business_ms:Math.round(businessMs),catalog_validation_ms:Math.round(catalogMs),atomic_rpc_ms:Math.round(rpcMs),preflight_ms:Math.round(Math.max(0,performance.now()-requestStarted-businessMs-catalogMs-rpcMs)),total_ms:Math.round(performance.now()-requestStarted),item_count:normalized.length,replayed:Boolean(created.replayed)}));
   return reply({order:{id:order.id,business_id,numero:number,customer_id:customerId,tracking_token:created.tracking_token,items:normalized.map(x=>({product_id:x.product_id,nombre:x.product_name,precio:x.unit_price,cantidad:x.quantity,variante:x.variant_name,complementos:x.addons_snapshot})),total:subtotal,estado:"pendiente",entrega:fulfillment_type==="delivery"?"domicilio":"recoger",direccion:delivery_address,observaciones:notes||"",metodo_pago:payment_method||"Efectivo",created_at:order.created_at}});
  }catch(e){console.error("create-store-order",e);return reply({error:"No fue posible registrar el pedido. Intenta nuevamente."},500);}
 });
