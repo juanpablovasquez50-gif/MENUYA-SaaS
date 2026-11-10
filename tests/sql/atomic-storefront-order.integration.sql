@@ -242,6 +242,6 @@ begin
   end if;
 
 end;
-$;
+$$;
 
 reset role;
