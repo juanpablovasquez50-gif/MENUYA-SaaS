@@ -203,3 +203,26 @@
  .restaurant-table-list article{flex-wrap:wrap}
  .restaurant-table-list article>button{min-height:36px!important}
 }
+
+
+/* Ajuste final: misma distribución de dos columnas que Domiciliarios */
+.restaurant-ops{gap:20px!important}
+.restaurant-ops-head{align-items:center!important;justify-content:space-between!important}
+.restaurant-ops-tabs{margin:0!important;padding:0 0 12px!important}
+.restaurant-ops-grid{
+  display:grid!important;
+  grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr)!important;
+  gap:18px!important;
+  align-items:stretch!important;
+  width:100%!important;
+}
+.restaurant-ops-panel{min-width:0!important;height:100%!important}
+.restaurant-ops-panel form{width:100%!important}
+.restaurant-ops-panel input,.restaurant-ops-panel select{box-sizing:border-box!important}
+.restaurant-table-list article{min-width:0!important}
+.restaurant-table-list article>div{min-width:0!important;overflow-wrap:anywhere}
+@media(max-width:700px){
+  .restaurant-ops-head{align-items:flex-start!important;flex-direction:column!important}
+  .restaurant-ops-actions{width:100%!important;justify-content:flex-start!important}
+  .restaurant-ops-grid{grid-template-columns:minmax(0,1fr)!important}
+}
