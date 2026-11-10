@@ -54,7 +54,9 @@ begin
 
   if (select count(*) from public.customers) <> 1
      or (select count(*) from public.orders) <> 1
-     or (select count(*) from public.order_items where order_id = v_order_id) <> 1 then
+     or (select count(*) from public.order_items where order_id = v_order_id) <> 1
+     or (select count(*) from public.storefront_order_push_outbox where order_id = v_order_id) <> 1
+     or v_result->>'push_outbox_id' is null then
     raise exception 'El pedido, cliente y artículo no se guardaron juntos';
   end if;
 
@@ -98,6 +100,7 @@ begin
 
   if (select count(*) from public.orders) <> 1
      or (select count(*) from public.order_items) <> 1
+     or (select count(*) from public.storefront_order_push_outbox) <> 1
      or (select total_orders from public.customers where id = v_customer_id) <> 1 then
     raise exception 'El reintento duplicó el pedido o actualizó dos veces al cliente';
   end if;
@@ -183,7 +186,8 @@ begin
 
   if (select count(*) from public.customers) <> 1
      or (select count(*) from public.orders) <> 2
-     or (select count(*) from public.order_items where order_id = v_order_id) <> 1 then
+     or (select count(*) from public.order_items where order_id = v_order_id) <> 1
+     or (select count(*) from public.storefront_order_push_outbox) <> 2 then
     raise exception 'La segunda compra duplicó el cliente o no guardó sus artículos';
   end if;
 
@@ -251,7 +255,8 @@ begin
   end;
 
   if (select count(*) from public.orders) <> v_before_orders
-     or (select count(*) from public.order_items) <> v_before_items then
+     or (select count(*) from public.order_items) <> v_before_items
+     or (select count(*) from public.storefront_order_push_outbox) <> v_before_orders then
     raise exception 'La operación fallida dejó escrituras parciales';
   end if;
 
