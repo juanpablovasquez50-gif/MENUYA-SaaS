@@ -64,3 +64,6 @@ create table public.order_items (
 
 insert into public.businesses (id)
 values ('11111111-1111-4111-8111-111111111111');
+
+-- Match the read access expected by the service_role integration assertions.
+grant select on public.customers, public.orders, public.order_items to service_role;
