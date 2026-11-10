@@ -43,7 +43,7 @@ function DeliveryMap({order,currentLocation,onSaveAddress}:{order:any;currentLoc
    }else if(tail.length>=2){
     cityPart=parts[parts.length-2];departmentPart=parts[parts.length-1];parts.splice(parts.length-2,2);
    }
-   if(parts.length>=2)neighborhoodPart=parts.pop()||'';
+   for(let i=parts.length-1;i>=0;i--){if(['monteria','cordoba','colombia'].includes(clean(parts[i])))parts.splice(i,1);}\n   if(parts.length>=2)neighborhoodPart=parts.pop()||'';
    const baseAddress=parts.join(', ');
    const neighborhoodFields=['neighbourhood','suburb','quarter','residential','hamlet','city_district'];
    const matchesLocation=(item:any)=>{
