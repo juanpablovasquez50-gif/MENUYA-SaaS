@@ -22,7 +22,7 @@ Deno.serve(async(req:Request)=>{
 
   // Load all requested products and option values in two bounded queries,
   // instead of issuing one request per cart line/variant/add-on.
-  const productIds=[...new Set(items.map((item:any)=>String(item.product_id||"")))];
+  const productIds=[...new Set(items.map((item)=>String(item.product_id||"")))];
   const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if(productIds.some((id:string)=>!uuidPattern.test(id)))return reply({error:"Producto no válido."},400);
 
@@ -53,33 +53,33 @@ Deno.serve(async(req:Request)=>{
     : Promise.resolve({data:[],error:null})
   ]);
   if(productsError||optionsError)throw productsError||optionsError;
-  const productsById=new Map<string,any>((products||[]).map((product:any)=>[product.id,product] as [string,any]));
-  const optionsById=new Map<string,any>((optionValues||[]).map((value:any)=>[value.id,value] as [string,any]));
+  const productsById=new Map((products||[]).map((product)=>[product.id,product] as const));
+  const optionsById=new Map((optionValues||[]).map((value)=>[value.id,value] as const));
 
   for(const item of items){
    const qty=Number(item.quantity);
    if(!Number.isInteger(qty)||qty<1||qty>99)return reply({error:"Cantidad no válida."},400);
-   const p:any=productsById.get(String(item.product_id));
+   const p=productsById.get(String(item.product_id));
    if(!p||!p.is_active||!p.is_available)return reply({error:"Producto no disponible."},409);
    let price=Number(p.price),variantName=null;
    const selectedVariants=[];
    for(const selected of (Array.isArray(item.variant_selections)?item.variant_selections:[])){
     const variantQty=Number(selected.quantity);
     if(!Number.isInteger(variantQty)||variantQty<1||variantQty>99)return reply({error:"Cantidad de extra no válida."},400);
-    const v:any=optionsById.get(String(selected.value_id));
+    const v=optionsById.get(String(selected.value_id));
     if(!v||v.product_options?.product_id!==p.id||v.product_options?.option_type!=="variant")return reply({error:"Variante inválida."},400);
     price+=Number(v.extra_price||0)*variantQty;
     selectedVariants.push(`${v.name} ×${variantQty}`);
    }
    if(item.variant_value_id){
-    const v:any=optionsById.get(String(item.variant_value_id));
+    const v=optionsById.get(String(item.variant_value_id));
     if(!v||v.product_options?.product_id!==p.id||v.product_options?.option_type!=="variant")return reply({error:"Variante inválida."},400);
     price+=Number(v.extra_price||0);selectedVariants.push(v.name);
    }
    variantName=selectedVariants.length?selectedVariants.join(", "):null;
    const addons=[];
    for(const id of (Array.isArray(item.addon_value_ids)?item.addon_value_ids:[])){
-    const a:any=optionsById.get(String(id));
+    const a=optionsById.get(String(id));
     if(!a||a.product_options?.product_id!==p.id||a.product_options?.option_type!=="addon")return reply({error:"Complemento inválido."},400);
     price+=Number(a.extra_price||0);addons.push({name:a.name,extra_price:Number(a.extra_price||0)});
    }
