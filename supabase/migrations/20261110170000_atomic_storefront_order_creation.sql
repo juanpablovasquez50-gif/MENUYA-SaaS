@@ -43,6 +43,7 @@ declare
   v_tracking_token text;
   v_request_hash text;
   v_existing_hash text;
+  v_existing_tracking_token text;
 begin
   if p_business_id is null
      or nullif(pg_catalog.btrim(p_customer_name), '') is null
@@ -119,7 +120,7 @@ begin
   select i.request_hash, o.id, o.customer_id, o.order_number,
          o.tracking_token, o.created_at
     into v_existing_hash, v_order_id, v_customer_id, v_order_number,
-         v_tracking_token, v_created_at
+         v_existing_tracking_token, v_created_at
     from public.storefront_order_idempotency i
     join public.orders o
       on o.business_id = i.business_id and o.id = i.order_id
@@ -135,7 +136,7 @@ begin
       'id', v_order_id,
       'customer_id', v_customer_id,
       'order_number', v_order_number,
-      'tracking_token', v_tracking_token,
+      'tracking_token', v_existing_tracking_token,
       'created_at', v_created_at,
       'replayed', true
     );
