@@ -56,6 +56,7 @@ jobs:
         run: |
           psql -h localhost -U postgres -d menuya_test -v ON_ERROR_STOP=1 -f supabase/migrations/20261110170000_atomic_storefront_order_creation.sql
           psql -h localhost -U postgres -d menuya_test -v ON_ERROR_STOP=1 -c 'grant select, update on public.storefront_order_push_outbox to service_role;'
+          psql -h localhost -U postgres -d menuya_test -v ON_ERROR_STOP=1 -f supabase/migrations/20261110193000_atomic_courier_order_status.sql
 
       - name: Verify commit and rollback behavior
         env:
@@ -134,3 +135,8 @@ jobs:
               end if;
             end;
             \$\$;"
+
+      - name: Verify atomic courier status and PIN rate limit
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d menuya_test -v ON_ERROR_STOP=1 -f tests/sql/atomic-courier-status.integration.sql
