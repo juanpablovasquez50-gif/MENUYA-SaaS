@@ -1,4 +1,5 @@
-// deno-lint-ignore no-import-prefix -- Supabase Edge Runtime resolves this pinned npm specifier.\nimport { createClient } from "npm:@supabase/supabase-js@2";
+// deno-lint-ignore no-import-prefix -- Supabase Edge Runtime resolves this pinned npm specifier.
+import { createClient } from "npm:@supabase/supabase-js@2";
 const cors={"Access-Control-Allow-Origin":"https://menuya-pruebas-v2.onrender.com","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS","Vary":"Origin"};
 const reply=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{...cors,"Content-Type":"application/json"}});
 const hex=(b:Uint8Array)=>Array.from(b).map(x=>x.toString(16).padStart(2,"0")).join("");
