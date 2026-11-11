@@ -285,8 +285,18 @@ begin
   values(v_business_id,v_plan_id,'pending',now());
 
   if v_code<>'' then
-    select pp.id into v_partner_id from public.platform_partners pp
-    where pp.referral_code=v_code and pp.status='active' limit 1;
+    select pp.id into v_partner_id
+    from public.platform_partners pp
+    where pp.referral_code=v_code
+      and pp.status='active'
+      -- A Partner cannot earn referral credit for their own account/business.
+      and not exists (
+        select 1
+        from auth.users referred_user
+        where referred_user.id=v_user_id
+          and lower(btrim(coalesce(referred_user.email,'')))=lower(btrim(pp.email))
+      )
+    limit 1;
     if v_partner_id is not null then
       insert into public.platform_partner_referrals(partner_id,business_id,referred_user_id,referral_code)
       values(v_partner_id,v_business_id,v_user_id,v_code)
