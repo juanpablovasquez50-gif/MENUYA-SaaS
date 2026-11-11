@@ -1415,6 +1415,7 @@ function Router() {
         privacyPolicyVersion: '1.0',
         privacyConsentAt: new Date().toISOString(),
         termsVersion: '1.0',
+        referralCode: new URLSearchParams(window.location.search).get('ref') || new URLSearchParams(window.location.search).get('partner') || undefined,
       });
       if (result.session) {
         const context = await ensureBusinessForCurrentUser();
