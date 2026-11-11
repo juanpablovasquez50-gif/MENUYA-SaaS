@@ -21,8 +21,17 @@ Enable:
 
 - `subscription_preapproval`
 - `subscription_authorized_payment`
+- `payment` (recommended by Mercado Pago for payment updates; the handler only applies it when the resource includes Menuya's exact `external_reference`)
 
-The webhook uses the notification only as a signal, verifies the signature, then fetches the resource from the Mercado Pago API before updating Menuya.
+The webhook uses the notification only as a signal, verifies the signature, then fetches the authoritative resource from the Mercado Pago API before updating Menuya. Payment notifications without a matching Menuya reference are acknowledged and ignored; subscription state is not changed from an uncorrelated payment.
+
+## Mercado Pago Developers configuration
+
+Configure the webhook at the application level in **Tus integraciones > CLICKOK > Webhooks > Configurar notificaciones** (not in the Subscriptions documentation navigation). Set the test URL to:
+
+`https://xbbdgsxlngosomwzkikq.supabase.co/functions/v1/mercadopago-subscription-webhook`
+
+Enable the events **Planes y suscripciones** (`subscription_preapproval` and `subscription_authorized_payment`) and **Pagos** (`payment`). Save the configuration and copy the generated secret signature into the Supabase secret `MERCADOPAGO_WEBHOOK_SECRET`. Keep test and production URLs/credentials separate; do not use production credentials for this test.
 
 ## Database migration
 
