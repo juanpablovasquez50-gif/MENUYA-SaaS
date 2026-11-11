@@ -1,0 +1,47 @@
+name: Menuya storefront 100 concurrent users
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Preview frontend URL
+        required: true
+        default: https://menuya-pruebas-v2.onrender.com
+        type: string
+      storefront_slug:
+        description: Slug of the isolated test storefront
+        required: true
+        type: string
+      target_vus:
+        description: Concurrent virtual users
+        required: true
+        default: "100"
+        type: string
+
+jobs:
+  storefront-load:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/production-stabilization-nov-2026
+      - uses: grafana/setup-k6-action@v1
+      - name: Run read-only storefront load test
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+          STOREFRONT_SLUG: ${{ inputs.storefront_slug }}
+          TARGET_VUS: ${{ inputs.target_vus }}
+          SUPABASE_URL: ${{ secrets.MENUYA_TEST_SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.MENUYA_TEST_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          test -n "$SUPABASE_URL" || (echo "Missing MENUYA_TEST_SUPABASE_URL secret" && exit 1)
+          test -n "$SUPABASE_PUBLISHABLE_KEY" || (echo "Missing MENUYA_TEST_SUPABASE_PUBLISHABLE_KEY secret" && exit 1)
+          mkdir -p k6-results
+          k6 run --summary-export=k6-results/k6-native-summary.json tests/load/menuya-storefront-100-vus.js | tee k6-results/k6-console.txt
+      - name: Upload load-test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: menuya-storefront-100-vus
+          path: k6-results/
+          if-no-files-found: warn
