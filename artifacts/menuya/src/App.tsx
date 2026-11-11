@@ -20,7 +20,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import { Link, Route, Switch, Router as WouterRouter, useLocation, useParams } from 'wouter';
 import { BookOpen, Utensils, Activity, AlertTriangle, ArrowDownRight, ArrowLeft, ArrowRight, BarChart3, Bell, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, ClipboardList, Clock3, CreditCard, ExternalLink, Eye, EyeOff, HelpCircle, ImagePlus, LayoutDashboard, Loader2, LogOut, MapPin, Menu, MoreHorizontal, Package, PawPrint, CalendarDays, Pencil, Plus, Search, Settings, ShieldCheck, ShoppingBag, ShoppingCart, Store, Tag, Trash2, TrendingUp, Truck, Upload, Users, X, Zap } from 'lucide-react';
-import { type AuditLog, type Business, type CatalogEvent, type Category, type Customer, type DemoData, type Order, type OrderStatus, type Plan, type Product, type ProductChoice, type StoreSettings, repository } from '@/lib/menuya-data';
+import { type AuditLog, type Business, type CatalogEvent, type Category, type Customer, type DemoData, type Order, type OrderStatus, type Plan, type Product, type ProductChoice, type ProductVariantStock, type StoreSettings, repository } from '@/lib/menuya-data';
 import { type MenuyaAuthContext, ensureBusinessForCurrentUser, getAuthContext, isSupabaseConfigured, sendPasswordRecovery, preparePasswordRecovery, signInWithEmail, signOut, signUpWithEmail, updatePassword } from '@/lib/menuya-auth';
 import { supabase } from '@/lib/supabase';
 
@@ -148,8 +148,27 @@ function ChoiceBuilderField({ field, onChange }: { field: FormField; onChange: (
   const sync = (next: { nombre: string; precio: string }[]) => { setRows(next); onChange(field.name, next.filter(x => x.nombre.trim()).map(x => `${x.nombre.trim()}|${x.precio || '0'}`).join('\n')); };
   return <section className="choice-builder"><div className="choice-builder-head"><div><b>{field.label}</b><small>Agrega cada opción sin escribir formatos especiales.</small></div><span>{rows.length} opciones</span></div>{rows.map((row,index)=><div className="choice-builder-row" key={index}><input aria-label="Nombre de la opción" placeholder="Ej. Queso extra" value={row.nombre} onChange={e=>sync(rows.map((x,i)=>i===index?{...x,nombre:e.target.value}:x))}/><label><span>$</span><input aria-label="Precio adicional" type="number" min="0" placeholder="0" value={row.precio} onChange={e=>sync(rows.map((x,i)=>i===index?{...x,precio:e.target.value}:x))}/></label><button type="button" aria-label="Eliminar opción" onClick={()=>sync(rows.filter((_,i)=>i!==index))}>×</button></div>)}<button className="choice-builder-add" type="button" onClick={()=>sync([...rows,{nombre:'',precio:'0'}])}>＋ Agregar opción</button></section>;
 }
+function ClothingVariantMatrixField({ field, onChange }: { field: FormField; onChange: (name: string, value: string) => void }) {
+  const [rows, setRows] = useState<ProductVariantStock[]>(() => {
+    try { return JSON.parse(String(field.value || '[]')); } catch { return []; }
+  });
+  const sync = (next: ProductVariantStock[]) => { setRows(next); onChange(field.name, JSON.stringify(next)); };
+  const patch = (id: string, values: Partial<ProductVariantStock>) => sync(rows.map(row => row.id === id ? { ...row, ...values } : row));
+  return <section className="choice-builder clothing-variant-matrix">
+    <div className="choice-builder-head"><div><b>Inventario por talla y color</b><small>Cada combinación tendrá su propio SKU y existencia.</small></div><span>{rows.length} variantes</span></div>
+    {rows.map(row => <div className="clothing-variant-row" key={row.id}>
+      <input aria-label="Talla" placeholder="Talla (S, M, 38…)" value={row.talla} onChange={e=>patch(row.id,{talla:e.target.value})}/>
+      <input aria-label="Color" placeholder="Color" value={row.color} onChange={e=>patch(row.id,{color:e.target.value})}/>
+      <input aria-label="SKU" placeholder="SKU / referencia" value={row.sku} onChange={e=>patch(row.id,{sku:e.target.value})}/>
+      <input aria-label="Existencias" type="number" min="0" value={row.stock} onChange={e=>patch(row.id,{stock:Math.max(0,Number(e.target.value)||0)})}/>
+      <button type="button" aria-label="Eliminar variante" onClick={()=>sync(rows.filter(x=>x.id!==row.id))}>×</button>
+    </div>)}
+    <button className="choice-builder-add" type="button" onClick={()=>sync([...rows,{id:repository.id(),sku:'',talla:'',color:'',stock:0,ajuste_precio:0,activo:true}])}>＋ Agregar combinación</button>
+    <small>Ejemplo: M · Negro · CAM-M-NEG · 8 unidades. El stock general se calcula con la suma de las variantes.</small>
+  </section>;
+}
 function Field({ field, onChange, businessId }: { field: FormField; onChange: (name: string, value: string | boolean) => void; businessId?: string }) {
-  if (field.type === 'choiceBuilder') return <ChoiceBuilderField field={field} onChange={onChange as (name: string, value: string) => void}/>;
+  if (field.type === 'choiceBuilder') return <ChoiceBuilderField field={field} onChange={onChange as (name: string, value: string) => void}/>;\n  if (field.type === 'clothingVariantMatrix') return <ClothingVariantMatrixField field={field} onChange={onChange as (name: string, value: string) => void}/>;
   if (field.type === 'image') return <ImageUploadField field={field} value={String(field.value ?? '')} businessId={businessId} onChange={onChange as (name: string, value: string) => void}/>;
   return <label className="field"><span>{field.label}{field.required ? ' *' : ''}</span>
       {field.options ? <select name={field.name} required={field.required} value={String(field.value ?? '')} onChange={e => onChange(field.name, e.target.value)} data-testid={`select-${field.name}`}>{field.options.map(o => <option key={o} value={o}>{field.optionLabels?.[o] || statusLabel[o] || o}</option>)}</select>
@@ -435,11 +454,12 @@ function MerchantPage({ path, data, business, update, modules = [] }: { path: st
     openModal(initial ? 'Editar producto' : 'Nuevo producto', [
     { name: 'nombre', label: 'Nombre', value: initial?.nombre, required: true }, { name: 'precio', label: 'Precio (COP)', type: 'number', value: initial?.precio, required: true },
     { name: 'descripcion', label: 'Descripción', type: 'textarea', value: initial?.descripcion }, { name: 'imagen', label: 'Fotografía del producto', type: 'image', value: initial?.imagen || '' }, { name: 'category_id', label: 'Categoría', value: initial?.category_id || cats[0]?.id, options: cats.map(c => c.id), optionLabels: Object.fromEntries(cats.map(c => [c.id, c.nombre])) },
+    ...( /ropa|moda|confecci[oó]n|boutique/i.test(business.tipo) ? [{ name: 'inventario_variantes', label: 'Variantes de ropa', type: 'clothingVariantMatrix', value: JSON.stringify(initial?.inventario_variantes || []) }] : []),
     ...([{ name: 'complementos', label: foodBusiness ? 'Adiciones y extras' : 'Adiciones, accesorios o extras', type: 'choiceBuilder', value: choiceText(initial?.complementos) }]),
-    { name: 'precio_anterior', label: 'Precio anterior (opcional)', type: 'number', value: initial?.precio_anterior || '' }, { name: 'stock', label: 'Stock', type: 'number', value: initial?.stock || 0 },
+    { name: 'precio_anterior', label: 'Precio anterior (opcional)', type: 'number', value: initial?.precio_anterior || '' }, { name: 'stock', label: 'Stock general', type: 'number', value: initial?.stock || 0 },
     { name: 'disponible', label: 'Disponible', type: 'checkbox', value: initial?.disponible ?? true }, { name: 'destacado', label: 'Destacado', type: 'checkbox', value: initial?.destacado ?? false },
   ], v => {
-    const item: Product = { id: initial?.id || repository.id(), business_id: business.id, category_id: String(v.category_id || cats[0]?.id || ''), nombre: String(v.nombre), descripcion: String(v.descripcion || ''), precio: Number(v.precio), precio_anterior: Number(v.precio_anterior) || undefined, imagen: String(v.imagen || '') || undefined, activo: initial?.activo ?? true, disponible: Boolean(v.disponible), destacado: Boolean(v.destacado), stock: Number(v.stock), variantes: initial?.variantes || [], complementos: parseChoices(v.complementos) };
+    const item: Product = { id: initial?.id || repository.id(), business_id: business.id, category_id: String(v.category_id || cats[0]?.id || ''), nombre: String(v.nombre), descripcion: String(v.descripcion || ''), precio: Number(v.precio), precio_anterior: Number(v.precio_anterior) || undefined, imagen: String(v.imagen || '') || undefined, activo: initial?.activo ?? true, disponible: Boolean(v.disponible), destacado: Boolean(v.destacado), stock: /ropa|moda|confecci[oó]n|boutique/i.test(business.tipo) ? (() => { try { return (JSON.parse(String(v.inventario_variantes || '[]')) as ProductVariantStock[]).reduce((sum,row)=>sum+Math.max(0,Number(row.stock)||0),0); } catch { return Number(v.stock)||0; } })() : Number(v.stock), inventario_variantes: /ropa|moda|confecci[oó]n|boutique/i.test(business.tipo) ? (() => { try { return JSON.parse(String(v.inventario_variantes || '[]')) as ProductVariantStock[]; } catch { return []; } })() : initial?.inventario_variantes || [], variantes: /ropa|moda|confecci[oó]n|boutique/i.test(business.tipo) ? (() => { try { return (JSON.parse(String(v.inventario_variantes || '[]')) as ProductVariantStock[]).filter(row=>row.activo && row.talla.trim() && row.color.trim()).map(row=>({id:row.id,nombre:`${row.talla} · ${row.color}`,precio_extra:row.ajuste_precio||0})); } catch { return []; } })() : initial?.variantes || [], complementos: parseChoices(v.complementos) };
     update(d => ({ ...d, products: initial ? d.products.map(p => p.id === initial.id ? item : p) : [...d.products, item] }), initial ? 'Producto actualizado' : 'Producto creado', item.nombre); setModal(null);
     });
   };
