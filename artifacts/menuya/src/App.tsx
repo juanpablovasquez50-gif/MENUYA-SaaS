@@ -1147,11 +1147,11 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
   const loadRemoteData = async () => {
     if (!business?.id) return;
     setLoading(true); setLoadError('');
-    const [categoryResult, productResult, productOptionsResult, productOptionValuesResult, settingsResult, subscriptionResult, planResult, orderResult, customerResult, catalogEventResult] = await Promise.all([
+    const [categoryResult, productResult, productOptionsResult, productOptionValuesResult, variantInventoryResult, settingsResult, subscriptionResult, planResult, orderResult, customerResult, catalogEventResult] = await Promise.all([
       supabase.from('categories').select('id,business_id,name,sort_order,is_active').eq('business_id',business.id).order('sort_order'),
       supabase.from('products').select('id,business_id,category_id,name,description,price,previous_price,image_url,is_active,is_available,is_featured,stock').eq('business_id',business.id).order('created_at',{ascending:false}),
       supabase.from('product_options').select('id,business_id,product_id,name,option_type,is_required,sort_order').eq('business_id',business.id).order('sort_order'),
-      supabase.from('product_option_values').select('id,business_id,option_id,name,extra_price,is_active,sort_order').eq('business_id',business.id).eq('is_active',true).order('sort_order'),
+      supabase.from('product_option_values').select('id,business_id,option_id,name,extra_price,is_active,sort_order').eq('business_id',business.id).eq('is_active',true).order('sort_order'),\n      supabase.from('product_variant_inventory').select('id,business_id,product_id,sku,size,color,stock,price_adjustment,is_active').eq('business_id',business.id).eq('is_active',true).order('size'),
       supabase.from('store_settings').select('business_id,cover_url,logo_url,brand_color,background_color,card_background_color,font_family,contact_text,social_links,payment_methods,delivery_info,is_published,tagline,storefront_layout,product_card_style,button_style').eq('business_id',business.id).maybeSingle(),
       supabase.from('subscriptions').select('id,business_id,plan_id,status,starts_at,ends_at,plans(id,name,price,billing_period,max_products,features,is_active)').eq('business_id',business.id).maybeSingle(),
       supabase.from('plans').select('id,code,name,price,billing_period,max_products,features,is_active').eq('is_active',true).order('price'),
@@ -1159,7 +1159,7 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
       supabase.from('customers').select('id,business_id,name,phone,total_orders,total_spent,last_order_at').eq('business_id',business.id).order('last_order_at',{ascending:false}),
       supabase.from('catalog_events').select('id,business_id,product_id,event_type,created_at').eq('business_id',business.id).gte('created_at',new Date(Date.now()-30*86400000).toISOString()).order('created_at',{ascending:false}),
     ]);
-    const firstError = categoryResult.error || productResult.error || productOptionsResult.error || productOptionValuesResult.error || settingsResult.error || subscriptionResult.error || planResult.error || orderResult.error || customerResult.error || catalogEventResult.error;
+    const firstError = categoryResult.error || productResult.error || productOptionsResult.error || productOptionValuesResult.error || variantInventoryResult.error || settingsResult.error || subscriptionResult.error || planResult.error || orderResult.error || customerResult.error || catalogEventResult.error;
     if (firstError) { setLoadError(firstError.message); setLoading(false); return; }
     const profileName = context.profile?.full_name || String(context.user.user_metadata?.full_name || context.user.email || 'Comercio');
     const biz = {
@@ -1171,9 +1171,11 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
     const products: Product[] = (productResult.data || []).map(p => {
       const groups = (productOptionsResult.data || []).filter(group => group.product_id === p.id);
       const values = (group: any) => (productOptionValuesResult.data || []).filter(value => value.option_id === group.id).map(value => ({id:value.id,nombre:value.name,precio_extra:Number(value.extra_price || 0)}));
-      const variants = groups.filter(group => ['variant','variants','variante','variantes'].includes(String(group.option_type).toLowerCase())).flatMap(values);
+      const inventory: ProductVariantStock[] = (variantInventoryResult.data || []).filter(row=>row.product_id===p.id).map(row=>({id:row.id,sku:row.sku||'',talla:row.size,color:row.color,stock:Number(row.stock||0),ajuste_precio:Number(row.price_adjustment||0),activo:row.is_active}));
+      const savedVariants = groups.filter(group => ['variant','variants','variante','variantes'].includes(String(group.option_type).toLowerCase())).flatMap(values);
+      const variants = inventory.length ? inventory.map(row=>({id:row.id,nombre:`${row.talla} · ${row.color}`,precio_extra:row.ajuste_precio})) : savedVariants;
       const addons = groups.filter(group => ['addon','addons','extra','extras','complemento','complementos'].includes(String(group.option_type).toLowerCase())).flatMap(values);
-      return {id:p.id,business_id:p.business_id,category_id:p.category_id || '',nombre:p.name,descripcion:p.description || '',precio:Number(p.price),precio_anterior:p.previous_price ? Number(p.previous_price) : undefined,imagen:p.image_url || undefined,activo:p.is_active,disponible:p.is_available,destacado:p.is_featured,stock:p.stock ?? 0,variantes:variants,complementos:addons};
+      return {id:p.id,business_id:p.business_id,category_id:p.category_id || '',nombre:p.name,descripcion:p.description || '',precio:Number(p.price),precio_anterior:p.previous_price ? Number(p.previous_price) : undefined,imagen:p.image_url || undefined,activo:p.is_active,disponible:p.is_available,destacado:p.is_featured,stock:p.stock ?? 0,variantes:variants,inventario_variantes:inventory,complementos:addons};
     });
     const s = settingsResult.data;
     const settings: StoreSettings = {
@@ -1290,6 +1292,15 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
             ? await supabase.from('products').update(payload).eq('id',id).eq('business_id',business.id)
             : await supabase.from('products').insert(payload);
           if(result.error) throw result.error;
+          if (!oldProducts.has(id) || JSON.stringify(before?.inventario_variantes || []) !== JSON.stringify(item.inventario_variantes || [])) {
+            const removedVariants = await supabase.from('product_variant_inventory').delete().eq('product_id',id).eq('business_id',business.id);
+            if (removedVariants.error) throw removedVariants.error;
+            const activeRows = (item.inventario_variantes || []).filter(row=>row.talla.trim() && row.color.trim()).map(row=>({business_id:business.id,product_id:id,sku:row.sku || null,size:row.talla.trim(),color:row.color.trim(),stock:Math.max(0,Number(row.stock)||0),price_adjustment:Number(row.ajuste_precio)||0,is_active:row.activo}));
+            if (activeRows.length) {
+              const insertedVariants = await supabase.from('product_variant_inventory').insert(activeRows);
+              if (insertedVariants.error) throw insertedVariants.error;
+            }
+          }
           if (!oldProducts.has(id) || JSON.stringify(before?.variantes || []) !== JSON.stringify(item.variantes || []) || JSON.stringify(before?.complementos || []) !== JSON.stringify(item.complementos || [])) {
             const oldGroups = await supabase.from('product_options').select('id').eq('product_id',id).eq('business_id',business.id);
             if (oldGroups.error) throw oldGroups.error;
