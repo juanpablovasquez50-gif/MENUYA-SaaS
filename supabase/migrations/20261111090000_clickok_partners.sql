@@ -237,6 +237,8 @@ begin
 end; $$;
 
 -- A referred business is attributed only at initial provisioning; existing businesses are not reassigned.
+-- Remove the legacy five-argument overload so calls with defaulted arguments are unambiguous.
+drop function if exists public.register_business(text,text,text,text,text);
 create or replace function public.register_business(
   p_name text,p_slug text,p_business_type text,p_phone text default null,
   p_email text default null,p_referral_code text default null
@@ -304,9 +306,16 @@ as $$
 declare
   v_referral public.platform_partner_referrals%rowtype;
   v_rule public.platform_partner_commission_rules%rowtype;
+  v_should_check boolean := false;
 begin
+  if tg_op='INSERT' then
+    v_should_check := true;
+  else
+    v_should_check := old.status is distinct from new.status
+      or old.external_reference is distinct from new.external_reference;
+  end if;
   if new.status='active' and nullif(btrim(coalesce(new.external_reference,'')),'') is not null
-    and (tg_op='INSERT' or old.status is distinct from new.status or old.external_reference is distinct from new.external_reference) then
+    and v_should_check then
     select r.* into v_referral from public.platform_partner_referrals r
     join public.platform_partners p on p.id=r.partner_id and p.status='active'
     where r.business_id=new.business_id and r.status='registered'
