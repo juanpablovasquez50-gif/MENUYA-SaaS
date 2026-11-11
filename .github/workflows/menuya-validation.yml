@@ -1,4 +1,4 @@
-name: Menuya validation
+name: Menuya validation (typecheck, build and Edge lint)
 
 on:
   pull_request:
@@ -6,6 +6,8 @@ on:
       - integration/supabase-auth
     paths:
       - 'artifacts/menuya/**'
+      - 'supabase/functions/**'
+      - 'supabase/migrations/**'
       - 'lib/**'
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
@@ -44,6 +46,12 @@ jobs:
         run: |
           pnpm run typecheck
           pnpm --filter @workspace/menuya build
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Lint Edge Functions
+        run: deno lint supabase/functions/courier-access/index.ts supabase/functions/create-store-order/index.ts
         env:
           VITE_SUPABASE_URL: https://example.supabase.co
           VITE_SUPABASE_PUBLISHABLE_KEY: validation-placeholder

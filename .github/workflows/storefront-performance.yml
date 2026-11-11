@@ -1,0 +1,75 @@
+name: Storefront performance benchmark
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "perf/storefront-orders-atomic"
+    paths:
+      - "supabase/migrations/*atomic_storefront_order*"
+      - "tests/sql/atomic-storefront-order.setup.sql"
+      - "tests/performance/**"
+      - ".github/workflows/storefront-performance.yml"
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: menuya_benchmark
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d menuya_benchmark"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PostgreSQL benchmark tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client postgresql-contrib python3
+
+      - name: Prepare disposable database
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d menuya_benchmark -v ON_ERROR_STOP=1 -f tests/sql/atomic-storefront-order.setup.sql
+          psql -h localhost -U postgres -d menuya_benchmark -v ON_ERROR_STOP=1 -f supabase/migrations/20261110170000_atomic_storefront_order_creation.sql
+          psql -h localhost -U postgres -d menuya_benchmark -v ON_ERROR_STOP=1 -c 'grant select, update on public.storefront_order_push_outbox to service_role;'
+
+      - name: Warm up database
+        env:
+          PGPASSWORD: postgres
+        run: |
+          pgbench -n -h localhost -U postgres -d menuya_benchmark -c 1 -j 1 -t 20 -f tests/performance/storefront-order-atomic.sql
+
+      - name: Measure optimized atomic order RPC
+        env:
+          PGPASSWORD: postgres
+        run: |
+          set -euo pipefail
+          mkdir -p benchmark-results
+          for clients in 1 5 10; do
+            echo "Running concurrency=${clients}"
+            pgbench -n -h localhost -U postgres -d menuya_benchmark \
+              -c "${clients}" -j "${clients}" -T 30 -P 5 -l \
+              --log-prefix="benchmark-results/c${clients}" \
+              -f tests/performance/storefront-order-atomic.sql \
+              | tee "benchmark-results/c${clients}-summary.txt"
+          done
+          python3 tests/performance/summarize-pgbench.py benchmark-results | tee benchmark-results/latency-summary.csv
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: menuya-storefront-performance
+          path: benchmark-results/
+          if-no-files-found: warn
