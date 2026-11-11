@@ -54,7 +54,7 @@ const parseStoreDelivery = (raw: string | null | undefined) => {
 const shortDate = (date: string) => new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short' }).format(new Date(date));
 const statusLabel: Record<string, string> = { pendiente: 'Pendiente', confirmado: 'Confirmado', preparando: 'En preparación', listo: 'Listo', en_camino: 'En camino', entregado: 'Entregado', cancelado: 'Cancelado', activo: 'Activo', rechazado: 'Rechazado', suspendido: 'Suspendido', activa: 'Activa', vencida: 'Vencida' };
 const productLimitLabel = (limit: number) => limit >= 999999 ? 'ilimitados' : String(limit);
-const adminLinks = [['/admin', 'Resumen', LayoutDashboard], ['/admin/businesses', 'Comercios', Store], ['/admin/requests', 'Solicitudes', ClipboardList], ['/admin/users', 'Usuarios', Users], ['/admin/plans', 'Planes', Tag], ['/admin/subscriptions', 'Suscripciones', CreditCard], ['/admin/settings', 'Ajustes', Settings], ['/admin/audit', 'Auditoría', Activity]] as const;
+const adminLinks = [['/admin', 'Resumen', LayoutDashboard], ['/admin/businesses', 'Comercios', Store], ['/admin/requests', 'Solicitudes', ClipboardList], ['/admin/users', 'Usuarios', Users], ['/admin/plans', 'Planes', Tag], ['/admin/subscriptions', 'Suscripciones', CreditCard], ['/admin/partners', 'Partners', Users], ['/admin/settings', 'Ajustes', Settings], ['/admin/audit', 'Auditoría', Activity]] as const;
 const shopLinks = [['/app', 'Inicio', LayoutDashboard], ['/app/catalog', 'Catálogo', ShoppingBag], ['/app/products', 'Productos', Package], ['/app/categories', 'Categorías', Tag], ['/app/orders', 'Pedidos', ClipboardList], ['/app/couriers', 'Domiciliarios', Truck], ['/app/customers', 'Clientes', Users], ['/app/editor', 'CLICKOK Studio', Pencil], ['/app/analytics', 'Analítica', BarChart3], ['/app/help', 'Centro de ayuda', HelpCircle], ['/app/settings', 'Ajustes', Settings], ['/app/subscription', 'Mi plan', CreditCard]] as const;
 type Session = { userId: string; role: 'admin' | 'owner' } | null;
 type FormField = { name: string; label: string; type?: string; value?: string | number | boolean; options?: string[]; optionLabels?: Record<string, string>; required?: boolean };
@@ -1352,6 +1352,62 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
   </AppShell>;
 }
 
+const CLICKOK_PARTNER_REFERRAL_KEY = 'clickok:partner-referral:v1';
+const CLICKOK_PARTNER_REFERRAL_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+type StoredPartnerReferral = { code: string; capturedAt: number; expiresAt: number };
+function captureClickokPartnerReferral() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const incoming = (params.get('ref') || params.get('partner') || '').trim().toUpperCase();
+    const now = Date.now();
+    let stored: StoredPartnerReferral | null = null;
+    const raw = window.localStorage.getItem(CLICKOK_PARTNER_REFERRAL_KEY);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw) as Partial<StoredPartnerReferral>;
+        if (typeof parsed.code === 'string' && /^CK[A-Z0-9]{8}$/.test(parsed.code)
+          && typeof parsed.expiresAt === 'number' && parsed.expiresAt > now
+          && typeof parsed.capturedAt === 'number') {
+          stored = { code: parsed.code, capturedAt: parsed.capturedAt, expiresAt: parsed.expiresAt };
+        }
+      } catch { /* Reemplaza datos locales inválidos por una captura nueva válida. */ }
+    }
+    // First touch: conserva el primer código vigente durante 30 días.
+    if (stored) {
+      window.localStorage.setItem(CLICKOK_PARTNER_REFERRAL_KEY, JSON.stringify(stored));
+      return stored.code;
+    }
+    window.localStorage.removeItem(CLICKOK_PARTNER_REFERRAL_KEY);
+    if (!/^CK[A-Z0-9]{8}$/.test(incoming)) return null;
+    const next: StoredPartnerReferral = {
+      code: incoming,
+      capturedAt: now,
+      expiresAt: now + CLICKOK_PARTNER_REFERRAL_TTL_MS,
+    };
+    window.localStorage.setItem(CLICKOK_PARTNER_REFERRAL_KEY, JSON.stringify(next));
+    return next.code;
+  } catch {
+    const params = new URLSearchParams(window.location.search);
+    const incoming = (params.get('ref') || params.get('partner') || '').trim().toUpperCase();
+    return /^CK[A-Z0-9]{8}$/.test(incoming) ? incoming : null;
+  }
+}
+function getClickokPartnerReferralCode() {
+  try {
+    const raw = window.localStorage.getItem(CLICKOK_PARTNER_REFERRAL_KEY);
+    if (raw) {
+      const stored = JSON.parse(raw) as Partial<StoredPartnerReferral>;
+      if (typeof stored.code === 'string' && /^CK[A-Z0-9]{8}$/.test(stored.code)
+        && typeof stored.expiresAt === 'number' && stored.expiresAt > Date.now()) return stored.code;
+      window.localStorage.removeItem(CLICKOK_PARTNER_REFERRAL_KEY);
+    }
+  } catch { /* El registro continúa aunque el navegador bloquee el almacenamiento local. */ }
+  return captureClickokPartnerReferral();
+}
+function clearClickokPartnerReferral() {
+  try { window.localStorage.removeItem(CLICKOK_PARTNER_REFERRAL_KEY); } catch { /* No bloquea el registro. */ }
+}
+
 function Router() {
   const [data, setData] = useState<DemoData>(() => repository.load());
   const [remoteContext, setRemoteContext] = useState<MenuyaAuthContext | null>(null);
@@ -1361,6 +1417,7 @@ function Router() {
   const [, setLocation] = useLocation();
   useEffect(() => { repository.save(data); }, [data]);
   useEffect(() => { if (!toast) return undefined; const timer = window.setTimeout(() => setToast(''), 3200); return () => window.clearTimeout(timer); }, [toast]);
+  useEffect(() => { void captureClickokPartnerReferral(); }, []);
   useEffect(() => {
     let mounted = true;
     if (!isSupabaseConfigured) {
@@ -1415,12 +1472,14 @@ function Router() {
         privacyPolicyVersion: '1.0',
         privacyConsentAt: new Date().toISOString(),
         termsVersion: '1.0',
+        referralCode: getClickokPartnerReferralCode() || undefined,
       });
       if (result.session) {
         const context = await ensureBusinessForCurrentUser();
         setRemoteContext(context);
         setLocation('/app');
       }
+      clearClickokPartnerReferral();
       return null;
     } catch (error) {
       return error instanceof Error ? error.message : 'No fue posible crear la cuenta.';
