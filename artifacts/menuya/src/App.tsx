@@ -168,7 +168,8 @@ function ClothingVariantMatrixField({ field, onChange }: { field: FormField; onC
   </section>;
 }
 function Field({ field, onChange, businessId }: { field: FormField; onChange: (name: string, value: string | boolean) => void; businessId?: string }) {
-  if (field.type === 'choiceBuilder') return <ChoiceBuilderField field={field} onChange={onChange as (name: string, value: string) => void}/>;\n  if (field.type === 'clothingVariantMatrix') return <ClothingVariantMatrixField field={field} onChange={onChange as (name: string, value: string) => void}/>;
+  if (field.type === 'choiceBuilder') return <ChoiceBuilderField field={field} onChange={onChange as (name: string, value: string) => void}/>;
+  if (field.type === 'clothingVariantMatrix') return <ClothingVariantMatrixField field={field} onChange={onChange as (name: string, value: string) => void}/>;
   if (field.type === 'image') return <ImageUploadField field={field} value={String(field.value ?? '')} businessId={businessId} onChange={onChange as (name: string, value: string) => void}/>;
   return <label className="field"><span>{field.label}{field.required ? ' *' : ''}</span>
       {field.options ? <select name={field.name} required={field.required} value={String(field.value ?? '')} onChange={e => onChange(field.name, e.target.value)} data-testid={`select-${field.name}`}>{field.options.map(o => <option key={o} value={o}>{field.optionLabels?.[o] || statusLabel[o] || o}</option>)}</select>
