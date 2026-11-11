@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Activity, Check, CheckCircle2, Copy, ExternalLink, Handshake, Link2, Plus, RefreshCw, Search, Users, Wallet } from 'lucide-react';
+import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { CheckCircle2, Copy, Handshake, Link2, Plus, RefreshCw, Search, Users, Wallet } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import './PartnersManager.css';
 
@@ -57,7 +57,7 @@ export default function PartnersManager(){
  const filteredPartners=useMemo(()=>partners.filter(p=>[p.full_name,p.email,p.phone,p.referral_code,p.city].join(' ').toLowerCase().includes(query.toLowerCase())),[partners,query]);
  const totalPending=commissions.filter(c=>c.status==='pending'||c.status==='approved').reduce((s,c)=>s+Number(c.amount),0);
  const totalPaid=commissions.filter(c=>c.status==='paid').reduce((s,c)=>s+Number(c.amount),0);
- const savePartner=async(e:React.FormEvent<HTMLFormElement>)=>{
+ const savePartner=async(e:FormEvent<HTMLFormElement>)=>{
   e.preventDefault();const f=new FormData(e.currentTarget);setBusy('partner');setError('');
   const {error:e2}=await supabase.rpc('platform_save_partner',{
    p_partner_id:editing?.id||null,p_full_name:String(f.get('full_name')),p_email:String(f.get('email')),
