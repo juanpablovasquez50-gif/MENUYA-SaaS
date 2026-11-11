@@ -47,6 +47,7 @@ export async function signUpWithEmail(input: {
   privacyPolicyVersion: string;
   privacyConsentAt: string;
   termsVersion: string;
+  referralCode?: string;
 }) {
   ensureConfigured();
   const { data, error } = await supabase.auth.signUp({
@@ -61,6 +62,7 @@ export async function signUpWithEmail(input: {
         privacy_policy_version: input.privacyPolicyVersion,
         privacy_consent_at: input.privacyConsentAt,
         terms_version: input.termsVersion,
+        referral_code: input.referralCode?.trim().toUpperCase() || null,
       },
     },
   });
@@ -149,6 +151,7 @@ export async function ensureBusinessForCurrentUser(): Promise<MenuyaAuthContext 
     p_business_type: businessType,
     p_phone: phone || null,
     p_email: context.user.email || null,
+    p_referral_code: String(metadata.referral_code || '').trim().toUpperCase() || null,
   });
   if (error) throw error;
   return getAuthContext();
