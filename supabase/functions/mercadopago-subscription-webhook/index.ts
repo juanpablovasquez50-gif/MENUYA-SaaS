@@ -76,12 +76,26 @@ Deno.serve(async (req: Request) => {
       return json({ received: true, ignored: "unsupported_topic" });
     }
 
-    const externalReference = String(resource.external_reference || "");
-    const preapprovalId = String(resource.preapproval_id || resource.id || "");
+    let externalReference = String(resource.external_reference || "");
+    const preapprovalId = String(resource.preapproval_id || (topic === "subscription_preapproval" ? resource.id : "") || "");
     const preapprovalStatus = topic === "subscription_preapproval" ? String(resource.status || "") : "";
     const paymentStatus = topic === "subscription_authorized_payment" ? String(resource.status || "") : "";
     const paymentId = topic === "subscription_authorized_payment" ? String(resource.id || dataId) : "";
+
+    // Authorized-payment resources point to their preapproval; fetch it to recover
+    // the local external_reference used when the subscription was created.
+    if (topic === "subscription_authorized_payment" && preapprovalId) {
+      const preapprovalResponse = await fetch(`https://api.mercadopago.com/preapproval/${encodeURIComponent(preapprovalId)}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const preapproval = await preapprovalResponse.json();
+      if (!preapprovalResponse.ok) throw new Error("No se pudo consultar la suscripción asociada al cobro.");
+      externalReference = String(preapproval.external_reference || "");
+    }
+
     const transactionAmount = Number(resource.transaction_amount || resource.transaction_amount_refunded || 0);
+    const currency = String(resource.currency_id || "COP");
+    if (currency !== "COP") return json({ error: "La moneda del cobro no coincide." }, 400);
     const amountInCents = transactionAmount > 0 ? Math.round(transactionAmount * 100) : null;
     const paymentDate = resource.date_approved || resource.debit_date || resource.date_created;
 
