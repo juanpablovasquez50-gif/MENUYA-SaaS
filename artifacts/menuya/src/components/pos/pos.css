@@ -26,3 +26,5 @@
 .pos-cash-history-grid .is-negative{color:#b42318}
 .pos-cash-history-grid .is-positive{color:#167345}
 @media(max-width:700px){.pos-cash-history-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pos-tabs{flex-wrap:wrap}}
+
+.pos-option-group input:disabled+span{opacity:.45}.pos-option-group label:has(input:disabled){opacity:.55;cursor:not-allowed}
