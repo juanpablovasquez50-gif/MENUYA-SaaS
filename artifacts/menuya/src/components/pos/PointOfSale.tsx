@@ -83,9 +83,6 @@ export default function PointOfSale({businessId,businessType,servicesEnabled=fal
       .on('postgres_changes',{event:'*',schema:'public',table:'orders',filter:`business_id=eq.${businessId}`},()=>{
         void load().catch(e=>setError(e.message||'No se pudieron actualizar los pedidos recibidos.'));
       })
-      .on('postgres_changes',{event:'*',schema:'public',table:'service_orders',filter:`business_id=eq.${businessId}`},()=>{
-        void load().catch(e=>setError(e.message||'No se pudieron actualizar los servicios pendientes.'));
-      })
       .subscribe();
     return ()=>{void supabase.removeChannel(channel);};
   },[businessId,load]);
