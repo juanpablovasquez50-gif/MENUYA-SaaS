@@ -111,7 +111,8 @@ begin
         from public.product_variant_inventory vi
        where vi.id=v_variant_id and vi.business_id=p_business_id and vi.product_id=v_product.id and vi.is_active
        for update;
-      if not found or v_variant.stock<v_quantity then raise exception 'La existencia de la variante cambió. Actualiza el POS e inténtalo de nuevo.' using errcode='22023'; end if;
+      if not found then raise exception 'La variante seleccionada ya no está disponible.' using errcode='22023'; end if;
+      if v_variant.stock<v_quantity then raise exception 'La existencia de la variante cambió. Actualiza el POS e inténtalo de nuevo.' using errcode='22023'; end if;
       v_extra_total:=v_variant.price_adjustment;
       v_selected:=v_selected||jsonb_build_array(jsonb_build_object(
         'kind','inventory_variant','variant_id',v_variant.id,'size',v_variant.size,
@@ -138,9 +139,11 @@ begin
     if v_product.stock is not null then
       update public.products set stock=greatest(0,stock-v_quantity),updated_at=now() where id=v_product.id and business_id=p_business_id;
     end if;
+    if v_product.stock is not null or v_variant_id is not null then
     insert into public.inventory_movements(business_id,product_id,branch_id,movement_type,quantity,reason,actor_id)
     values(p_business_id,v_product.id,p_branch_id,'out',v_quantity,
       'Venta POS '||v_sale_id::text||case when v_variant_id is not null then ' · '||v_variant.size||' · '||v_variant.color else '' end,auth.uid());
+    end if;
   end loop;
   return v_sale_id;
 end;
