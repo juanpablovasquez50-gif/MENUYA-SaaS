@@ -116,14 +116,28 @@ begin
 
   v_payment_status := upper(coalesce(p_payment_status,''));
   if v_payment_status in ('approved','authorized') then
-    update public.subscription_payments
-    set status='APPROVED',
-        provider_payment_id=coalesce(p_authorized_payment_id,provider_payment_id),
-        provider_subscription_id=coalesce(p_preapproval_id,provider_subscription_id),
-        paid_at=coalesce(p_payment_date,now()),
-        updated_at=now(),
-        metadata=metadata || jsonb_build_object('mercadopago_event_type',p_event_type)
-    where id=v_payment.id;
+    -- Keep a separate ledger row for every recurring charge.
+    if v_payment.provider_payment_id is null and v_payment.status='PENDING' then
+      update public.subscription_payments
+      set status='APPROVED',
+          provider_payment_id=p_authorized_payment_id,
+          provider_subscription_id=coalesce(p_preapproval_id,provider_subscription_id),
+          paid_at=coalesce(p_payment_date,now()),
+          updated_at=now(),
+          metadata=metadata || jsonb_build_object('mercadopago_event_type',p_event_type)
+      where id=v_payment.id;
+    else
+      insert into public.subscription_payments(
+        business_id,plan_id,reference,amount_in_cents,currency,status,
+        payment_provider,provider_payment_id,provider_subscription_id,paid_at,metadata
+      ) values (
+        v_payment.business_id,v_payment.plan_id,
+        'MP-RENEWAL-' || coalesce(p_authorized_payment_id,gen_random_uuid()::text),
+        coalesce(p_amount_in_cents,v_payment.amount_in_cents),'COP','APPROVED',
+        'mercadopago',p_authorized_payment_id,p_preapproval_id,
+        coalesce(p_payment_date,now()),jsonb_build_object('mercadopago_event_type',p_event_type,'original_reference',p_reference)
+      ) on conflict (payment_provider,provider_payment_id) do nothing;
+    end if;
 
     update public.subscriptions
     set payment_provider='mercadopago',
@@ -138,12 +152,26 @@ begin
       and plan_id=v_payment.plan_id;
 
   elsif v_payment_status in ('rejected','cancelled','refunded','charged_back') then
-    update public.subscription_payments
-    set status='DECLINED',
-        provider_payment_id=coalesce(p_authorized_payment_id,provider_payment_id),
-        updated_at=now(),
-        metadata=metadata || jsonb_build_object('mercadopago_event_type',p_event_type)
-    where id=v_payment.id;
+    if v_payment.provider_payment_id is null and v_payment.status='PENDING' then
+      update public.subscription_payments
+      set status='DECLINED',
+          provider_payment_id=p_authorized_payment_id,
+          provider_subscription_id=coalesce(p_preapproval_id,provider_subscription_id),
+          updated_at=now(),
+          metadata=metadata || jsonb_build_object('mercadopago_event_type',p_event_type)
+      where id=v_payment.id;
+    else
+      insert into public.subscription_payments(
+        business_id,plan_id,reference,amount_in_cents,currency,status,
+        payment_provider,provider_payment_id,provider_subscription_id,metadata
+      ) values (
+        v_payment.business_id,v_payment.plan_id,
+        'MP-RENEWAL-' || coalesce(p_authorized_payment_id,gen_random_uuid()::text),
+        coalesce(p_amount_in_cents,v_payment.amount_in_cents),'COP','DECLINED',
+        'mercadopago',p_authorized_payment_id,p_preapproval_id,
+        jsonb_build_object('mercadopago_event_type',p_event_type,'original_reference',p_reference)
+      ) on conflict (payment_provider,provider_payment_id) do nothing;
+    end if;
 
     update public.subscriptions
     set status='past_due'
