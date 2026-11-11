@@ -73,14 +73,19 @@ begin
   end if;
   return query
     select p.id,p.full_name,p.email,p.phone,p.partner_type,p.city,p.status,p.referral_code,p.created_at,
-      count(distinct r.id)::bigint,
-      count(distinct r.id) filter (where r.status='qualified')::bigint,
-      coalesce(sum(c.amount) filter (where c.status in ('pending','approved')),0)::numeric,
-      coalesce(sum(c.amount) filter (where c.status='paid'),0)::numeric
+      coalesce(r.referral_count,0)::bigint,coalesce(r.qualified_count,0)::bigint,
+      coalesce(c.pending_commission,0)::numeric,coalesce(c.paid_commission,0)::numeric
     from public.platform_partners p
-    left join public.platform_partner_referrals r on r.partner_id=p.id
-    left join public.platform_partner_commissions c on c.partner_id=p.id
-    group by p.id
+    left join lateral (
+      select count(*)::bigint as referral_count,
+        count(*) filter (where pr.status='qualified')::bigint as qualified_count
+      from public.platform_partner_referrals pr where pr.partner_id=p.id
+    ) r on true
+    left join lateral (
+      select sum(pc.amount) filter (where pc.status in ('pending','approved')) as pending_commission,
+        sum(pc.amount) filter (where pc.status='paid') as paid_commission
+      from public.platform_partner_commissions pc where pc.partner_id=p.id
+    ) c on true
     order by p.created_at desc;
 end; $$;
 
