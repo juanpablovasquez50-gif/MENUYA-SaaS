@@ -20,7 +20,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import { Link, Route, Switch, Router as WouterRouter, useLocation, useParams } from 'wouter';
 import { BookOpen, Utensils, Activity, AlertTriangle, ArrowDownRight, ArrowLeft, ArrowRight, BarChart3, Bell, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, ClipboardList, Clock3, CreditCard, ExternalLink, Eye, EyeOff, HelpCircle, ImagePlus, LayoutDashboard, Loader2, LogOut, MapPin, Menu, MoreHorizontal, Package, PawPrint, CalendarDays, Pencil, Plus, Search, Settings, ShieldCheck, ShoppingBag, ShoppingCart, Store, Tag, Trash2, TrendingUp, Truck, Upload, Users, X, Zap } from 'lucide-react';
-import { type AuditLog, type Business, type CatalogEvent, type Category, type Customer, type DemoData, type Order, type OrderStatus, type Plan, type Product, type ProductChoice, type StoreSettings, repository } from '@/lib/menuya-data';
+import { type AuditLog, type Business, type CatalogEvent, type Category, type Customer, type DemoData, type Order, type OrderStatus, type Plan, type Product, type ProductChoice, type ProductVariantStock, type StoreSettings, repository } from '@/lib/menuya-data';
 import { type MenuyaAuthContext, ensureBusinessForCurrentUser, getAuthContext, isSupabaseConfigured, sendPasswordRecovery, preparePasswordRecovery, signInWithEmail, signOut, signUpWithEmail, updatePassword } from '@/lib/menuya-auth';
 import { supabase } from '@/lib/supabase';
 
@@ -148,8 +148,28 @@ function ChoiceBuilderField({ field, onChange }: { field: FormField; onChange: (
   const sync = (next: { nombre: string; precio: string }[]) => { setRows(next); onChange(field.name, next.filter(x => x.nombre.trim()).map(x => `${x.nombre.trim()}|${x.precio || '0'}`).join('\n')); };
   return <section className="choice-builder"><div className="choice-builder-head"><div><b>{field.label}</b><small>Agrega cada opción sin escribir formatos especiales.</small></div><span>{rows.length} opciones</span></div>{rows.map((row,index)=><div className="choice-builder-row" key={index}><input aria-label="Nombre de la opción" placeholder="Ej. Queso extra" value={row.nombre} onChange={e=>sync(rows.map((x,i)=>i===index?{...x,nombre:e.target.value}:x))}/><label><span>$</span><input aria-label="Precio adicional" type="number" min="0" placeholder="0" value={row.precio} onChange={e=>sync(rows.map((x,i)=>i===index?{...x,precio:e.target.value}:x))}/></label><button type="button" aria-label="Eliminar opción" onClick={()=>sync(rows.filter((_,i)=>i!==index))}>×</button></div>)}<button className="choice-builder-add" type="button" onClick={()=>sync([...rows,{nombre:'',precio:'0'}])}>＋ Agregar opción</button></section>;
 }
+function ClothingVariantMatrixField({ field, onChange }: { field: FormField; onChange: (name: string, value: string) => void }) {
+  const [rows, setRows] = useState<ProductVariantStock[]>(() => {
+    try { return JSON.parse(String(field.value || '[]')); } catch { return []; }
+  });
+  const sync = (next: ProductVariantStock[]) => { setRows(next); onChange(field.name, JSON.stringify(next)); };
+  const patch = (id: string, values: Partial<ProductVariantStock>) => sync(rows.map(row => row.id === id ? { ...row, ...values } : row));
+  return <section className="choice-builder clothing-variant-matrix">
+    <div className="choice-builder-head"><div><b>Inventario por talla y color</b><small>Cada combinación tendrá su propio SKU y existencia.</small></div><span>{rows.length} variantes</span></div>
+    {rows.map(row => <div className="clothing-variant-row" key={row.id}>
+      <input aria-label="Talla" placeholder="Talla (S, M, 38…)" value={row.talla} onChange={e=>patch(row.id,{talla:e.target.value})}/>
+      <input aria-label="Color" placeholder="Color" value={row.color} onChange={e=>patch(row.id,{color:e.target.value})}/>
+      <input aria-label="SKU" placeholder="SKU / referencia" value={row.sku} onChange={e=>patch(row.id,{sku:e.target.value})}/>
+      <input aria-label="Existencias" type="number" min="0" value={row.stock} onChange={e=>patch(row.id,{stock:Math.max(0,Number(e.target.value)||0)})}/>
+      <button type="button" aria-label="Eliminar variante" onClick={()=>sync(rows.filter(x=>x.id!==row.id))}>×</button>
+    </div>)}
+    <button className="choice-builder-add" type="button" onClick={()=>sync([...rows,{id:repository.id(),sku:'',talla:'',color:'',stock:0,ajuste_precio:0,activo:true}])}>＋ Agregar combinación</button>
+    <small>Ejemplo: M · Negro · CAM-M-NEG · 8 unidades. El stock general se calcula con la suma de las variantes.</small>
+  </section>;
+}
 function Field({ field, onChange, businessId }: { field: FormField; onChange: (name: string, value: string | boolean) => void; businessId?: string }) {
   if (field.type === 'choiceBuilder') return <ChoiceBuilderField field={field} onChange={onChange as (name: string, value: string) => void}/>;
+  if (field.type === 'clothingVariantMatrix') return <ClothingVariantMatrixField field={field} onChange={onChange as (name: string, value: string) => void}/>;
   if (field.type === 'image') return <ImageUploadField field={field} value={String(field.value ?? '')} businessId={businessId} onChange={onChange as (name: string, value: string) => void}/>;
   return <label className="field"><span>{field.label}{field.required ? ' *' : ''}</span>
       {field.options ? <select name={field.name} required={field.required} value={String(field.value ?? '')} onChange={e => onChange(field.name, e.target.value)} data-testid={`select-${field.name}`}>{field.options.map(o => <option key={o} value={o}>{field.optionLabels?.[o] || statusLabel[o] || o}</option>)}</select>
@@ -435,11 +455,12 @@ function MerchantPage({ path, data, business, update, modules = [] }: { path: st
     openModal(initial ? 'Editar producto' : 'Nuevo producto', [
     { name: 'nombre', label: 'Nombre', value: initial?.nombre, required: true }, { name: 'precio', label: 'Precio (COP)', type: 'number', value: initial?.precio, required: true },
     { name: 'descripcion', label: 'Descripción', type: 'textarea', value: initial?.descripcion }, { name: 'imagen', label: 'Fotografía del producto', type: 'image', value: initial?.imagen || '' }, { name: 'category_id', label: 'Categoría', value: initial?.category_id || cats[0]?.id, options: cats.map(c => c.id), optionLabels: Object.fromEntries(cats.map(c => [c.id, c.nombre])) },
+    ...( /ropa|moda|confecci[oó]n|boutique/i.test(business.tipo) ? [{ name: 'inventario_variantes', label: 'Variantes de ropa', type: 'clothingVariantMatrix', value: JSON.stringify(initial?.inventario_variantes || []) }] : []),
     ...([{ name: 'complementos', label: foodBusiness ? 'Adiciones y extras' : 'Adiciones, accesorios o extras', type: 'choiceBuilder', value: choiceText(initial?.complementos) }]),
-    { name: 'precio_anterior', label: 'Precio anterior (opcional)', type: 'number', value: initial?.precio_anterior || '' }, { name: 'stock', label: 'Stock', type: 'number', value: initial?.stock || 0 },
+    { name: 'precio_anterior', label: 'Precio anterior (opcional)', type: 'number', value: initial?.precio_anterior || '' }, { name: 'stock', label: 'Stock general', type: 'number', value: initial?.stock || 0 },
     { name: 'disponible', label: 'Disponible', type: 'checkbox', value: initial?.disponible ?? true }, { name: 'destacado', label: 'Destacado', type: 'checkbox', value: initial?.destacado ?? false },
   ], v => {
-    const item: Product = { id: initial?.id || repository.id(), business_id: business.id, category_id: String(v.category_id || cats[0]?.id || ''), nombre: String(v.nombre), descripcion: String(v.descripcion || ''), precio: Number(v.precio), precio_anterior: Number(v.precio_anterior) || undefined, imagen: String(v.imagen || '') || undefined, activo: initial?.activo ?? true, disponible: Boolean(v.disponible), destacado: Boolean(v.destacado), stock: Number(v.stock), variantes: initial?.variantes || [], complementos: parseChoices(v.complementos) };
+    const item: Product = { id: initial?.id || repository.id(), business_id: business.id, category_id: String(v.category_id || cats[0]?.id || ''), nombre: String(v.nombre), descripcion: String(v.descripcion || ''), precio: Number(v.precio), precio_anterior: Number(v.precio_anterior) || undefined, imagen: String(v.imagen || '') || undefined, activo: initial?.activo ?? true, disponible: Boolean(v.disponible), destacado: Boolean(v.destacado), stock: /ropa|moda|confecci[oó]n|boutique/i.test(business.tipo) ? (() => { try { return (JSON.parse(String(v.inventario_variantes || '[]')) as ProductVariantStock[]).reduce((sum,row)=>sum+Math.max(0,Number(row.stock)||0),0); } catch { return Number(v.stock)||0; } })() : Number(v.stock), inventario_variantes: /ropa|moda|confecci[oó]n|boutique/i.test(business.tipo) ? (() => { try { return JSON.parse(String(v.inventario_variantes || '[]')) as ProductVariantStock[]; } catch { return []; } })() : initial?.inventario_variantes || [], variantes: /ropa|moda|confecci[oó]n|boutique/i.test(business.tipo) ? (() => { try { return (JSON.parse(String(v.inventario_variantes || '[]')) as ProductVariantStock[]).filter(row=>row.activo && row.talla.trim() && row.color.trim()).map(row=>({id:row.id,nombre:`${row.talla} · ${row.color}`,precio_extra:row.ajuste_precio||0})); } catch { return []; } })() : initial?.variantes || [], complementos: parseChoices(v.complementos) };
     update(d => ({ ...d, products: initial ? d.products.map(p => p.id === initial.id ? item : p) : [...d.products, item] }), initial ? 'Producto actualizado' : 'Producto creado', item.nombre); setModal(null);
     });
   };
@@ -1127,11 +1148,11 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
   const loadRemoteData = async () => {
     if (!business?.id) return;
     setLoading(true); setLoadError('');
-    const [categoryResult, productResult, productOptionsResult, productOptionValuesResult, settingsResult, subscriptionResult, planResult, orderResult, customerResult, catalogEventResult] = await Promise.all([
+    const [categoryResult, productResult, productOptionsResult, productOptionValuesResult, variantInventoryResult, settingsResult, subscriptionResult, planResult, orderResult, customerResult, catalogEventResult] = await Promise.all([
       supabase.from('categories').select('id,business_id,name,sort_order,is_active').eq('business_id',business.id).order('sort_order'),
       supabase.from('products').select('id,business_id,category_id,name,description,price,previous_price,image_url,is_active,is_available,is_featured,stock').eq('business_id',business.id).order('created_at',{ascending:false}),
       supabase.from('product_options').select('id,business_id,product_id,name,option_type,is_required,sort_order').eq('business_id',business.id).order('sort_order'),
-      supabase.from('product_option_values').select('id,business_id,option_id,name,extra_price,is_active,sort_order').eq('business_id',business.id).eq('is_active',true).order('sort_order'),
+      supabase.from('product_option_values').select('id,business_id,option_id,name,extra_price,is_active,sort_order').eq('business_id',business.id).eq('is_active',true).order('sort_order'),\n      supabase.from('product_variant_inventory').select('id,business_id,product_id,sku,size,color,stock,price_adjustment,is_active').eq('business_id',business.id).eq('is_active',true).order('size'),
       supabase.from('store_settings').select('business_id,cover_url,logo_url,brand_color,background_color,card_background_color,font_family,contact_text,social_links,payment_methods,delivery_info,is_published,tagline,storefront_layout,product_card_style,button_style').eq('business_id',business.id).maybeSingle(),
       supabase.from('subscriptions').select('id,business_id,plan_id,status,starts_at,ends_at,plans(id,name,price,billing_period,max_products,features,is_active)').eq('business_id',business.id).maybeSingle(),
       supabase.from('plans').select('id,code,name,price,billing_period,max_products,features,is_active').eq('is_active',true).order('price'),
@@ -1139,7 +1160,7 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
       supabase.from('customers').select('id,business_id,name,phone,total_orders,total_spent,last_order_at').eq('business_id',business.id).order('last_order_at',{ascending:false}),
       supabase.from('catalog_events').select('id,business_id,product_id,event_type,created_at').eq('business_id',business.id).gte('created_at',new Date(Date.now()-30*86400000).toISOString()).order('created_at',{ascending:false}),
     ]);
-    const firstError = categoryResult.error || productResult.error || productOptionsResult.error || productOptionValuesResult.error || settingsResult.error || subscriptionResult.error || planResult.error || orderResult.error || customerResult.error || catalogEventResult.error;
+    const firstError = categoryResult.error || productResult.error || productOptionsResult.error || productOptionValuesResult.error || variantInventoryResult.error || settingsResult.error || subscriptionResult.error || planResult.error || orderResult.error || customerResult.error || catalogEventResult.error;
     if (firstError) { setLoadError(firstError.message); setLoading(false); return; }
     const profileName = context.profile?.full_name || String(context.user.user_metadata?.full_name || context.user.email || 'Comercio');
     const biz = {
@@ -1151,9 +1172,11 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
     const products: Product[] = (productResult.data || []).map(p => {
       const groups = (productOptionsResult.data || []).filter(group => group.product_id === p.id);
       const values = (group: any) => (productOptionValuesResult.data || []).filter(value => value.option_id === group.id).map(value => ({id:value.id,nombre:value.name,precio_extra:Number(value.extra_price || 0)}));
-      const variants = groups.filter(group => ['variant','variants','variante','variantes'].includes(String(group.option_type).toLowerCase())).flatMap(values);
+      const inventory: ProductVariantStock[] = (variantInventoryResult.data || []).filter(row=>row.product_id===p.id).map(row=>({id:row.id,sku:row.sku||'',talla:row.size,color:row.color,stock:Number(row.stock||0),ajuste_precio:Number(row.price_adjustment||0),activo:row.is_active}));
+      const savedVariants = groups.filter(group => ['variant','variants','variante','variantes'].includes(String(group.option_type).toLowerCase())).flatMap(values);
+      const variants = inventory.length ? inventory.map(row=>({id:row.id,nombre:`${row.talla} · ${row.color}`,precio_extra:row.ajuste_precio})) : savedVariants;
       const addons = groups.filter(group => ['addon','addons','extra','extras','complemento','complementos'].includes(String(group.option_type).toLowerCase())).flatMap(values);
-      return {id:p.id,business_id:p.business_id,category_id:p.category_id || '',nombre:p.name,descripcion:p.description || '',precio:Number(p.price),precio_anterior:p.previous_price ? Number(p.previous_price) : undefined,imagen:p.image_url || undefined,activo:p.is_active,disponible:p.is_available,destacado:p.is_featured,stock:p.stock ?? 0,variantes:variants,complementos:addons};
+      return {id:p.id,business_id:p.business_id,category_id:p.category_id || '',nombre:p.name,descripcion:p.description || '',precio:Number(p.price),precio_anterior:p.previous_price ? Number(p.previous_price) : undefined,imagen:p.image_url || undefined,activo:p.is_active,disponible:p.is_available,destacado:p.is_featured,stock:p.stock ?? 0,variantes:variants,inventario_variantes:inventory,complementos:addons};
     });
     const s = settingsResult.data;
     const settings: StoreSettings = {
@@ -1270,6 +1293,15 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
             ? await supabase.from('products').update(payload).eq('id',id).eq('business_id',business.id)
             : await supabase.from('products').insert(payload);
           if(result.error) throw result.error;
+          if (!oldProducts.has(id) || JSON.stringify(before?.inventario_variantes || []) !== JSON.stringify(item.inventario_variantes || [])) {
+            const removedVariants = await supabase.from('product_variant_inventory').delete().eq('product_id',id).eq('business_id',business.id);
+            if (removedVariants.error) throw removedVariants.error;
+            const activeRows = (item.inventario_variantes || []).filter(row=>row.talla.trim() && row.color.trim()).map(row=>({business_id:business.id,product_id:id,sku:row.sku || null,size:row.talla.trim(),color:row.color.trim(),stock:Math.max(0,Number(row.stock)||0),price_adjustment:Number(row.ajuste_precio)||0,is_active:row.activo}));
+            if (activeRows.length) {
+              const insertedVariants = await supabase.from('product_variant_inventory').insert(activeRows);
+              if (insertedVariants.error) throw insertedVariants.error;
+            }
+          }
           if (!oldProducts.has(id) || JSON.stringify(before?.variantes || []) !== JSON.stringify(item.variantes || []) || JSON.stringify(before?.complementos || []) !== JSON.stringify(item.complementos || [])) {
             const oldGroups = await supabase.from('product_options').select('id').eq('product_id',id).eq('business_id',business.id);
             if (oldGroups.error) throw oldGroups.error;
