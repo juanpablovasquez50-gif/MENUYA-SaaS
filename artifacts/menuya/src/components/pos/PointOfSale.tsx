@@ -70,7 +70,7 @@ export default function PointOfSale({businessId,businessType,servicesEnabled=fal
       orderItems=items||[];
     }
     setProductOptions((o.data||[]).map(option=>({...option,values:(v.data||[]).filter(value=>value.option_id===option.id).map(value=>({...value,extra_price:Number(value.extra_price||0)}))})));
-    setProducts((p.data||[]).map(x=>({id:x.id,nombre:x.name,precio:Number(x.price),imagen:x.image_url||undefined,stock:x.stock===null?undefined:Number(x.stock),activo:x.is_active,disponible:x.is_available,inventario_variantes:(variantInventory.data||[]).filter(row=>row.product_id===x.id).map(row=>({id:row.id,sku:row.sku,size:row.size,color:row.color,stock:Number(row.stock||0),price_adjustment:Number(row.price_adjustment||0)}))})));
+    setProducts((p.data||[]).map(x=>{const variants=(variantInventory.data||[]).filter(row=>row.product_id===x.id).map(row=>({id:row.id,sku:row.sku,size:row.size,color:row.color,stock:Number(row.stock||0),price_adjustment:Number(row.price_adjustment||0)}));return {id:x.id,nombre:x.name,precio:Number(x.price),imagen:x.image_url||undefined,stock:variants.length?variants.reduce((sum,row)=>sum+row.stock,0):(x.stock===null?undefined:Number(x.stock)),activo:x.is_active,disponible:x.is_available,inventario_variantes:variants};}));
     setSession(c.data?{...c.data,opening_amount:Number(c.data.opening_amount)}:null);
     setSales((s.data||[]).map(x=>({...x,total:Number(x.total),subtotal:Number(x.subtotal),discount:Number(x.discount)})));
     setTableOrders((orders.data||[]).map(order=>({...order,order_items:orderItems.filter(item=>item.order_id===order.id)})));
