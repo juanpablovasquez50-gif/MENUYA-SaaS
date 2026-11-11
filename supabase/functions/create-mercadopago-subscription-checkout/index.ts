@@ -45,6 +45,9 @@ Deno.serve(async (req: Request) => {
     const planId = String(body?.plan_id || "");
     if (!businessId || !planId) return json({ error: "Selecciona un comercio y un plan." }, 400);
 
+    const payerEmail = String(authData.user.email || "").trim().toLowerCase();
+    if (!payerEmail) return json({ error: "La cuenta necesita un correo electrónico verificado para crear la suscripción." }, 400);
+
     const userId = authData.user.id;
     const [{ data: business, error: businessError }, { data: membership, error: membershipError }, { data: plan, error: planError }] = await Promise.all([
       db.from("businesses").select("id,owner_id,status").eq("id", businessId).maybeSingle(),
@@ -75,13 +78,13 @@ Deno.serve(async (req: Request) => {
     });
     if (insertError) throw insertError;
 
-    const origin = validReturnOrigin(req.headers.get("origin"));
+    const origin = validReturnOrigin(req.headers.get("origin")) || validReturnOrigin(Deno.env.get("MENUYA_APP_URL") || null);
     const backUrl = origin ? new URL("/app/subscription?payment=return", origin).toString() : undefined;
     const frequency = plan.billing_period === "year" ? 12 : 1;
     const payload: Record<string, unknown> = {
       reason: `Membresía Menuya - ${plan.name}`,
       external_reference: reference,
-      payer_email: authData.user.email,
+      payer_email: payerEmail,
       auto_recurring: {
         frequency,
         frequency_type: "months",
