@@ -72,6 +72,12 @@ Deno.serve(async (req: Request) => {
       });
       resource = await response.json();
       if (!response.ok) throw new Error("No se pudo consultar el cobro recurrente en Mercado Pago.");
+    } else if (topic === "payment") {
+      const response = await fetch(`https://api.mercadopago.com/v1/payments/${encodeURIComponent(dataId)}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      resource = await response.json();
+      if (!response.ok) throw new Error("No se pudo consultar el pago en Mercado Pago.");
     } else {
       return json({ received: true, ignored: "unsupported_topic" });
     }
@@ -79,8 +85,12 @@ Deno.serve(async (req: Request) => {
     let externalReference = String(resource.external_reference || "");
     const preapprovalId = String(resource.preapproval_id || (topic === "subscription_preapproval" ? resource.id : "") || "");
     const preapprovalStatus = topic === "subscription_preapproval" ? String(resource.status || "") : "";
-    const paymentStatus = topic === "subscription_authorized_payment" ? String(resource.status || "") : "";
-    const paymentId = topic === "subscription_authorized_payment" ? String(resource.id || dataId) : "";
+    const paymentStatus = (topic === "subscription_authorized_payment" || topic === "payment")
+      ? String(resource.status || "")
+      : "";
+    const paymentId = (topic === "subscription_authorized_payment" || topic === "payment")
+      ? String(resource.id || dataId)
+      : "";
 
     // Authorized-payment resources point to their preapproval; fetch it to recover
     // the local external_reference used when the subscription was created.
@@ -91,6 +101,13 @@ Deno.serve(async (req: Request) => {
       const preapproval = await preapprovalResponse.json();
       if (!preapprovalResponse.ok) throw new Error("No se pudo consultar la suscripción asociada al cobro.");
       externalReference = String(preapproval.external_reference || "");
+    }
+
+    // Payment notifications are supplementary. Process them only when Mercado Pago
+    // returns the exact local reference created by Menuya; otherwise acknowledge
+    // them without changing subscription state.
+    if (topic === "payment" && !externalReference) {
+      return json({ received: true, ignored: "payment_without_menuya_reference" });
     }
 
     const transactionAmount = Number(resource.transaction_amount || resource.transaction_amount_refunded || 0);
