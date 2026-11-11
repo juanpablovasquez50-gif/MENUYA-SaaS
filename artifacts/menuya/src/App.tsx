@@ -1290,21 +1290,27 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
           const before = oldProducts.get(id);
           if (before === item) continue;
           const payload = {business_id:business.id,category_id:item.category_id || null,name:item.nombre,description:item.descripcion,price:item.precio,previous_price:item.precio_anterior ?? null,image_url:item.imagen ?? null,is_active:item.activo,is_available:item.disponible,is_featured:item.destacado,stock:item.stock ?? 0};
-          const result = oldProducts.has(id)
-            ? await supabase.from('products').update(payload).eq('id',id).eq('business_id',business.id)
-            : await supabase.from('products').insert(payload);
-          if(result.error) throw result.error;
+          // New products use temporary client IDs; always use the database UUID for related rows.
+          let persistedProductId = id;
+          if (oldProducts.has(id)) {
+            const result = await supabase.from('products').update(payload).eq('id',id).eq('business_id',business.id);
+            if (result.error) throw result.error;
+          } else {
+            const insertedProduct = await supabase.from('products').insert(payload).select('id').single();
+            if (insertedProduct.error) throw insertedProduct.error;
+            persistedProductId = insertedProduct.data.id;
+          }
           if (!oldProducts.has(id) || JSON.stringify(before?.inventario_variantes || []) !== JSON.stringify(item.inventario_variantes || [])) {
-            const removedVariants = await supabase.from('product_variant_inventory').delete().eq('product_id',id).eq('business_id',business.id);
+            const removedVariants = await supabase.from('product_variant_inventory').delete().eq('product_id',persistedProductId).eq('business_id',business.id);
             if (removedVariants.error) throw removedVariants.error;
-            const activeRows = (item.inventario_variantes || []).filter(row=>row.talla.trim() && row.color.trim()).map(row=>({business_id:business.id,product_id:id,sku:row.sku || null,size:row.talla.trim(),color:row.color.trim(),stock:Math.max(0,Number(row.stock)||0),price_adjustment:Number(row.ajuste_precio)||0,is_active:row.activo}));
+            const activeRows = (item.inventario_variantes || []).filter(row=>row.talla.trim() && row.color.trim()).map(row=>({business_id:business.id,product_id:persistedProductId,sku:row.sku || null,size:row.talla.trim(),color:row.color.trim(),stock:Math.max(0,Number(row.stock)||0),price_adjustment:Number(row.ajuste_precio)||0,is_active:row.activo}));
             if (activeRows.length) {
               const insertedVariants = await supabase.from('product_variant_inventory').insert(activeRows);
               if (insertedVariants.error) throw insertedVariants.error;
             }
           }
           if (!oldProducts.has(id) || JSON.stringify(before?.variantes || []) !== JSON.stringify(item.variantes || []) || JSON.stringify(before?.complementos || []) !== JSON.stringify(item.complementos || [])) {
-            const oldGroups = await supabase.from('product_options').select('id').eq('product_id',id).eq('business_id',business.id);
+            const oldGroups = await supabase.from('product_options').select('id').eq('product_id',persistedProductId).eq('business_id',business.id);
             if (oldGroups.error) throw oldGroups.error;
             const oldGroupIds = (oldGroups.data || []).map(group => group.id);
             if (oldGroupIds.length) {
@@ -1313,7 +1319,7 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
             }
             for (const [optionType, optionName, choices] of [['variant','Variantes',item.variantes || []],['addon','Adiciones y extras',item.complementos || []]] as const) {
               if (!choices.length) continue;
-              const groupResult = await supabase.from('product_options').insert({business_id:business.id,product_id:id,name:optionName,option_type:optionType,is_required:optionType === 'variant',sort_order:optionType === 'variant' ? 0 : 1}).select('id').single();
+              const groupResult = await supabase.from('product_options').insert({business_id:business.id,product_id:persistedProductId,name:optionName,option_type:optionType,is_required:optionType === 'variant',sort_order:optionType === 'variant' ? 0 : 1}).select('id').single();
               if (groupResult.error) throw groupResult.error;
               const valueResult = await supabase.from('product_option_values').insert(choices.map((choice,index)=>({business_id:business.id,option_id:groupResult.data.id,name:choice.nombre,extra_price:choice.precio_extra || 0,is_active:true,sort_order:index})));
               if (valueResult.error) throw valueResult.error;
