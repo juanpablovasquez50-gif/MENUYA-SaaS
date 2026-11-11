@@ -349,7 +349,6 @@ function FormModal({ title, fields, close, submit, submitText = 'Guardar', busin
 
 function MerchantPage({ path, data, business, update, modules = [] }: { path: string; data: DemoData; business: Business; update: (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => void; modules?: string[] }) {
   const foodBusiness = isFoodBusiness(business.tipo);
-  const variantLabel = optionLabelForBusiness(business.tipo);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('todos');
   const [categoryFilter, setCategoryFilter] = useState('todos');
@@ -433,11 +432,11 @@ function MerchantPage({ path, data, business, update, modules = [] }: { path: st
     openModal(initial ? 'Editar producto' : 'Nuevo producto', [
     { name: 'nombre', label: 'Nombre', value: initial?.nombre, required: true }, { name: 'precio', label: 'Precio (COP)', type: 'number', value: initial?.precio, required: true },
     { name: 'descripcion', label: 'Descripción', type: 'textarea', value: initial?.descripcion }, { name: 'imagen', label: 'Fotografía del producto', type: 'image', value: initial?.imagen || '' }, { name: 'category_id', label: 'Categoría', value: initial?.category_id || cats[0]?.id, options: cats.map(c => c.id), optionLabels: Object.fromEntries(cats.map(c => [c.id, c.nombre])) },
-    { name: 'variantes', label: variantLabel, type: 'choiceBuilder', value: choiceText(initial?.variantes) }, ...([{ name: 'complementos', label: foodBusiness ? 'Adiciones y extras' : 'Adiciones, accesorios o extras', type: 'choiceBuilder', value: choiceText(initial?.complementos) }]),
+    ...([{ name: 'complementos', label: foodBusiness ? 'Adiciones y extras' : 'Adiciones, accesorios o extras', type: 'choiceBuilder', value: choiceText(initial?.complementos) }]),
     { name: 'precio_anterior', label: 'Precio anterior (opcional)', type: 'number', value: initial?.precio_anterior || '' }, { name: 'stock', label: 'Stock', type: 'number', value: initial?.stock || 0 },
     { name: 'disponible', label: 'Disponible', type: 'checkbox', value: initial?.disponible ?? true }, { name: 'destacado', label: 'Destacado', type: 'checkbox', value: initial?.destacado ?? false },
   ], v => {
-    const item: Product = { id: initial?.id || repository.id(), business_id: business.id, category_id: String(v.category_id || cats[0]?.id || ''), nombre: String(v.nombre), descripcion: String(v.descripcion || ''), precio: Number(v.precio), precio_anterior: Number(v.precio_anterior) || undefined, imagen: String(v.imagen || '') || undefined, activo: initial?.activo ?? true, disponible: Boolean(v.disponible), destacado: Boolean(v.destacado), stock: Number(v.stock), variantes: parseChoices(v.variantes), complementos: parseChoices(v.complementos) };
+    const item: Product = { id: initial?.id || repository.id(), business_id: business.id, category_id: String(v.category_id || cats[0]?.id || ''), nombre: String(v.nombre), descripcion: String(v.descripcion || ''), precio: Number(v.precio), precio_anterior: Number(v.precio_anterior) || undefined, imagen: String(v.imagen || '') || undefined, activo: initial?.activo ?? true, disponible: Boolean(v.disponible), destacado: Boolean(v.destacado), stock: Number(v.stock), variantes: initial?.variantes || [], complementos: parseChoices(v.complementos) };
     update(d => ({ ...d, products: initial ? d.products.map(p => p.id === initial.id ? item : p) : [...d.products, item] }), initial ? 'Producto actualizado' : 'Producto creado', item.nombre); setModal(null);
     });
   };
@@ -732,6 +731,11 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
   useEffect(() => {
     const store = data.businesses.find(item => item.slug === slug);
     if (!store) return;
+    const visitKey = `menuya:catalog-visit:${store.id}`;
+    try {
+      if (window.sessionStorage.getItem(visitKey) === '1') return;
+      window.sessionStorage.setItem(visitKey, '1');
+    } catch { /* El registro de analítica nunca debe bloquear la vitrina. */ }
     void supabase.from('catalog_events').insert({ business_id: store.id, event_type: 'visit' }).then(({ error }) => { if (error) console.warn('No se pudo registrar la visita del catálogo:', error.message); });
   }, [slug]);
   useEffect(() => {
@@ -1499,18 +1503,33 @@ function PublicRoute({ data, update }: { data: DemoData; update: (fn: (d: DemoDa
           created_at:new Date().toISOString(),
         };
         const row = settingsResult.data;
+        const deliveryInfo = parseStoreDelivery(row.delivery_info);
         const settings = {
           business_id:businessRow.id, portada:row.cover_url || '', logo:row.logo_url || '',
           color:row.brand_color || '#252525', background_color:row.background_color || '#f7f7f5', card_background_color:row.card_background_color || '#ffffff', fuente:row.font_family || 'Manrope',
           contacto:row.contact_text || '', redes:typeof row.social_links === 'string' ? row.social_links : JSON.stringify(row.social_links || {}),
           pagos:Array.isArray(row.payment_methods) ? row.payment_methods.join(', ') : 'Efectivo',
-          entrega:parseStoreDelivery(row.delivery_info).methods,direccion:parseStoreDelivery(row.delivery_info).address,tiempo_entrega:parseStoreDelivery(row.delivery_info).time, publicado:true, tagline:row.tagline || '',
+          entrega:deliveryInfo.methods,direccion:deliveryInfo.address,tiempo_entrega:deliveryInfo.time, publicado:true, tagline:row.tagline || '',
           layout:row.storefront_layout || 'grid', card_style:row.product_card_style || 'classic', button_style:row.button_style || 'rounded',
         };
         const categories = (categoryResult.data || []).map(c=>({id:c.id,business_id:c.business_id,nombre:c.name,orden:c.sort_order,activo:c.is_active}));
+        // Index option groups and values once. The previous per-product filters
+        // repeatedly scanned the full options tables (O(products × options)).
+        const optionsByProduct = new Map<string, any[]>();
+        for (const group of productOptionsResult.data || []) {
+          const current = optionsByProduct.get(group.product_id) || [];
+          current.push(group);
+          optionsByProduct.set(group.product_id, current);
+        }
+        const valuesByOption = new Map<string, any[]>();
+        for (const value of productOptionValuesResult.data || []) {
+          const current = valuesByOption.get(value.option_id) || [];
+          current.push(value);
+          valuesByOption.set(value.option_id, current);
+        }
         const products = (productResult.data || []).map(p=>{
-          const groups=(productOptionsResult.data || []).filter(group=>group.product_id===p.id);
-          const values=(group: any)=>(productOptionValuesResult.data || []).filter(value=>value.option_id===group.id).map(value=>({id:value.id,nombre:value.name,precio_extra:Number(value.extra_price || 0)}));
+          const groups=optionsByProduct.get(p.id) || [];
+          const values=(group: any)=>(valuesByOption.get(group.id) || []).map(value=>({id:value.id,nombre:value.name,precio_extra:Number(value.extra_price || 0)}));
           const variants=groups.filter(group=>['variant','variants','variante','variantes'].includes(String(group.option_type).toLowerCase())).flatMap(values);
           const addons=groups.filter(group=>['addon','addons','extra','extras','complemento','complementos'].includes(String(group.option_type).toLowerCase())).flatMap(values);
           return {id:p.id,business_id:p.business_id,category_id:p.category_id || '',nombre:p.name,descripcion:p.description || '',precio:Number(p.price),precio_anterior:p.previous_price ? Number(p.previous_price) : undefined,imagen:p.image_url || undefined,activo:p.is_active,disponible:p.is_available,destacado:p.is_featured,stock:p.stock ?? 0,variantes:variants,complementos:addons};
