@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Activity, Check, CheckCircle2, Copy, ExternalLink, Handshake, Link2, Plus, RefreshCw, Search, Users, Wallet } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import './PartnersManager.css';
 
 type Partner = {
   id:string; full_name:string; email:string; phone:string|null; partner_type:'influencer'|'commercial';
