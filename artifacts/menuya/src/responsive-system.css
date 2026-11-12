@@ -870,3 +870,85 @@ button,input,select,textarea{max-width:100%;touch-action:manipulation}
     background: #f8faff !important;
   }
 }
+
+
+/* Final mobile layout reset: stack each field to prevent stretched grid tracks. */
+@media (max-width: 700px) {
+  .merchant-dashboard .products-table tbody,
+  .merchant-dashboard .customers-table tbody,
+  .dashboard-shell .workspace .products-table tbody,
+  .dashboard-shell .workspace .customers-table tbody {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 10px !important;
+    height: auto !important;
+  }
+  .merchant-dashboard .products-table tbody tr,
+  .merchant-dashboard .customers-table tbody tr,
+  .dashboard-shell .workspace .products-table tbody tr,
+  .dashboard-shell .workspace .customers-table tbody tr {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 7px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 12px !important;
+  }
+  .merchant-dashboard .products-table tbody td,
+  .merchant-dashboard .customers-table tbody td,
+  .dashboard-shell .workspace .products-table tbody td,
+  .dashboard-shell .workspace .customers-table tbody td {
+    display: flex !important;
+    flex: 0 0 auto !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 4px 0 !important;
+    border: 0 !important;
+    text-align: left !important;
+    line-height: 1.35 !important;
+  }
+  .merchant-dashboard .products-table tbody td:first-child,
+  .merchant-dashboard .customers-table tbody td:first-child,
+  .dashboard-shell .workspace .products-table tbody td:first-child,
+  .dashboard-shell .workspace .customers-table tbody td:first-child {
+    order: 0 !important;
+    padding-bottom: 9px !important;
+    margin-bottom: 2px !important;
+    border-bottom: 1px solid #edf0f5 !important;
+  }
+  .merchant-dashboard .products-table tbody td:nth-child(2),
+  .merchant-dashboard .products-table tbody td:nth-child(3),
+  .merchant-dashboard .products-table tbody td:nth-child(4),
+  .merchant-dashboard .customers-table tbody td:nth-child(2),
+  .merchant-dashboard .customers-table tbody td:nth-child(3),
+  .merchant-dashboard .customers-table tbody td:nth-child(4),
+  .merchant-dashboard .customers-table tbody td:nth-child(5),
+  .dashboard-shell .workspace .products-table tbody td:nth-child(2),
+  .dashboard-shell .workspace .products-table tbody td:nth-child(3),
+  .dashboard-shell .workspace .products-table tbody td:nth-child(4),
+  .dashboard-shell .workspace .customers-table tbody td:nth-child(2),
+  .dashboard-shell .workspace .customers-table tbody td:nth-child(3),
+  .dashboard-shell .workspace .customers-table tbody td:nth-child(4),
+  .dashboard-shell .workspace .customers-table tbody td:nth-child(5) {
+    gap: 6px !important;
+  }
+  .merchant-dashboard .products-table tbody td:nth-child(5),
+  .merchant-dashboard .customers-table tbody td:nth-child(6),
+  .dashboard-shell .workspace .products-table tbody td:nth-child(5),
+  .dashboard-shell .workspace .customers-table tbody td:nth-child(6) {
+    order: 10 !important;
+    justify-content: flex-end !important;
+    padding-top: 8px !important;
+    margin-top: 3px !important;
+    border-top: 1px solid #edf0f5 !important;
+  }
+}
