@@ -3663,7 +3663,7 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
   font-weight: 950 !important;
   line-height: 1.15 !important;
   letter-spacing: -0.035em !important;
-  color: var(--store-text) !important;
+  color: var(--store-price-text, var(--store-card-text, #17191f)) !important;
   opacity: 1 !important;
 }
 .public-store .public-product-info .public-product-prices del {
