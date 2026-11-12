@@ -4063,3 +4063,53 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
     min-height: 44px !important;
   }
 }
+
+
+/* Checkout móvil: desplazar el documento del modal completo, no un scroll interno */
+@media (max-width: 700px) {
+  .public-store .modal-backdrop:has(> .modal > .checkout-form) {
+    position: fixed !important;
+    inset: 0 !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: none !important;
+    padding: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-y: contain !important;
+    align-items: initial !important;
+  }
+  .public-store .modal-backdrop:has(> .modal > .checkout-form) > .modal {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 100% !important;
+    max-height: none !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    border-radius: 0 !important;
+  }
+  .public-store .modal-backdrop:has(> .modal > .checkout-form) > .modal > .checkout-form {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    flex: none !important;
+    overflow: visible !important;
+    padding: 18px 18px calc(28px + env(safe-area-inset-bottom)) !important;
+    -webkit-overflow-scrolling: auto !important;
+  }
+  .public-store .modal-backdrop:has(> .modal > .checkout-form) .modal-actions {
+    position: static !important;
+    margin: 18px -18px 0 !important;
+    padding: 14px 18px calc(16px + env(safe-area-inset-bottom)) !important;
+    flex-wrap: wrap !important;
+  }
+  .public-store .modal-backdrop:has(> .modal > .checkout-form) .modal-actions button {
+    min-height: 46px !important;
+  }
+}
