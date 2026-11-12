@@ -952,3 +952,78 @@ button,input,select,textarea{max-width:100%;touch-action:manipulation}
     border-top: 1px solid #edf0f5 !important;
   }
 }
+
+
+/* FIX CRITICO: tablas de Productos y Clientes en pantallas estrechas.
+   La tabla conserva el ancho real de sus columnas y se desplaza dentro del contenedor;
+   nunca comprime cada palabra/letra en columnas verticales. */
+@media (max-width: 700px) {
+  .table-wrap.products-table,
+  .table-wrap.customers-table {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-inline: contain !important;
+    touch-action: pan-x pan-y !important;
+  }
+  .table-wrap.products-table table,
+  .table-wrap.customers-table table {
+    display: table !important;
+    width: max-content !important;
+    min-width: 760px !important;
+    max-width: none !important;
+    table-layout: auto !important;
+    border-collapse: separate !important;
+  }
+  .table-wrap.products-table th,
+  .table-wrap.products-table td,
+  .table-wrap.customers-table th,
+  .table-wrap.customers-table td {
+    min-width: 112px !important;
+    width: auto !important;
+    white-space: nowrap !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+    vertical-align: middle !important;
+  }
+  .table-wrap.products-table th:first-child,
+  .table-wrap.products-table td:first-child {
+    min-width: 230px !important;
+    white-space: normal !important;
+  }
+  .table-wrap.customers-table th:first-child,
+  .table-wrap.customers-table td:first-child {
+    min-width: 210px !important;
+    white-space: normal !important;
+  }
+  .table-wrap.products-table .table-product,
+  .table-wrap.customers-table .table-product {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    gap: 10px !important;
+    min-width: 190px !important;
+    width: max-content !important;
+    max-width: 220px !important;
+  }
+  .table-wrap.products-table .table-product > span:last-child,
+  .table-wrap.customers-table .table-product > b {
+    min-width: 0 !important;
+    white-space: normal !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+  }
+  .table-wrap.products-table .table-product small {
+    display: block !important;
+    white-space: normal !important;
+  }
+  .table-wrap.products-table .table-actions {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    min-width: 118px !important;
+  }
+}
