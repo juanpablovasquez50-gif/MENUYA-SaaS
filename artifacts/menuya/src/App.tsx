@@ -1683,7 +1683,7 @@ function PublicRoute({ data, update }: { data: DemoData; update: (fn: (d: DemoDa
         }
         const [categoryResult, productResult, productOptionsResult, productOptionValuesResult, settingsResult] = await Promise.all([
           supabase.from('categories').select('id,business_id,name,sort_order,is_active').eq('business_id',businessRow.id).eq('is_active',true).order('sort_order'),
-          supabase.from('products').select('id,business_id,category_id,name,description,price,previous_price,image_url,is_active,is_available,is_featured,stock').eq('business_id',businessRow.id).eq('is_active',true).eq('is_available',true).order('created_at',{ascending:false}),
+          supabase.from('products').select('id,business_id,category_id,name,description,price,previous_price,image_url,image_gallery,is_active,is_available,is_featured,stock').eq('business_id',businessRow.id).eq('is_active',true).eq('is_available',true).order('created_at',{ascending:false}),
           supabase.from('product_options').select('id,business_id,product_id,name,option_type,is_required,sort_order').eq('business_id',businessRow.id).order('sort_order'),
           supabase.from('product_option_values').select('id,business_id,option_id,name,extra_price,is_active,sort_order').eq('business_id',businessRow.id).eq('is_active',true).order('sort_order'),
           supabase.from('store_settings').select('business_id,cover_url,logo_url,brand_color,background_color,card_background_color,font_family,contact_text,social_links,payment_methods,delivery_info,is_published,tagline,storefront_layout,product_card_style,button_style').eq('business_id',businessRow.id).maybeSingle(),
@@ -1729,7 +1729,7 @@ function PublicRoute({ data, update }: { data: DemoData; update: (fn: (d: DemoDa
           const values=(group: any)=>(valuesByOption.get(group.id) || []).map(value=>({id:value.id,nombre:value.name,precio_extra:Number(value.extra_price || 0)}));
           const variants=groups.filter(group=>['variant','variants','variante','variantes'].includes(String(group.option_type).toLowerCase())).flatMap(values);
           const addons=groups.filter(group=>['addon','addons','extra','extras','complemento','complementos'].includes(String(group.option_type).toLowerCase())).flatMap(values);
-          return {id:p.id,business_id:p.business_id,category_id:p.category_id || '',nombre:p.name,descripcion:p.description || '',precio:Number(p.price),precio_anterior:p.previous_price ? Number(p.previous_price) : undefined,imagen:p.image_url || undefined,activo:p.is_active,disponible:p.is_available,destacado:p.is_featured,stock:p.stock ?? 0,variantes:variants,complementos:addons};
+          return {id:p.id,business_id:p.business_id,category_id:p.category_id || '',nombre:p.name,descripcion:p.description || '',precio:Number(p.price),precio_anterior:p.previous_price ? Number(p.previous_price) : undefined,imagen:p.image_url || undefined,galeria:Array.isArray(p.image_gallery) && p.image_gallery.length ? p.image_gallery : (p.image_url ? [p.image_url] : []),activo:p.is_active,disponible:p.is_available,destacado:p.is_featured,stock:p.stock ?? 0,variantes:variants,complementos:addons};
         });
         const remote: DemoData = {...data,users:[],businesses:[profile],categories,products,customers:[],orders:[],settings:[settings],subscriptions:[],audit:[],catalog_events:[]};
         if (active) { setStoreData(remote); setLoading(false); }
