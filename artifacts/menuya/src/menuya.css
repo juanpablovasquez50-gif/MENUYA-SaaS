@@ -2819,3 +2819,75 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
  .public-store .product-detail-gallery-track{gap:9px;border-radius:13px}
  .public-store .product-detail-image{width:100%;height:100%}
 }
+
+
+/* Modal de producto: hereda la identidad cromática configurada por cada comercio */
+.public-store .modal{
+  --product-modal-bg:var(--store-card-background,#fff);
+  --product-modal-text:var(--store-card-text,#182331);
+  --product-modal-muted:var(--store-card-muted,#596579);
+  --product-modal-border:color-mix(in srgb,var(--store-text,#182331) 14%,transparent);
+  overflow:hidden;
+  border:1px solid var(--product-modal-border);
+  border-radius:20px;
+  background:var(--product-modal-bg)!important;
+  color:var(--product-modal-text)!important;
+  box-shadow:0 24px 80px rgba(12,20,32,.28);
+}
+.public-store .modal-head{
+  padding:20px 24px;
+  border-bottom:1px solid var(--product-modal-border)!important;
+  background:var(--product-modal-bg)!important;
+}
+.public-store .modal-head .eyebrow{color:var(--store-color)!important;letter-spacing:.13em;font-weight:850}
+.public-store .modal-head h2{color:var(--product-modal-text)!important;font-size:clamp(19px,2.4vw,25px);font-weight:850;letter-spacing:-.035em}
+.public-store .modal-head .icon-btn{
+  color:var(--product-modal-text)!important;
+  border:1px solid var(--product-modal-border)!important;
+  border-radius:11px;
+  background:var(--store-background,#f5f7fb)!important;
+}
+.public-store .modal-head .icon-btn:hover{background:var(--store-color)!important;color:var(--store-accent-text,#fff)!important}
+.public-store .modal .product-config{padding:20px 24px 24px;background:var(--product-modal-bg);color:var(--product-modal-text)}
+.public-store .modal .product-config>.subtle{margin:0 0 16px;color:var(--product-modal-muted)!important;font-size:13px;line-height:1.6}
+.public-store .modal .product-detail-price{margin:4px 0 20px;color:var(--product-modal-text)!important;font-size:clamp(25px,3vw,30px);font-weight:900;letter-spacing:-.04em}
+.public-store .modal .product-detail-gallery-track{background:var(--store-background)!important;border:1px solid var(--product-modal-border)}
+.public-store .modal .product-detail-slide{background:var(--store-background)!important;border:0}
+.public-store .modal .product-detail-gallery-hint{color:var(--product-modal-muted)!important;font-size:11px;font-weight:650}
+.public-store .modal .choice-list{
+  margin:16px 0;padding:15px;border:1px solid var(--product-modal-border)!important;border-radius:14px;background:var(--store-background)!important
+}
+.public-store .modal .choice-list legend,.public-store .modal .field>span{color:var(--product-modal-text)!important;font-size:13px;font-weight:800}
+.public-store .modal .choice-list label{color:var(--product-modal-text)!important}
+.public-store .modal .product-extra-compact{
+  border:1px solid var(--product-modal-border)!important;border-radius:12px;background:var(--product-modal-bg)!important;color:var(--product-modal-text)!important
+}
+.public-store .modal .product-extra-compact.is-selected{border-color:var(--store-color)!important;background:var(--store-background)!important}
+.public-store .modal .product-extra-copy b{color:var(--product-modal-text)!important;font-size:13px}
+.public-store .modal .product-extra-copy small{color:var(--product-modal-muted)!important;font-size:11px}
+.public-store .modal .product-extra-controls button{
+  border:1px solid var(--product-modal-border)!important;border-radius:9px;background:var(--store-background)!important;color:var(--product-modal-text)!important
+}
+.public-store .modal .product-extra-controls button:disabled{opacity:.42}
+.public-store .modal .product-extra-controls b{color:var(--product-modal-text)!important}
+.public-store .modal .checkout-total{color:var(--product-modal-muted)!important}
+.public-store .modal .checkout-total b{color:var(--product-modal-text)!important}
+.public-store .modal .modal-actions{
+  padding:14px 24px!important;border-top:1px solid var(--product-modal-border)!important;
+  background:var(--store-background)!important
+}
+.public-store .modal .modal-actions button{min-height:44px;border-radius:11px;font-size:13px;font-weight:800}
+.public-store .modal .modal-actions .btn-solid,
+.public-store .modal .modal-actions .btn-primary{
+  background:var(--store-color)!important;color:var(--store-accent-text,#fff)!important;border:1px solid var(--store-color)!important
+}
+.public-store .modal .modal-actions .btn-ghost,
+.public-store .modal .modal-actions .btn-outline{
+  color:var(--product-modal-text)!important;border:1px solid var(--product-modal-border)!important;background:transparent!important
+}
+@media(max-width:700px){
+ .public-store .modal{border-radius:18px 18px 0 0}
+ .public-store .modal-head{padding:17px 18px}
+ .public-store .modal .product-config{padding:16px 18px 20px}
+ .public-store .modal .modal-actions{padding:12px 18px!important}
+}
