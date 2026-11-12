@@ -1186,7 +1186,7 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
       const savedVariants = groups.filter(group => ['variant','variants','variante','variantes'].includes(String(group.option_type).toLowerCase())).flatMap(values);
       const variants = inventory.length ? inventory.map(row=>({id:row.id,nombre:`${row.talla} · ${row.color}`,precio_extra:row.ajuste_precio})) : savedVariants;
       const addons = groups.filter(group => ['addon','addons','extra','extras','complemento','complementos'].includes(String(group.option_type).toLowerCase())).flatMap(values);
-      return {id:p.id,business_id:p.business_id,category_id:p.category_id || '',nombre:p.name,descripcion:p.description || '',precio:Number(p.price),precio_anterior:p.previous_price ? Number(p.previous_price) : undefined,imagen:p.image_url || undefined,activo:p.is_active,disponible:p.is_available,destacado:p.is_featured,stock:p.stock ?? 0,variantes:variants,inventario_variantes:inventory,complementos:addons};
+      return {id:p.id,business_id:p.business_id,category_id:p.category_id || '',nombre:p.name,descripcion:p.description || '',precio:Number(p.price),precio_anterior:p.previous_price ? Number(p.previous_price) : undefined,imagen:p.image_url || undefined,galeria:Array.isArray(p.image_gallery) && p.image_gallery.length ? p.image_gallery : (p.image_url ? [p.image_url] : []),activo:p.is_active,disponible:p.is_available,destacado:p.is_featured,stock:p.stock ?? 0,variantes:variants,inventario_variantes:inventory,complementos:addons};
     });
     const s = settingsResult.data;
     const settings: StoreSettings = {
