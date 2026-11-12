@@ -4550,3 +4550,120 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
     border-top:0!important;
   }
 }
+
+
+/* Definitive tablet landing footer layout: explicit grid areas, no flex-flow collisions */
+@media(min-width:621px) and (max-width:1100px){
+  .landing.clickok-world.stripe-inspired>footer.ck-footer{
+    position:relative!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    grid-template-rows:auto auto auto auto!important;
+    grid-template-areas:
+      "brands brands"
+      "tagline login"
+      "legal legal"
+      "trust trust"!important;
+    align-items:center!important;
+    justify-items:stretch!important;
+    gap:0 20px!important;
+    padding:28px 34px 30px!important;
+    text-align:left!important;
+  }
+  .landing.clickok-world.stripe-inspired>footer.ck-footer>.footer-brand-group{
+    grid-area:brands!important;
+    display:flex!important;
+    position:static!important;
+    align-items:center!important;
+    justify-content:center!important;
+    width:100%!important;
+    min-width:0!important;
+    margin:0 0 22px!important;
+    padding:0!important;
+    gap:0!important;
+  }
+  .landing.clickok-world.stripe-inspired>footer.ck-footer>.footer-brand-group>.brand{
+    display:flex!important;
+    flex:0 0 auto!important;
+    align-items:center!important;
+    justify-content:center!important;
+    width:auto!important;
+    margin:0!important;
+  }
+  .landing.clickok-world.stripe-inspired>footer.ck-footer>.footer-brand-group>.brand img{
+    display:block!important;
+    width:auto!important;
+    height:34px!important;
+    max-width:190px!important;
+    object-fit:contain!important;
+  }
+  .landing.clickok-world.stripe-inspired>footer.ck-footer>.footer-brand-group>.atomlabs-credit{
+    display:flex!important;
+    position:static!important;
+    flex:0 0 auto!important;
+    align-items:center!important;
+    justify-content:center!important;
+    width:auto!important;
+    margin:0 0 0 18px!important;
+    padding:0 0 0 18px!important;
+    border-left:1px solid #e2e6ee!important;
+    white-space:nowrap!important;
+  }
+  .landing.clickok-world.stripe-inspired>footer.ck-footer>span:first-of-type{
+    grid-area:tagline!important;
+    display:block!important;
+    position:static!important;
+    align-self:center!important;
+    justify-self:start!important;
+    width:auto!important;
+    min-width:0!important;
+    margin:0!important;
+    padding:0!important;
+    text-align:left!important;
+    line-height:1.5!important;
+    white-space:normal!important;
+  }
+  .landing.clickok-world.stripe-inspired>footer.ck-footer>span:nth-of-type(2){
+    display:none!important;
+  }
+  .landing.clickok-world.stripe-inspired>footer.ck-footer>.legal-footer-links{
+    grid-area:legal!important;
+    display:flex!important;
+    position:static!important;
+    align-items:center!important;
+    justify-content:center!important;
+    flex-wrap:wrap!important;
+    gap:14px 24px!important;
+    width:100%!important;
+    min-width:0!important;
+    margin:18px 0 16px!important;
+    padding:16px 0 0!important;
+    border-top:1px solid #e6eaf0!important;
+  }
+  .landing.clickok-world.stripe-inspired>footer.ck-footer>a:not(.atomlabs-credit){
+    grid-area:login!important;
+    display:flex!important;
+    position:static!important;
+    align-items:center!important;
+    justify-self:end!important;
+    width:max-content!important;
+    margin:0!important;
+    padding:0!important;
+    white-space:nowrap!important;
+  }
+  .landing.clickok-world.stripe-inspired>footer.ck-footer>.menuya-trust-badges{
+    grid-area:trust!important;
+    display:flex!important;
+    position:static!important;
+    align-items:center!important;
+    justify-content:center!important;
+    justify-self:center!important;
+    flex-wrap:nowrap!important;
+    gap:22px!important;
+    width:min(100%,620px)!important;
+    min-width:0!important;
+    margin:0!important;
+    padding:0!important;
+    border:0!important;
+  }
+}
