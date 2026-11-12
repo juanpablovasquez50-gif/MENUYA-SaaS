@@ -4246,3 +4246,31 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
     margin:0 auto!important;
   }
 }
+
+
+/* Storefront footer — compact spacing on tablets and desktop */
+@media(min-width:701px){
+  .public-store .public-store-landing-footer{
+    gap:14px 22px!important;
+    padding:24px clamp(24px,4vw,56px)!important;
+  }
+  .public-store .public-store-landing-footer .footer-brand-group{
+    gap:16px!important;
+  }
+  .public-store .public-store-landing-footer .menuya-trust-badges{
+    gap:20px!important;
+    padding-top:14px!important;
+  }
+}
+@media(min-width:701px) and (max-width:1100px){
+  .public-store .public-store-landing-footer{
+    column-gap:18px!important;
+    padding:22px 28px!important;
+  }
+  .public-store .public-store-landing-footer .legal-footer-links{
+    gap:12px!important;
+  }
+  .public-store .public-store-landing-footer .menuya-trust-badges{
+    gap:16px!important;
+  }
+}
