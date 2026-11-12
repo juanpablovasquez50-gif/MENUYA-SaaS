@@ -3506,3 +3506,64 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
  .public-store .public-main > .public-products .public-product-info p{font-size:11px!important}
 }
 
+
+
+/* Vitrina: tarjetas compactas y tipografia con mayor contraste */
+.public-store .public-category-section .public-product-info,
+.public-store .public-main > .public-products .public-product-info{
+  color:var(--store-text)!important;
+  text-align:left!important;
+}
+.public-store .public-category-section .public-product-info .product-title-button,
+.public-store .public-main > .public-products .public-product-info .product-title-button{
+  display:block!important;
+  width:100%!important;
+  color:var(--store-text)!important;
+  font-size:clamp(14px,1.45vw,18px)!important;
+  font-weight:850!important;
+  line-height:1.22!important;
+  letter-spacing:-.025em!important;
+  text-align:left!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+  opacity:1!important;
+}
+.public-store .public-category-section .public-product-info p,
+.public-store .public-main > .public-products .public-product-info p{
+  color:var(--store-text)!important;
+  opacity:.82!important;
+  font-size:clamp(11px,1.08vw,14px)!important;
+  font-weight:550!important;
+  line-height:1.35!important;
+  min-height:0!important;
+  height:auto!important;
+  max-width:100%!important;
+  margin:5px 0 8px!important;
+}
+.public-store .public-category-section .public-product-info .product-current-price,
+.public-store .public-main > .public-products .public-product-info .product-current-price{
+  display:inline-block!important;
+  color:var(--store-text)!important;
+  font-size:clamp(15px,1.55vw,19px)!important;
+  font-weight:900!important;
+  line-height:1.2!important;
+  letter-spacing:-.02em!important;
+  opacity:1!important;
+}
+.public-store .public-category-section .public-product-art>span,
+.public-store .public-main > .public-products .public-product-art>span{display:none!important}
+.public-store .public-product-art .product-sticker{
+  display:block!important;
+  position:absolute!important;
+  z-index:3!important;
+  top:9px!important;
+  left:9px!important;
+}
+@media(max-width:700px){
+ .public-store .public-category-section .public-product-info .product-title-button,
+ .public-store .public-main > .public-products .public-product-info .product-title-button{font-size:15px!important}
+ .public-store .public-category-section .public-product-info p,
+ .public-store .public-main > .public-products .public-product-info p{font-size:12px!important}
+ .public-store .public-category-section .public-product-info .product-current-price,
+ .public-store .public-main > .public-products .public-product-info .product-current-price{font-size:16px!important}
+}
