@@ -4217,3 +4217,32 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
  .public-store .public-store-landing-footer .menuya-trust-badges small{font-size:7px;line-height:1.15;white-space:normal}
 }
 
+
+
+/* Storefront footer spacing — match the compact rhythm of the landing footer */
+@media(max-width:700px){
+  .public-store .public-store-landing-footer{
+    padding:18px 20px 20px!important;
+    row-gap:0!important;
+  }
+  .public-store .public-store-landing-footer .footer-brand-group{
+    margin:0 0 14px!important;
+    min-height:29px!important;
+  }
+  .public-store .public-store-landing-footer>span:first-of-type{
+    margin:0 0 12px!important;
+    line-height:1.45!important;
+  }
+  .public-store .public-store-landing-footer>a:not(.atomlabs-credit){
+    margin:0 0 12px!important;
+  }
+  .public-store .public-store-landing-footer .legal-footer-links{
+    padding:12px 0 12px!important;
+    gap:18px!important;
+  }
+  .public-store .public-store-landing-footer .menuya-trust-badges{
+    padding:10px 11px!important;
+    gap:7px!important;
+    margin:0 auto!important;
+  }
+}
