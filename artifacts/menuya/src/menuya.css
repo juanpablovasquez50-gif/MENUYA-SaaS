@@ -3300,3 +3300,23 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
   }
 }
 
+/* Products table: prevent category text from colliding with product names */
+.table-wrap{max-width:100%;overflow-x:auto!important;overscroll-behavior-x:contain}
+.table-wrap table{width:100%;min-width:760px;table-layout:fixed}
+.table-wrap th:nth-child(1),.table-wrap td:nth-child(1){width:29%}
+.table-wrap th:nth-child(2),.table-wrap td:nth-child(2){width:17%}
+.table-wrap th:nth-child(3),.table-wrap td:nth-child(3){width:18%}
+.table-wrap th:nth-child(4),.table-wrap td:nth-child(4){width:16%}
+.table-wrap th:nth-child(5),.table-wrap td:nth-child(5){width:20%}
+.table-wrap td{vertical-align:middle;overflow:hidden}
+.table-wrap td:nth-child(2){white-space:normal;overflow-wrap:anywhere;line-height:1.35}
+.table-wrap .table-product{min-width:0;max-width:100%}
+.table-wrap .table-product>span:last-child{min-width:0;overflow:hidden}
+.table-wrap .table-product b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.table-wrap .table-product small{max-width:100%;white-space:nowrap;text-overflow:ellipsis}
+.table-wrap td:nth-child(3){white-space:nowrap}
+.table-wrap .old-price{display:inline-block;white-space:nowrap}
+@media(max-width:900px){
+  .table-wrap table{min-width:740px}
+}
+
