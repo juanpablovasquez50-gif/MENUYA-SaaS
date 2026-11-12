@@ -440,3 +440,96 @@ button,input,select,textarea{max-width:100%;touch-action:manipulation}
     font-size: 9px !important;
   }
 }
+
+
+/* Pedidos: mobile layout isolated from the rest of the dashboard. */
+@media (max-width: 700px) {
+  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    align-items: end !important;
+    gap: 12px 10px !important;
+  }
+  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) > .search-field {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 52px !important;
+  }
+  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) > select {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    min-height: 48px !important;
+    font-size: 14px !important;
+  }
+  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) > .date-filter {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-end !important;
+    gap: 7px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+  }
+  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) .date-filter input[type="date"] {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    max-height: 48px !important;
+    flex: none !important;
+    padding: 0 9px !important;
+    border: 1px solid #dce3ed !important;
+    border-radius: 11px !important;
+    background: #fff !important;
+    color: #273247 !important;
+    font: 500 13px/1.2 'DM Sans', sans-serif !important;
+    appearance: auto !important;
+    -webkit-appearance: auto !important;
+  }
+  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) > .toolbar-count {
+    grid-column: 1 / -1 !important;
+    justify-self: end !important;
+    margin: 0 !important;
+  }
+  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) + .table-wrap {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overscroll-behavior-inline: contain !important;
+  }
+  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) + .table-wrap table {
+    width: max-content !important;
+    min-width: 780px !important;
+    table-layout: auto !important;
+  }
+  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) + .table-wrap th,
+  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) + .table-wrap td {
+    width: auto !important;
+    white-space: nowrap !important;
+    overflow-wrap: normal !important;
+    padding: 12px 11px !important;
+    font-size: 12px !important;
+  }
+  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) + .table-wrap th:nth-child(1),
+  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) + .table-wrap td:nth-child(1) {
+    min-width: 82px !important;
+  }
+  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) + .table-wrap th:nth-child(2),
+  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) + .table-wrap td:nth-child(2) {
+    min-width: 155px !important;
+  }
+  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) + .table-wrap td:nth-child(2) .simple-cell {
+    min-width: 135px !important;
+  }
+  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) + .table-wrap td:nth-child(2) .simple-cell b {
+    white-space: normal !important;
+    overflow-wrap: break-word !important;
+  }
+}
