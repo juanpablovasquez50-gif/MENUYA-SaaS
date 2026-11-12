@@ -1436,3 +1436,14 @@ button,input,select,textarea{max-width:100%;touch-action:manipulation}
  .stripe-inspired .landing-actions .btn svg{width:13px;height:13px}
 }
 
+/* Distintivos informativos de seguridad en el pie de página */
+.menuya-trust-badges{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px 22px;width:100%;margin:24px auto 8px;padding:16px 0;border-top:1px solid rgba(125,135,160,.18);border-bottom:1px solid rgba(125,135,160,.18)}
+.menuya-trust-badges>span{display:inline-flex;align-items:center;gap:7px;color:var(--muted,#7d8798);font-size:12px;line-height:1.4}
+.menuya-trust-badges>span svg{flex:0 0 auto;color:#278b70}
+.menuya-trust-badges>span b{font-weight:600}
+.menuya-trust-badges .trust-lock{font-size:15px;line-height:1}
+@media(max-width:560px){
+ .menuya-trust-badges{display:grid;grid-template-columns:1fr;justify-items:center;gap:12px;margin-top:20px;padding:16px 8px}
+ .menuya-trust-badges>span{font-size:11px}
+}
+
