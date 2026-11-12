@@ -3320,3 +3320,43 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
   .table-wrap table{min-width:740px}
 }
 
+/* Definitive fix: use the same explicit grid tracks for product table header and rows */
+.dashboard-shell .workspace .table-wrap:has(tbody tr[data-testid^="row-product-"]){
+  width:100%;max-width:100%;overflow-x:auto!important;
+}
+.dashboard-shell .workspace .table-wrap:has(tbody tr[data-testid^="row-product-"]) table{
+  display:block!important;width:100%!important;min-width:780px!important;
+  table-layout:auto!important;white-space:normal!important;
+}
+.dashboard-shell .workspace .table-wrap:has(tbody tr[data-testid^="row-product-"]) thead,
+.dashboard-shell .workspace .table-wrap:has(tbody tr[data-testid^="row-product-"]) tbody{
+  display:block!important;width:100%!important;
+}
+.dashboard-shell .workspace .table-wrap:has(tbody tr[data-testid^="row-product-"]) tr{
+  display:grid!important;
+  grid-template-columns:minmax(245px,2fr) minmax(125px,1.05fr) minmax(145px,1.15fr) minmax(105px,.9fr) minmax(112px,.9fr)!important;
+  align-items:center!important;width:100%!important;
+}
+.dashboard-shell .workspace .table-wrap:has(tbody tr[data-testid^="row-product-"]) th,
+.dashboard-shell .workspace .table-wrap:has(tbody tr[data-testid^="row-product-"]) td{
+  display:flex!important;align-items:center!important;
+  box-sizing:border-box!important;min-width:0!important;width:auto!important;
+  max-width:none!important;overflow:hidden!important;
+  white-space:normal!important;padding:12px 10px!important;
+}
+.dashboard-shell .workspace .table-wrap:has(tbody tr[data-testid^="row-product-"]) td:nth-child(2){
+  overflow-wrap:anywhere!important;line-height:1.35!important;
+}
+.dashboard-shell .workspace .table-wrap:has(tbody tr[data-testid^="row-product-"]) .table-product{
+  display:flex!important;min-width:0!important;width:100%!important;gap:9px!important;
+}
+.dashboard-shell .workspace .table-wrap:has(tbody tr[data-testid^="row-product-"]) .table-product>span:last-child{
+  display:grid!important;min-width:0!important;flex:1!important;overflow:hidden!important;
+}
+.dashboard-shell .workspace .table-wrap:has(tbody tr[data-testid^="row-product-"]) .table-product b{
+  display:block!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+}
+.dashboard-shell .workspace .table-wrap:has(tbody tr[data-testid^="row-product-"]) .old-price{
+  display:inline-block!important;white-space:nowrap!important;margin-left:5px!important;
+}
+
