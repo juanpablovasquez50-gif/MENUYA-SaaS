@@ -3934,10 +3934,4 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 }
 
 
-/* Marca blanca Pro: ocultar el logo de la tienda en móviles y tablets */
-@media (max-width: 1024px) {
-  .public-store.public-store-pro .public-store-intro > .public-logo {
-    display: none !important;
-    visibility: hidden !important;
-  }
-}
+/* El logo propio del comercio permanece visible también en móviles. */
