@@ -3659,7 +3659,7 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 
 /* Vitrina: precio principal con jerarquia visual reforzada */
 .public-store .public-product-info .public-product-prices .product-current-price {
-  font-size: clamp(20px, 2.15vw, 25px) !important;
+  font-size: clamp(24px, 2.58vw, 30px) !important;
   font-weight: 950 !important;
   line-height: 1.15 !important;
   letter-spacing: -0.035em !important;
@@ -3667,12 +3667,12 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
   opacity: 1 !important;
 }
 .public-store .public-product-info .public-product-prices del {
-  font-size: 13px !important;
+  font-size: 14px !important;
   font-weight: 600 !important;
   opacity: .8 !important;
 }
 @media (max-width: 700px) {
   .public-store .public-product-info .public-product-prices .product-current-price {
-    font-size: 20px !important;
+    font-size: 24px !important;
   }
 }
