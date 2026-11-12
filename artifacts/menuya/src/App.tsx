@@ -868,10 +868,30 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
   }, [slug]);
   if (!business) return <NotFound />;
   const settings: StoreSettings = data.settings.find(s => s.business_id === business.id) ?? { business_id: business.id, portada: '', logo: '', color: '#e7785d', background_color: '#f7f7f5', card_background_color: '#ffffff', fuente: 'Manrope', contacto: business.telefono, redes: '', pagos: 'Efectivo, Nequi', entrega: 'Domicilio y recoger en tienda', direccion: '', tiempo_entrega: '', publicado: false, tagline: '', layout: 'grid', card_style: 'classic', button_style: 'rounded' };
-  // Supabase stores subscription status as 'active'; legacy/demo data may use 'activa'.
-  const activeStoreSubscription = data.subscriptions.find(item => item.business_id === business.id && ['active', 'activa'].includes(String(item.estado || '').toLowerCase()));
-  const activeStorePlan = data.plans.find(item => item.id === activeStoreSubscription?.plan_id);
-  const isProStore = Boolean(activeStorePlan?.nombre?.toLowerCase().includes('pro') || activeStorePlan?.funciones?.some(feature => /quitar.*marca|sin.*marca|white.?label/i.test(feature)));
+  const [isProStore, setIsProStore] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    const loadStorePlan = async () => {
+      const { data: subscription, error } = await supabase
+        .from('subscriptions')
+        .select('status,plans(name,features)')
+        .eq('business_id', business.id)
+        .maybeSingle();
+      if (!alive) return;
+      if (error) {
+        console.warn('No se pudo verificar el plan de la vitrina:', error.message);
+        setIsProStore(false);
+        return;
+      }
+      const status = String(subscription?.status || '').toLowerCase();
+      const plan = Array.isArray(subscription?.plans) ? subscription.plans[0] : subscription?.plans;
+      const planName = String(plan?.name || '').toLowerCase();
+      const features = Array.isArray(plan?.features) ? plan.features : [];
+      setIsProStore(['active','activa'].includes(status) && (planName.includes('pro') || features.some((feature: unknown) => /quitar.*marca|sin.*marca|white.?label/i.test(String(feature)))));
+    };
+    void loadStorePlan();
+    return () => { alive = false; };
+  }, [business.id]);
   const cats = data.categories.filter(c => c.business_id === business.id && c.activo).sort((a, b) => a.orden - b.orden);
   const products = data.products.filter(p => p.business_id === business.id && p.activo && p.disponible && (category === 'todos' || p.category_id === category) && `${p.nombre} ${p.descripcion}`.toLowerCase().includes(search.toLowerCase()));
   const featuredProducts = category === 'todos' && !search ? products.filter(p => p.destacado) : [];
