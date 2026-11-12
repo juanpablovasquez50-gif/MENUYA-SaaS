@@ -3932,3 +3932,12 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
   .public-store .public-product-info p{font-size:13px!important;line-height:1.16!important}
   .public-store .public-product-info .public-product-prices>b.product-current-price{font-size:22px!important}
 }
+
+
+/* Marca blanca Pro: ocultar el logo de la tienda en móviles y tablets */
+@media (max-width: 1024px) {
+  .public-store.public-store-pro .public-store-intro > .public-logo {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
