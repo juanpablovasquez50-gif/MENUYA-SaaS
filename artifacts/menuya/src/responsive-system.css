@@ -198,3 +198,245 @@ button,input,select,textarea{max-width:100%;touch-action:manipulation}
     min-width: 0;
   }
 }
+
+
+/* Merchant dashboard: mobile-first layout refinements.
+   Tablet and desktop layouts remain unchanged. */
+@media (max-width: 700px) {
+  .merchant-dashboard {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: clip !important;
+  }
+  .merchant-dashboard .workspace {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+  .merchant-dashboard .workspace-top {
+    display: grid !important;
+    grid-template-columns: 40px minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-height: 62px !important;
+    padding: 8px 12px !important;
+  }
+  .merchant-dashboard .mobile-menu {
+    grid-column: 1;
+    grid-row: 1;
+    margin: 0 !important;
+    width: 38px !important;
+    height: 38px !important;
+  }
+  .merchant-dashboard .crumb {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    font-size: 11px !important;
+    gap: 5px !important;
+  }
+  .merchant-dashboard .crumb:first-letter { text-transform: uppercase; }
+  .merchant-dashboard .top-actions {
+    grid-column: 3;
+    grid-row: 1;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    min-width: 0 !important;
+    gap: 10px !important;
+  }
+  .merchant-dashboard .top-actions select {
+    max-width: 30vw !important;
+    min-width: 0 !important;
+    font-size: 11px !important;
+  }
+  .merchant-dashboard .top-icon {
+    width: 34px;
+    height: 38px;
+    flex: 0 0 34px;
+  }
+  .merchant-dashboard .top-avatar {
+    width: 30px !important;
+    height: 30px !important;
+    flex: 0 0 30px !important;
+  }
+  .merchant-dashboard .page-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 20px 14px calc(34px + var(--menuya-safe-bottom)) !important;
+  }
+  .merchant-dashboard .page-title {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    margin-bottom: 20px !important;
+  }
+  .merchant-dashboard .page-title h1 {
+    font-size: clamp(25px, 7vw, 31px) !important;
+    line-height: 1.08 !important;
+    letter-spacing: -.8px !important;
+  }
+  .merchant-dashboard .page-title p {
+    font-size: 13px !important;
+    line-height: 1.5 !important;
+  }
+  .merchant-dashboard .page-title .title-action {
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+  .merchant-dashboard .page-title .title-action > * {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+  .merchant-dashboard .metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 9px !important;
+  }
+  .merchant-dashboard .metric {
+    min-width: 0 !important;
+    min-height: 108px !important;
+    padding: 12px !important;
+  }
+  .merchant-dashboard .metric-top {
+    align-items: flex-start !important;
+    gap: 6px !important;
+    font-size: 10px !important;
+    line-height: 1.3 !important;
+  }
+  .merchant-dashboard .metric > b {
+    margin: 10px 0 6px !important;
+    font-size: clamp(18px, 5.5vw, 24px) !important;
+    overflow-wrap: anywhere !important;
+  }
+  .merchant-dashboard .metric-foot {
+    flex-wrap: wrap !important;
+    font-size: 10px !important;
+    line-height: 1.3 !important;
+  }
+  .merchant-dashboard .dashboard-grid,
+  .merchant-dashboard .admin-overview-grid,
+  .merchant-dashboard .analytics-grid,
+  .merchant-dashboard .settings-grid,
+  .merchant-dashboard .form-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .merchant-dashboard .panel {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 15px !important;
+    border-radius: 13px !important;
+  }
+  .merchant-dashboard .panel-head {
+    align-items: flex-start !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  .merchant-dashboard .panel-head h2 {
+    font-size: 17px !important;
+    line-height: 1.25 !important;
+  }
+  .merchant-dashboard .toolbar,
+  .merchant-dashboard .filters,
+  .merchant-dashboard .page-actions {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  .merchant-dashboard .toolbar > *,
+  .merchant-dashboard .filters > *,
+  .merchant-dashboard .page-actions > * {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+  .merchant-dashboard .toolbar input,
+  .merchant-dashboard .toolbar select,
+  .merchant-dashboard .filters input,
+  .merchant-dashboard .filters select {
+    flex: 1 1 145px !important;
+    width: 100% !important;
+  }
+  .merchant-dashboard .table-wrap {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    border-radius: 10px !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-x pan-y !important;
+  }
+  .merchant-dashboard .table-wrap table {
+    width: max-content !important;
+    min-width: 620px !important;
+  }
+  .merchant-dashboard .table-wrap th,
+  .merchant-dashboard .table-wrap td {
+    padding: 12px 10px !important;
+    font-size: 11px !important;
+  }
+  .merchant-dashboard input,
+  .merchant-dashboard select,
+  .merchant-dashboard textarea {
+    font-size: 16px;
+  }
+  .merchant-dashboard .btn,
+  .merchant-dashboard button:not(.icon-btn):not(.mobile-shade) {
+    min-height: 42px;
+  }
+  .merchant-dashboard .form-grid .field {
+    grid-column: 1 / -1 !important;
+  }
+  .merchant-dashboard .sidebar {
+    width: min(310px, 88vw) !important;
+    max-width: 88vw !important;
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+  }
+  .merchant-dashboard .side-link {
+    min-height: 46px !important;
+    font-size: 13px !important;
+  }
+  .merchant-dashboard .side-link svg {
+    width: 19px;
+    height: 19px;
+    flex: 0 0 19px;
+  }
+  .merchant-dashboard .business-select {
+    margin-bottom: 20px !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .merchant-dashboard .page-content {
+    padding-left: 11px !important;
+    padding-right: 11px !important;
+  }
+  .merchant-dashboard .workspace-top {
+    grid-template-columns: 38px minmax(0, 1fr) auto !important;
+    gap: 5px !important;
+    padding-inline: 8px !important;
+  }
+  .merchant-dashboard .crumb {
+    font-size: 10px !important;
+  }
+  .merchant-dashboard .top-actions {
+    gap: 6px !important;
+  }
+  .merchant-dashboard .metrics-grid {
+    gap: 7px !important;
+  }
+  .merchant-dashboard .metric {
+    padding: 10px !important;
+  }
+  .merchant-dashboard .metric-top {
+    font-size: 9px !important;
+  }
+}
