@@ -3676,3 +3676,27 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
     font-size: 24px !important;
   }
 }
+
+
+/* Final price hierarchy: current price larger than the crossed-out previous price */
+.public-store .public-product-info .public-product-prices > b.product-current-price{
+  display:inline-block!important;
+  font-size:clamp(27px,2.9vw,34px)!important;
+  font-weight:950!important;
+  line-height:1.1!important;
+  color:var(--store-text,#fff)!important;
+  opacity:1!important;
+}
+.public-store .public-product-info .public-product-prices > del{
+  font-size:11px!important;
+  font-weight:600!important;
+  opacity:.72!important;
+}
+@media(max-width:700px){
+  .public-store .public-product-info .public-product-prices > b.product-current-price{
+    font-size:25px!important;
+  }
+  .public-store .public-product-info .public-product-prices > del{
+    font-size:11px!important;
+  }
+}
