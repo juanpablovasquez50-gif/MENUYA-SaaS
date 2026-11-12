@@ -3269,3 +3269,34 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
   .public-store .public-main{padding-bottom:105px!important}
 }
 
+/* Editable promotional stickers on storefront product photography */
+.public-store .public-product-art{position:relative}
+.public-store .public-product-art .product-sticker{
+  position:absolute;
+  z-index:5;
+  top:12px;
+  right:12px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  max-width:calc(100% - 24px);
+  padding:8px 12px;
+  border:2px solid #fff;
+  border-radius:7px 7px 7px 2px;
+  background:#ef4444;
+  color:#fff;
+  font-size:11px;
+  line-height:1;
+  font-weight:950;
+  letter-spacing:.035em;
+  text-transform:uppercase;
+  box-shadow:0 4px 12px rgba(0,0,0,.22);
+  transform:rotate(2deg);
+  pointer-events:none;
+}
+@media(max-width:640px){
+  .public-store .public-product-art .product-sticker{
+    top:8px;right:8px;padding:7px 9px;font-size:9px;
+  }
+}
+
