@@ -3222,3 +3222,50 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
   }
 }
 
+/* Storefront cart dock: fixed bottom bar using each shop's institutional color */
+.public-store .public-toolbar .cart-button{
+  position:fixed!important;
+  z-index:80!important;
+  left:50%!important;
+  right:auto!important;
+  bottom:max(14px,env(safe-area-inset-bottom))!important;
+  transform:translateX(-50%)!important;
+  width:min(560px,calc(100vw - 28px))!important;
+  min-height:58px!important;
+  justify-content:center!important;
+  gap:12px!important;
+  padding:0 22px!important;
+  border:1px solid color-mix(in srgb,var(--store-color) 85%,#111)!important;
+  border-radius:12px!important;
+  background:var(--store-color)!important;
+  color:var(--store-accent-text,#fff)!important;
+  box-shadow:0 10px 30px rgba(15,23,42,.24)!important;
+  font-size:15px!important;
+  font-weight:850!important;
+}
+.public-store .public-toolbar .cart-button span{
+  width:25px!important;height:25px!important;
+  border-radius:8px!important;
+  background:color-mix(in srgb,var(--store-accent-text,#fff) 18%,transparent)!important;
+  color:var(--store-accent-text,#fff)!important;
+  font-size:12px!important;
+}
+.public-store .public-toolbar .cart-button svg{width:20px;height:20px}
+.public-store .public-product-info .quantity-control{
+  display:none!important;
+}
+.public-store .public-product-art>button{
+  background:var(--store-color)!important;
+  color:var(--store-accent-text,#fff)!important;
+  border:0!important;
+}
+@media(max-width:700px){
+  .public-store .public-toolbar .cart-button{
+    bottom:max(12px,env(safe-area-inset-bottom))!important;
+    width:calc(100vw - 28px)!important;
+    min-height:56px!important;
+    border-radius:12px!important;
+  }
+  .public-store .public-main{padding-bottom:105px!important}
+}
+
