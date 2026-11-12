@@ -1383,3 +1383,32 @@ button,input,select,textarea{max-width:100%;touch-action:manipulation}
     border-top: 1px solid #edf0f5 !important;
   }
 }
+
+/* Auth móvil: tarjeta espaciada, siguiendo la referencia del acceso de meseros */
+@media(max-width:560px){
+ .auth-layout{min-height:100svh;background:#f3f5fb}
+ .auth-story{display:none}
+ .auth-main{min-height:100svh;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:22px;padding:28px 20px calc(28px + var(--menuya-safe-bottom));background:linear-gradient(180deg,#f0efff 0%,#f5f7fb 42%,#f3f5fb 100%)}
+ .auth-mobile-brand{display:flex;justify-content:center;align-items:center;margin:0 auto 2px}
+ .auth-mobile-brand .brand img{max-width:188px;height:auto}
+ .auth-form-wrap{width:100%;max-width:420px;margin:0 auto;padding:24px 20px 22px;background:#fff;border:1px solid #e9edf5;border-radius:24px;box-shadow:0 16px 42px rgba(31,45,75,.09)}
+ .auth-form-wrap h2{margin:12px 0 9px;font-size:clamp(25px,7vw,29px);line-height:1.18;letter-spacing:-.8px}
+ .auth-form-wrap>.subtle{margin:0 0 24px;font-size:13px;line-height:1.65;color:#7d8ba0}
+ .form-stack{gap:17px}
+ .auth-form-wrap .field{gap:8px;font-size:11px;line-height:1.4}
+ .auth-form-wrap .field input,.auth-form-wrap .field select,.auth-form-wrap .field textarea{min-height:48px;padding:12px 13px;border-radius:12px;border-color:#dfe6f1;background:#fff;font-size:13px}
+ .auth-form-wrap .password-wrap input{padding-right:44px}
+ .auth-form-wrap .password-eye{right:10px}
+ .auth-form-wrap .full-btn{min-height:50px;margin-top:3px;border-radius:12px}
+ .auth-form-wrap .auth-switch{margin-top:22px;line-height:1.6}
+ .auth-form-wrap .security-note{margin-top:22px;line-height:1.5;text-align:center}
+ .auth-form-wrap .fine-print{line-height:1.55}
+ .auth-form-wrap .legal-consent{align-items:flex-start;gap:10px;line-height:1.55}
+}
+@media(max-width:380px){
+ .auth-main{padding-left:14px;padding-right:14px}
+ .auth-form-wrap{padding:21px 17px 20px;border-radius:22px}
+ .auth-form-wrap>.subtle{margin-bottom:21px}
+ .form-stack{gap:15px}
+}
+
