@@ -1412,3 +1412,27 @@ button,input,select,textarea{max-width:100%;touch-action:manipulation}
  .form-stack{gap:15px}
 }
 
+/* Landing móvil: evitar que el CTA del encabezado se recorte en pantallas estrechas */
+@media(max-width:420px){
+ .stripe-inspired .landing-nav{
+   min-width:0;gap:7px;padding-left:12px;padding-right:12px;
+ }
+ .stripe-inspired .landing-nav>.brand{
+   flex:0 1 auto;min-width:0;max-width:36%;overflow:hidden;
+ }
+ .stripe-inspired .landing-nav>.brand img{
+   display:block;width:100%;max-width:118px;height:auto;object-fit:contain;
+ }
+ .stripe-inspired .landing-actions{
+   flex:0 0 auto;min-width:0;gap:7px;margin-left:auto;
+ }
+ .stripe-inspired .landing-actions .nav-login{
+   flex:0 0 auto;white-space:nowrap;font-size:9px;
+ }
+ .stripe-inspired .landing-actions .btn{
+   flex:0 0 auto;white-space:nowrap;min-height:36px;padding:0 9px!important;
+   font-size:9px!important;gap:4px;
+ }
+ .stripe-inspired .landing-actions .btn svg{width:13px;height:13px}
+}
+
