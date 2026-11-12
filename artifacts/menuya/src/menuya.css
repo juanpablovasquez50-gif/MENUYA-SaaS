@@ -5140,3 +5140,35 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
     text-align:left!important;
   }
 }
+
+
+/* CLICKOK Studio: the editor preview renders the real storefront, not a mockup */
+.studio-preview-live{min-width:0}
+.studio-browser-live{
+  width:100%;
+  max-height:calc(100vh - 235px);
+  min-height:560px;
+  overflow:auto;
+  overscroll-behavior:contain;
+  border:1px solid #e6eaf0;
+  border-radius:13px;
+  background:#fff;
+  box-shadow:0 12px 35px rgba(20,38,66,.10);
+  scrollbar-gutter:stable;
+}
+.studio-browser-live>.public-store{
+  width:100%;
+  min-width:0;
+  min-height:0;
+  overflow:visible;
+  border-radius:0;
+}
+.studio-browser-live .public-store-landing-footer{position:relative}
+.studio-preview-live .studio-preview-foot{align-items:flex-start}
+.studio-preview-live .studio-preview-foot small{max-width:58%;line-height:1.5}
+@media(max-width:1050px){
+  .studio-browser-live{max-height:70vh;min-height:480px}
+}
+@media(max-width:700px){
+  .studio-browser-live{max-height:68vh;min-height:420px}
+}
