@@ -4452,3 +4452,101 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
     border-top:0!important;
   }
 }
+
+
+/* Tablet and desktop landing footer: same hierarchy as the working phone layout */
+@media(min-width:621px){
+  .stripe-inspired .ck-footer{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    grid-template-rows:auto auto auto auto!important;
+    align-items:center!important;
+    column-gap:24px!important;
+    row-gap:0!important;
+    padding:26px clamp(28px,5vw,64px) 28px!important;
+    text-align:left!important;
+  }
+  .stripe-inspired .ck-footer>.footer-brand-group{
+    grid-column:1/-1!important;
+    grid-row:1!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:0!important;
+    width:100%!important;
+    margin:0 0 20px!important;
+  }
+  .stripe-inspired .ck-footer>.footer-brand-group>.brand{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    flex:0 0 auto!important;
+    width:auto!important;
+    margin:0!important;
+  }
+  .stripe-inspired .ck-footer>.footer-brand-group>.brand img{
+    display:block!important;
+    width:auto!important;
+    height:34px!important;
+    max-width:190px!important;
+    object-fit:contain!important;
+  }
+  .stripe-inspired .ck-footer>.footer-brand-group>.atomlabs-credit{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    flex:0 0 auto!important;
+    margin:0 0 0 18px!important;
+    padding:0 0 0 18px!important;
+    border-left:1px solid #e2e6ee!important;
+    white-space:nowrap!important;
+  }
+  .stripe-inspired .ck-footer>span:first-of-type{
+    grid-column:1!important;
+    grid-row:2!important;
+    display:block!important;
+    justify-self:start!important;
+    margin:0 0 16px!important;
+    font-size:12px!important;
+    line-height:1.5!important;
+    white-space:normal!important;
+  }
+  .stripe-inspired .ck-footer>span:nth-of-type(2){display:none!important}
+  .stripe-inspired .ck-footer>.legal-footer-links{
+    grid-column:1/-1!important;
+    grid-row:3!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    flex-wrap:wrap!important;
+    gap:16px 24px!important;
+    width:100%!important;
+    margin:0!important;
+    padding:16px 0 14px!important;
+    border-top:1px solid #e6eaf0!important;
+  }
+  .stripe-inspired .ck-footer>a:not(.atomlabs-credit){
+    grid-column:2!important;
+    grid-row:2!important;
+    justify-self:end!important;
+    display:flex!important;
+    align-items:center!important;
+    gap:6px!important;
+    margin:0 0 16px!important;
+    white-space:nowrap!important;
+  }
+  .stripe-inspired .ck-footer>.menuya-trust-badges{
+    grid-column:1/-1!important;
+    grid-row:4!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    flex-wrap:nowrap!important;
+    gap:22px!important;
+    width:min(100%,620px)!important;
+    justify-self:center!important;
+    margin:0!important;
+    padding:14px 16px 0!important;
+    border-top:0!important;
+  }
+}
