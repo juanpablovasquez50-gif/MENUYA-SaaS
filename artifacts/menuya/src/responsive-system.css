@@ -729,3 +729,144 @@ button,input,select,textarea{max-width:100%;touch-action:manipulation}
   .merchant-dashboard .products-table td,
   .merchant-dashboard .customers-table td { font-size: 11px !important; }
 }
+
+
+/* Hotfix: compact mobile record cards. Override legacy table column sizing. */
+@media (max-width: 700px) {
+  .dashboard-shell .workspace .products-table,
+  .dashboard-shell .workspace .customers-table {
+    overflow: visible !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+  .dashboard-shell .workspace .products-table table,
+  .dashboard-shell .workspace .customers-table table {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    table-layout: auto !important;
+  }
+  .dashboard-shell .workspace .products-table thead,
+  .dashboard-shell .workspace .customers-table thead { display: none !important; }
+  .dashboard-shell .workspace .products-table tbody,
+  .dashboard-shell .workspace .customers-table tbody {
+    display: grid !important;
+    grid-auto-rows: min-content !important;
+    align-content: start !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+  .dashboard-shell .workspace .products-table tbody tr,
+  .dashboard-shell .workspace .customers-table tbody tr {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-auto-rows: min-content !important;
+    align-content: start !important;
+    align-items: start !important;
+    gap: 0 10px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 10px 12px !important;
+    box-sizing: border-box !important;
+    border: 1px solid #e5eaf1 !important;
+    border-radius: 12px !important;
+    background: #fff !important;
+    box-shadow: 0 2px 8px rgba(28,45,70,.04) !important;
+  }
+  .dashboard-shell .workspace .products-table tbody td,
+  .dashboard-shell .workspace .customers-table tbody td {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    align-self: start !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    box-sizing: border-box !important;
+    padding: 7px 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    color: #526176 !important;
+    font-size: 12px !important;
+    line-height: 1.35 !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+  .dashboard-shell .workspace .products-table tbody td:first-child,
+  .dashboard-shell .workspace .customers-table tbody td:first-child {
+    grid-column: 1 / -1 !important;
+    padding-bottom: 9px !important;
+    margin-bottom: 2px !important;
+    border-bottom: 1px solid #edf0f5 !important;
+  }
+  .dashboard-shell .workspace .products-table .table-product,
+  .dashboard-shell .workspace .customers-table .table-product {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    gap: 10px !important;
+  }
+  .dashboard-shell .workspace .products-table .table-product b,
+  .dashboard-shell .workspace .customers-table .table-product b {
+    display: block !important;
+    max-width: 100% !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    font-size: 13px !important;
+  }
+  .dashboard-shell .workspace .products-table .table-product small {
+    max-width: 100% !important;
+    white-space: normal !important;
+  }
+  .dashboard-shell .workspace .products-table tbody td:nth-child(2)::before { content: "Categoría"; }
+  .dashboard-shell .workspace .products-table tbody td:nth-child(3)::before { content: "Precio"; }
+  .dashboard-shell .workspace .products-table tbody td:nth-child(4)::before { content: "Estado"; }
+  .dashboard-shell .workspace .customers-table tbody td:nth-child(2)::before { content: "Teléfono"; }
+  .dashboard-shell .workspace .customers-table tbody td:nth-child(3)::before { content: "Pedidos"; }
+  .dashboard-shell .workspace .customers-table tbody td:nth-child(4)::before { content: "Compras"; }
+  .dashboard-shell .workspace .customers-table tbody td:nth-child(5)::before { content: "Último pedido"; }
+  .dashboard-shell .workspace .products-table tbody td:nth-child(2)::before,
+  .dashboard-shell .workspace .products-table tbody td:nth-child(3)::before,
+  .dashboard-shell .workspace .products-table tbody td:nth-child(4)::before,
+  .dashboard-shell .workspace .customers-table tbody td:nth-child(2)::before,
+  .dashboard-shell .workspace .customers-table tbody td:nth-child(3)::before,
+  .dashboard-shell .workspace .customers-table tbody td:nth-child(4)::before,
+  .dashboard-shell .workspace .customers-table tbody td:nth-child(5)::before {
+    flex: 0 0 auto !important;
+    margin-right: 4px !important;
+    color: #8793a5 !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+  }
+  .dashboard-shell .workspace .products-table tbody td:nth-child(5),
+  .dashboard-shell .workspace .customers-table tbody td:nth-child(6) {
+    grid-column: 1 / -1 !important;
+    justify-content: flex-end !important;
+    padding-top: 8px !important;
+    margin-top: 2px !important;
+    border-top: 1px solid #edf0f5 !important;
+  }
+  .dashboard-shell .workspace .products-table .table-actions {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+  }
+  .dashboard-shell .workspace .products-table .table-actions button {
+    flex: 0 0 36px !important;
+    width: 36px !important;
+    min-width: 36px !important;
+    max-width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    border: 1px solid #e7ebf2 !important;
+    border-radius: 9px !important;
+    background: #f8faff !important;
+  }
+}
