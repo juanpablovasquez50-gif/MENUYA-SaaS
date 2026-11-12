@@ -2764,3 +2764,22 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .image-gallery-add input[type=file]{display:none}
 .image-gallery-hint{display:block;margin-top:8px;color:var(--text-muted,#788295);font-size:11px;line-height:1.45}
 @media(max-width:560px){.image-gallery-manager{padding:9px}.image-gallery-track{gap:9px}.image-gallery-item,.image-gallery-add{flex-basis: min(68vw,190px)}.image-gallery-add{min-height:174px}}
+
+
+/* La galería ocupa todo el ancho del formulario; no debe quedar atrapada en una columna */
+.form-grid .field:has(.image-gallery-manager){grid-column:1 / -1 !important;width:100%;min-width:0}
+.image-gallery-heading{width:100%;gap:10px}
+.image-gallery-heading>span{font-size:13px;font-weight:750;letter-spacing:.005em}
+.image-gallery-heading>small{white-space:nowrap}
+.image-gallery-manager{width:100%;box-sizing:border-box}
+.image-gallery-track{width:100%;box-sizing:border-box;flex-flow:row nowrap;align-items:stretch}
+.image-gallery-item{flex:0 0 184px;width:184px}
+.image-gallery-add{flex:0 0 184px;width:184px;min-height:0}
+.image-gallery-photo img{aspect-ratio:4/3}
+.image-gallery-actions{flex-wrap:nowrap}
+.image-gallery-hint{max-width:720px}
+@media(max-width:560px){
+ .form-grid .field:has(.image-gallery-manager){grid-column:1 / -1 !important}
+ .image-gallery-item,.image-gallery-add{flex:0 0 72vw;width:72vw}
+ .image-gallery-photo img{aspect-ratio:4/3}
+}
