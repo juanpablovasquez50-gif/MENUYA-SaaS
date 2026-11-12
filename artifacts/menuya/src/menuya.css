@@ -4216,36 +4216,4 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
  .public-store .public-store-landing-footer .menuya-trust-badges b{font-size:8px;white-space:nowrap}
  .public-store .public-store-landing-footer .menuya-trust-badges small{font-size:7px;line-height:1.15;white-space:normal}
 }
- .public-store .public-store-landing-footer .footer-brand-group{
-  grid-column:1/-1;width:100%;display:grid;grid-template-columns:max-content max-content;
-  align-items:center;justify-content:center;justify-items:center;column-gap:24px;margin:0
- }
- .public-store .public-store-landing-footer .footer-brand-group>.brand{
-  display:flex;align-items:center;justify-self:end;flex:0 0 auto;width:max-content!important;margin:0!important
- }
- .public-store .public-store-landing-footer .footer-brand-group>.atomlabs-credit{
-  display:flex;align-items:center;justify-self:start;flex:0 0 auto;width:max-content!important;
-  margin:0!important;padding:0!important;white-space:nowrap
- }
- .public-store .public-store-landing-footer .footer-brand-group .atomlabs-credit b{white-space:nowrap}
- .public-store .public-store-landing-footer>span:first-of-type{grid-column:1;grid-row:2;width:auto;margin:0;text-align:left}
- .public-store .public-store-landing-footer>span:nth-of-type(2){display:none}
- .public-store .public-store-landing-footer>a:not(.atomlabs-credit){grid-column:2;grid-row:2;justify-self:end;white-space:nowrap}
- .public-store .public-store-landing-footer .legal-footer-links{
-  grid-column:1/-1;display:flex;justify-content:center;width:100%;gap:14px;flex-wrap:nowrap;
-  padding:12px 0 0;border-top:1px solid #e9e6ef
- }
- .public-store .public-store-landing-footer .legal-footer-links a{white-space:nowrap;font-size:9px}
- .public-store .public-store-landing-footer .menuya-trust-badges{
-  grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:7px;flex-wrap:nowrap;
-  width:100%;padding:11px 9px;border:1px solid #e6eaf0;border-radius:12px;background:#fff;
-  box-shadow:0 5px 16px #1823310a
- }
- .public-store .public-store-landing-footer .menuya-trust-badges>span{
-  display:flex;align-items:center;gap:4px;flex:1;min-width:0;text-align:left;color:#159b75
- }
- .public-store .public-store-landing-footer .menuya-trust-badges>span>svg{width:15px;height:15px;flex:0 0 15px}
- .public-store .public-store-landing-footer .menuya-trust-badges>span>span{display:grid;min-width:0;gap:1px}
- .public-store .public-store-landing-footer .menuya-trust-badges b{font-size:7px;white-space:nowrap}
- .public-store .public-store-landing-footer .menuya-trust-badges small{font-size:6px;line-height:1.15;white-space:normal}
-}
+
