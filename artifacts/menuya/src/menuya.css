@@ -2801,3 +2801,21 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
  .public-store .product-detail-image{height:clamp(190px,58vw,290px)}
  .public-store .product-detail-gallery-track{border-radius:13px}
 }
+
+
+/* Galería pública cuadrada; una foto se centra, varias se deslizan */
+.public-store .product-detail-gallery{display:flex;flex-direction:column;align-items:center;width:100%;min-width:0;margin:0 0 18px}
+.public-store .product-detail-gallery-track{display:flex;flex-flow:row nowrap;gap:12px;width:100%;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;border-radius:16px;background:transparent}
+.public-store .product-detail-gallery-track::-webkit-scrollbar{display:none}
+.public-store .product-detail-slide{position:relative;display:flex;flex:0 0 min(100%,420px);width:min(100%,420px);aspect-ratio:1/1;min-width:0;align-items:center;justify-content:center;margin:0;padding:8px;box-sizing:border-box;overflow:hidden;border:1px solid var(--store-border,rgba(30,40,55,.08));border-radius:16px;background:var(--store-card-background,#fff);scroll-snap-align:center}
+.public-store .product-detail-slide:only-child{margin-inline:auto}
+.public-store .product-detail-image{display:block;width:100%;height:100%;max-height:none;aspect-ratio:1/1;object-fit:contain;object-position:center;margin:0;border-radius:10px;background:transparent}
+.public-store .product-detail-slide figcaption{position:absolute;right:16px;bottom:16px;padding:5px 9px;border:1px solid rgba(255,255,255,.55);border-radius:999px;background:rgba(24,35,49,.72);color:#fff;font-size:10px;font-weight:750;backdrop-filter:blur(8px)}
+.public-store .product-detail-gallery-hint{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:420px;margin:8px auto 0;color:var(--store-muted,#77818e);font-size:10px}
+.public-store .public-product-art{display:flex;align-items:center;justify-content:center;aspect-ratio:1/1;overflow:hidden;background:color-mix(in srgb,var(--store-card-background,#fff) 80%,var(--store-background,#f7f7f5))}
+.public-store .public-product-image{display:block;width:100%;height:100%;aspect-ratio:1/1;object-fit:cover;object-position:center}
+@media(max-width:700px){
+ .public-store .product-detail-slide{flex-basis:100%;width:100%;padding:6px;border-radius:13px}
+ .public-store .product-detail-gallery-track{gap:9px;border-radius:13px}
+ .public-store .product-detail-image{width:100%;height:100%}
+}
