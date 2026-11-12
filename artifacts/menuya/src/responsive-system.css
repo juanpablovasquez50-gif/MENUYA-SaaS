@@ -1711,3 +1711,24 @@ button,input,select,textarea{max-width:100%;touch-action:manipulation}
     justify-self:center!important;
   }
 }
+
+
+/* Final alignment override: center the combined brand lockup, not each logo independently */
+.stripe-inspired footer.ck-footer>.footer-brand-group{
+  display:flex!important;
+  flex-direction:row!important;
+  flex-wrap:nowrap!important;
+  align-items:center!important;
+  justify-content:center!important;
+  justify-self:stretch!important;
+  grid-column:1/-1!important;
+  width:100%!important;
+  max-width:100%!important;
+  margin-inline:auto!important;
+  padding-inline:0!important;
+  box-sizing:border-box!important;
+}
+.stripe-inspired footer.ck-footer>.footer-brand-group>.brand,
+.stripe-inspired footer.ck-footer>.footer-brand-group>.atomlabs-credit{
+  flex:0 0 auto!important;
+}
