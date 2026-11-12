@@ -4274,3 +4274,84 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
     gap:16px!important;
   }
 }
+
+
+/* Desktop/tablet storefront footer — keep both brands together and mirror landing hierarchy */
+@media(min-width:701px){
+  .public-store .public-store-landing-footer{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    grid-template-rows:auto auto auto!important;
+    align-items:center!important;
+    column-gap:24px!important;
+    row-gap:16px!important;
+    padding:26px clamp(24px,4vw,56px) 28px!important;
+  }
+  .public-store .public-store-landing-footer .footer-brand-group{
+    grid-column:1!important;
+    grid-row:1!important;
+    justify-self:start!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    gap:16px!important;
+    width:max-content!important;
+    margin:0!important;
+  }
+  .public-store .public-store-landing-footer .footer-brand-group>.brand{
+    margin:0!important;
+    flex:0 0 auto!important;
+  }
+  .public-store .public-store-landing-footer .footer-brand-group>.atomlabs-credit{
+    margin:0!important;
+    padding-left:16px!important;
+    border-left:1px solid #e2e6ee!important;
+    flex:0 0 auto!important;
+  }
+  .public-store .public-store-landing-footer>span:first-of-type{
+    grid-column:2!important;
+    grid-row:1!important;
+    justify-self:end!important;
+    margin:0!important;
+    white-space:nowrap!important;
+  }
+  .public-store .public-store-landing-footer>span:nth-of-type(2){
+    display:none!important;
+  }
+  .public-store .public-store-landing-footer .legal-footer-links{
+    grid-column:1!important;
+    grid-row:2!important;
+    justify-self:start!important;
+    margin:0!important;
+    gap:18px!important;
+  }
+  .public-store .public-store-landing-footer>a:not(.atomlabs-credit){
+    grid-column:2!important;
+    grid-row:2!important;
+    justify-self:end!important;
+    margin:0!important;
+    white-space:nowrap!important;
+  }
+  .public-store .public-store-landing-footer .menuya-trust-badges{
+    grid-column:1/-1!important;
+    grid-row:3!important;
+    display:flex!important;
+    justify-content:center!important;
+    align-items:center!important;
+    width:min(100%,720px)!important;
+    justify-self:center!important;
+    margin:0!important;
+    padding:14px 18px 0!important;
+    gap:28px!important;
+  }
+}
+@media(min-width:701px) and (max-width:900px){
+  .public-store .public-store-landing-footer{
+    column-gap:14px!important;
+    padding-left:22px!important;
+    padding-right:22px!important;
+  }
+  .public-store .public-store-landing-footer .menuya-trust-badges{
+    gap:16px!important;
+  }
+}
