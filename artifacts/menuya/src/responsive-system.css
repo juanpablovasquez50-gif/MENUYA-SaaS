@@ -442,94 +442,140 @@ button,input,select,textarea{max-width:100%;touch-action:manipulation}
 }
 
 
-/* Pedidos: mobile layout isolated from the rest of the dashboard. */
+
+/* Mobile-only responsive system. Tablet and desktop styles remain untouched. */
 @media (max-width: 700px) {
-  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) {
+  .merchant-dashboard .orders-toolbar {
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     align-items: end !important;
     gap: 12px 10px !important;
+    width: 100% !important;
   }
-  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) > .search-field {
+  .merchant-dashboard .orders-toolbar > .search-field,
+  .merchant-dashboard .orders-toolbar > select,
+  .merchant-dashboard .orders-toolbar > .toolbar-count {
     grid-column: 1 / -1 !important;
     width: 100% !important;
     min-width: 0 !important;
-    min-height: 52px !important;
   }
-  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) > select {
-    grid-column: 1 / -1 !important;
-    width: 100% !important;
-    min-height: 48px !important;
+  .merchant-dashboard .orders-toolbar > .search-field {
+    min-height: 50px !important;
+    height: 50px !important;
+  }
+  .merchant-dashboard .orders-toolbar > select {
+    min-height: 46px !important;
+    height: 46px !important;
     font-size: 14px !important;
   }
-  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) > .date-filter {
+  .merchant-dashboard .orders-toolbar > .orders-date-filter {
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
     justify-content: flex-end !important;
-    gap: 7px !important;
+    gap: 6px !important;
     width: 100% !important;
     min-width: 0 !important;
-    max-width: 100% !important;
-    font-size: 13px !important;
+    white-space: normal !important;
+    font-size: 12px !important;
     font-weight: 700 !important;
     line-height: 1.2 !important;
   }
-  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) .date-filter input[type="date"] {
+  .merchant-dashboard .orders-toolbar > .orders-date-filter > span {
     display: block !important;
+  }
+  .merchant-dashboard .orders-toolbar > .orders-date-filter input[type="date"] {
+    display: block !important;
+    box-sizing: border-box !important;
     width: 100% !important;
     min-width: 0 !important;
     max-width: 100% !important;
-    height: 48px !important;
-    min-height: 48px !important;
-    max-height: 48px !important;
-    flex: none !important;
-    padding: 0 9px !important;
-    border: 1px solid #dce3ed !important;
-    border-radius: 11px !important;
-    background: #fff !important;
-    color: #273247 !important;
+    height: 46px !important;
+    min-height: 46px !important;
+    max-height: 46px !important;
+    flex: 0 0 46px !important;
+    margin: 0 !important;
+    padding: 0 8px !important;
+    border: 1px solid #cbd6e4 !important;
+    border-radius: 10px !important;
+    background: #f5f7fb !important;
+    color: #182331 !important;
     font: 500 13px/1.2 'DM Sans', sans-serif !important;
     appearance: auto !important;
     -webkit-appearance: auto !important;
   }
-  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) > .toolbar-count {
-    grid-column: 1 / -1 !important;
+  .merchant-dashboard .orders-toolbar > .toolbar-count {
     justify-self: end !important;
+    text-align: right !important;
     margin: 0 !important;
   }
-  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) + .table-wrap {
+  .merchant-dashboard .orders-toolbar + .table-wrap {
     width: 100% !important;
     max-width: 100% !important;
     overflow-x: auto !important;
-    overscroll-behavior-inline: contain !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
   }
-  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) + .table-wrap table {
+  .merchant-dashboard .orders-toolbar + .table-wrap table {
+    display: table !important;
     width: max-content !important;
-    min-width: 780px !important;
+    min-width: 790px !important;
     table-layout: auto !important;
   }
-  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) + .table-wrap th,
-  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) + .table-wrap td {
+  .merchant-dashboard .orders-toolbar + .table-wrap th,
+  .merchant-dashboard .orders-toolbar + .table-wrap td {
     width: auto !important;
+    max-width: none !important;
     white-space: nowrap !important;
     overflow-wrap: normal !important;
     padding: 12px 11px !important;
     font-size: 12px !important;
   }
-  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) + .table-wrap th:nth-child(1),
-  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) + .table-wrap td:nth-child(1) {
-    min-width: 82px !important;
-  }
-  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) + .table-wrap th:nth-child(2),
-  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) + .table-wrap td:nth-child(2) {
-    min-width: 155px !important;
-  }
-  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) + .table-wrap td:nth-child(2) .simple-cell {
-    min-width: 135px !important;
-  }
-  .merchant-dashboard .toolbar:has([data-testid="input-orders-from"]) + .table-wrap td:nth-child(2) .simple-cell b {
+  .merchant-dashboard .orders-toolbar + .table-wrap th:nth-child(1),
+  .merchant-dashboard .orders-toolbar + .table-wrap td:nth-child(1) { min-width: 88px !important; }
+  .merchant-dashboard .orders-toolbar + .table-wrap th:nth-child(2),
+  .merchant-dashboard .orders-toolbar + .table-wrap td:nth-child(2) { min-width: 165px !important; }
+  .merchant-dashboard .orders-toolbar + .table-wrap th:nth-child(3),
+  .merchant-dashboard .orders-toolbar + .table-wrap td:nth-child(3) { min-width: 110px !important; }
+  .merchant-dashboard .orders-toolbar + .table-wrap th:nth-child(4),
+  .merchant-dashboard .orders-toolbar + .table-wrap td:nth-child(4) { min-width: 115px !important; }
+  .merchant-dashboard .orders-toolbar + .table-wrap th:nth-child(5),
+  .merchant-dashboard .orders-toolbar + .table-wrap td:nth-child(5) { min-width: 110px !important; }
+  .merchant-dashboard .orders-toolbar + .table-wrap td:nth-child(2) .simple-cell { min-width: 145px !important; }
+  .merchant-dashboard .orders-toolbar + .table-wrap td:nth-child(2) .simple-cell b {
     white-space: normal !important;
     overflow-wrap: break-word !important;
   }
+  .merchant-dashboard .orders-toolbar + .table-wrap td:nth-child(2) .simple-cell small {
+    white-space: nowrap !important;
+  }
+
+  /* Shared mobile layout primitives for all merchant modules. */
+  .merchant-dashboard .page-content,
+  .merchant-dashboard .panel,
+  .merchant-dashboard .toolbar,
+  .merchant-dashboard .filters,
+  .merchant-dashboard .page-actions,
+  .merchant-dashboard .form-grid,
+  .merchant-dashboard .dashboard-grid,
+  .merchant-dashboard .analytics-grid,
+  .merchant-dashboard .settings-grid { min-width: 0 !important; max-width: 100% !important; }
+  .merchant-dashboard .toolbar:not(.orders-toolbar) { display:flex !important; flex-wrap:wrap !important; align-items:stretch !important; gap:9px !important; }
+  .merchant-dashboard .toolbar:not(.orders-toolbar) > .search-field { flex:1 1 100% !important; width:100% !important; min-width:0 !important; }
+  .merchant-dashboard .toolbar:not(.orders-toolbar) > select { flex:1 1 100% !important; width:100% !important; min-width:0 !important; }
+  .merchant-dashboard .toolbar:not(.orders-toolbar) > .toolbar-count { flex:1 1 100% !important; text-align:right !important; }
+  .merchant-dashboard .table-wrap { width:100% !important; max-width:100% !important; overflow-x:auto !important; -webkit-overflow-scrolling:touch !important; }
+  .merchant-dashboard .table-wrap table { min-width:740px !important; table-layout:auto !important; }
+  .merchant-dashboard .table-wrap th,
+  .merchant-dashboard .table-wrap td { white-space:nowrap !important; }
+  .merchant-dashboard input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+  .merchant-dashboard select,
+  .merchant-dashboard textarea { font-size:16px !important; max-width:100% !important; }
+  .merchant-dashboard .date-filter:not(.orders-date-filter) { width:100% !important; flex-direction:column !important; align-items:stretch !important; }
+  .merchant-dashboard .panel-head { gap:9px !important; }
+}
+@media (max-width: 390px) {
+  .merchant-dashboard .orders-toolbar { gap:10px 8px !important; }
+  .merchant-dashboard .orders-toolbar > .orders-date-filter input[type="date"] { padding-inline:5px !important; font-size:12px !important; }
+  .merchant-dashboard .orders-toolbar + .table-wrap table { min-width:760px !important; }
 }
