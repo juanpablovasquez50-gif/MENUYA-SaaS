@@ -3759,3 +3759,111 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
     font-size:30px!important;
   }
 }
+
+
+/* Storefront typography scale: readable catalog with compact vertical rhythm */
+.public-store .public-categories{
+  gap:12px!important;
+  margin-bottom:12px!important;
+}
+.public-store .public-categories button{
+  font-size:clamp(14px,1.65vw,18px)!important;
+  line-height:1.1!important;
+  padding:10px 13px!important;
+}
+.public-store .public-section-title{
+  margin:16px 0 20px!important;
+}
+.public-store .public-section-title .eyebrow,
+.public-store .public-category-heading .eyebrow{
+  font-size:13px!important;
+  line-height:1.1!important;
+  letter-spacing:.11em!important;
+}
+.public-store .public-section-title h2,
+.public-store .public-category-heading h2{
+  font-size:clamp(23px,2.5vw,30px)!important;
+  line-height:1.08!important;
+  letter-spacing:-.025em!important;
+  margin:4px 0 0!important;
+}
+.public-store .public-category-heading{
+  margin:18px 0 12px!important;
+  align-items:center!important;
+}
+.public-store .public-category-heading>button{
+  font-size:16px!important;
+  line-height:1.1!important;
+}
+.public-store .public-product-info{
+  gap:4px!important;
+  padding-top:4px!important;
+  padding-bottom:4px!important;
+}
+.public-store .public-product-info .product-title-button,
+.public-store .public-product-info h3{
+  font-size:clamp(17px,1.9vw,21px)!important;
+  line-height:1.12!important;
+  letter-spacing:-.018em!important;
+  margin:0 0 4px!important;
+}
+.public-store .public-product-info p{
+  font-size:clamp(14px,1.45vw,16px)!important;
+  line-height:1.16!important;
+  margin:2px 0 5px!important;
+}
+.public-store .public-product-info small{
+  font-size:13px!important;
+  line-height:1.15!important;
+}
+.public-store .public-product-info .public-product-prices{
+  gap:10px!important;
+  margin-top:5px!important;
+  align-items:baseline!important;
+}
+.public-store .public-product-info .public-product-prices>b.product-current-price,
+.public-store .public-category-section .public-product-info>b.product-current-price,
+.public-store .public-main>.public-products .public-product-info>b.product-current-price,
+.public-store .public-featured-section .public-product-info>b.product-current-price{
+  font-size:clamp(21px,2.15vw,25px)!important;
+  line-height:1.05!important;
+  letter-spacing:-.025em!important;
+}
+.public-store .public-product-info .public-product-prices>del{
+  font-size:13px!important;
+  line-height:1.05!important;
+}
+.public-store .public-category-section,
+.public-store .public-featured-section{
+  margin-top:16px!important;
+  margin-bottom:20px!important;
+}
+.public-store .public-products{
+  row-gap:14px!important;
+}
+.public-store .public-category-section .public-product,
+.public-store .public-featured-section .public-product{
+  row-gap:6px!important;
+}
+@media(max-width:700px){
+  .public-store .public-categories{gap:8px!important;margin-bottom:10px!important}
+  .public-store .public-categories button{font-size:13px!important;padding:9px 11px!important}
+  .public-store .public-section-title{margin:14px 0 16px!important}
+  .public-store .public-section-title .eyebrow,
+  .public-store .public-category-heading .eyebrow{font-size:11px!important}
+  .public-store .public-section-title h2,
+  .public-store .public-category-heading h2{font-size:22px!important;line-height:1.08!important}
+  .public-store .public-category-heading{margin:15px 0 10px!important}
+  .public-store .public-category-heading>button{font-size:14px!important}
+  .public-store .public-product-info .product-title-button,
+  .public-store .public-product-info h3{font-size:16px!important;line-height:1.12!important}
+  .public-store .public-product-info p{font-size:13px!important;line-height:1.16!important;margin:2px 0 4px!important}
+  .public-store .public-product-info small{font-size:12px!important}
+  .public-store .public-product-info .public-product-prices>b.product-current-price,
+  .public-store .public-category-section .public-product-info>b.product-current-price,
+  .public-store .public-main>.public-products .public-product-info>b.product-current-price,
+  .public-store .public-featured-section .public-product-info>b.product-current-price{font-size:22px!important;line-height:1.05!important}
+  .public-store .public-product-info .public-product-prices>del{font-size:11px!important}
+  .public-store .public-category-section,
+  .public-store .public-featured-section{margin-top:12px!important;margin-bottom:15px!important}
+}
