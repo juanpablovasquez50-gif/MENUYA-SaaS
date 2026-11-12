@@ -24,7 +24,7 @@ export default defineConfig({
     { name: 'desktop-1366', use: { viewport: { width: 1366, height: 900 } } },
   ],
   webServer: process.env.PLAYWRIGHT_BASE_URL ? undefined : {
-    command: 'pnpm --filter @workspace/menuya serve',
+    command: 'PORT=4173 pnpm --filter @workspace/menuya serve',
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
