@@ -3597,3 +3597,37 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
   font-weight:600!important;
   opacity:.85!important;
 }
+
+
+/* Storefront sticker compact: keep product photography visible */
+.public-store .public-product-art .product-sticker{
+  box-sizing:border-box!important;
+  top:7px!important;
+  right:7px!important;
+  left:auto!important;
+  width:auto!important;
+  max-width:44%!important;
+  min-width:0!important;
+  max-height:34px!important;
+  overflow:hidden!important;
+  padding:4px 6px!important;
+  border:1px solid #fff!important;
+  border-radius:6px!important;
+  font-size:8px!important;
+  line-height:1.05!important;
+  letter-spacing:.015em!important;
+  font-weight:850!important;
+  white-space:normal!important;
+  text-align:center!important;
+  overflow-wrap:anywhere!important;
+  transform:none!important;
+  box-shadow:0 2px 6px rgba(0,0,0,.18)!important;
+}
+@media(max-width:700px){
+  .public-store .public-product-art .product-sticker{
+    top:6px!important;right:6px!important;
+    max-width:44%!important;max-height:30px!important;
+    padding:3px 5px!important;font-size:7px!important;
+    border-width:1px!important;border-radius:5px!important;
+  }
+}
