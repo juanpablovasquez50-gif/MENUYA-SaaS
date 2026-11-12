@@ -3413,3 +3413,96 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 }
 .dashboard-shell .product-more-menu button:hover{background:#f1efff!important;color:#5638cf!important}
 
+/* Reference storefront layout: compact two-column rows with text left and product photo right */
+.public-store .public-category-section .public-products,
+.public-store .public-main > .public-products{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  align-items:stretch!important;
+  gap:16px 18px!important;
+}
+.public-store .public-category-section .public-products .public-product,
+.public-store .public-main > .public-products .public-product{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(112px,38%)!important;
+  grid-template-areas:"info art"!important;
+  align-items:center!important;
+  gap:10px!important;
+  min-width:0!important;
+  height:auto!important;
+  padding:0!important;
+  overflow:hidden!important;
+  border:0!important;
+  border-radius:10px!important;
+  box-shadow:none!important;
+  background:transparent!important;
+}
+.public-store .public-category-section .public-products .public-product-art,
+.public-store .public-main > .public-products .public-product-art{
+  grid-area:art!important;
+  width:100%!important;
+  min-width:0!important;
+  height:auto!important;
+  min-height:0!important;
+  aspect-ratio:1/1!important;
+  border-radius:10px!important;
+  overflow:hidden!important;
+}
+.public-store .public-category-section .public-products .public-product-info,
+.public-store .public-main > .public-products .public-product-info{
+  grid-area:info!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-start!important;
+  justify-content:center!important;
+  min-width:0!important;
+  width:100%!important;
+  padding:5px 0!important;
+  gap:7px!important;
+  background:transparent!important;
+}
+.public-store .public-category-section .public-products .public-product-info>div:first-child,
+.public-store .public-main > .public-products .public-product-info>div:first-child{
+  width:100%!important;min-width:0!important;
+}
+.public-store .public-category-section .public-products .product-title-button,
+.public-store .public-main > .public-products .product-title-button{
+  font-size:clamp(12px,1.35vw,17px)!important;
+  line-height:1.25!important;
+  text-align:left!important;
+}
+.public-store .public-category-section .public-products .public-product-info p,
+.public-store .public-main > .public-products .public-product-info p{
+  display:-webkit-box!important;
+  -webkit-line-clamp:2!important;
+  -webkit-box-orient:vertical!important;
+  overflow:hidden!important;
+  margin:4px 0 7px!important;
+  font-size:clamp(10px,1.1vw,14px)!important;
+  line-height:1.3!important;
+}
+.public-store .public-category-section .public-products .public-product-info .product-current-price,
+.public-store .public-main > .public-products .public-product-info .product-current-price{
+  font-size:clamp(13px,1.4vw,17px)!important;
+}
+.public-store .public-category-section .public-products .public-product-art>button,
+.public-store .public-main > .public-products .public-product-art>button{
+  right:7px!important;bottom:7px!important;width:36px!important;height:36px!important;
+  border-radius:9px!important;background:var(--store-color)!important;color:#fff!important;
+}
+.public-store .public-product-art>span{display:none!important}
+@media(max-width:700px){
+ .public-store .public-category-section .public-products,
+ .public-store .public-main > .public-products{
+   grid-template-columns:1fr!important;gap:13px!important;
+ }
+ .public-store .public-category-section .public-products .public-product,
+ .public-store .public-main > .public-products .public-product{
+   grid-template-columns:minmax(0,1fr) 112px!important;gap:12px!important;
+ }
+ .public-store .public-category-section .public-products .product-title-button,
+ .public-store .public-main > .public-products .product-title-button{font-size:14px!important}
+ .public-store .public-category-section .public-products .public-product-info p,
+ .public-store .public-main > .public-products .public-product-info p{font-size:11px!important}
+}
+
