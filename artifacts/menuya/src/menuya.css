@@ -4867,3 +4867,94 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 @media(prefers-reduced-motion:reduce){
   .ck-demo-sector-options button,.ck-demo-add{transition:none}
 }
+
+
+/* Menuya landing — mismo sistema visual de botones del panel de comercios */
+.landing button,
+.landing .btn,
+.landing [role="button"] {
+  font-family: inherit;
+  font-weight: 750;
+  letter-spacing: -.01em;
+  border-radius: 11px;
+  transition: background .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.landing button:focus-visible,
+.landing .btn:focus-visible,
+.landing [role="button"]:focus-visible {
+  outline: 3px solid #9c8af3;
+  outline-offset: 2px;
+}
+.landing button:disabled,
+.landing .btn:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.landing .btn {
+  min-height: 40px;
+  padding: 0 15px;
+  font-size: 12px;
+  font-weight: 800;
+  border-radius: 11px;
+}
+.landing .btn-large {
+  min-height: 48px;
+  padding: 0 20px;
+  font-size: 13px;
+}
+.landing .btn-solid,
+.landing button.btn-solid {
+  color: #fff !important;
+  border: 1px solid #6848df !important;
+  background: linear-gradient(105deg,#6040d4 0%,#7959e8 55%,#9278f2 100%) !important;
+  box-shadow: 0 5px 13px #6848df26 !important;
+}
+.landing .btn-solid:hover,
+.landing button.btn-solid:hover {
+  background: linear-gradient(105deg,#5333c4 0%,#6b4bd9 55%,#8469e8 100%) !important;
+  box-shadow: 0 7px 17px #6848df35 !important;
+  transform: translateY(-1px);
+}
+.landing .btn-outline,
+.landing button.btn-outline {
+  color: #6045c7 !important;
+  border: 1px solid #d9d0fa !important;
+  background: linear-gradient(110deg,#fff 0%,#f8f6ff 100%) !important;
+  box-shadow: 0 2px 7px #6045c70a !important;
+}
+.landing .btn-outline:hover,
+.landing button.btn-outline:hover {
+  border-color: #a99aeb !important;
+  background: linear-gradient(110deg,#f7f4ff 0%,#eeeaff 100%) !important;
+}
+.landing .btn-soft,
+.landing button.btn-soft,
+.landing .btn-light,
+.landing button.btn-light {
+  color: #6045c7 !important;
+  border: 1px solid #e5defb !important;
+  background: linear-gradient(110deg,#f7f5ff 0%,#eeeaff 100%) !important;
+}
+.landing .btn-soft:hover,
+.landing button.btn-soft:hover,
+.landing .btn-light:hover,
+.landing button.btn-light:hover {
+  background: linear-gradient(110deg,#eeeaff 0%,#e4ddff 100%) !important;
+}
+.landing .btn-ghost,
+.landing button.btn-ghost {
+  color: #6653ad !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.landing .btn-ghost:hover,
+.landing button.btn-ghost:hover {
+  background: #f1eeff !important;
+  border-color: #e5defb !important;
+}
+@media (max-width: 640px) {
+  .landing .btn { min-height: 42px; }
+}
