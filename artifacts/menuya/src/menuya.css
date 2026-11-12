@@ -3361,3 +3361,40 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .table-wrap td:nth-child(2){white-space:normal!important;overflow-wrap:anywhere!important;line-height:1.35!important}
 .table-wrap td:nth-child(3){white-space:nowrap!important}
 .table-wrap .old-price{display:inline-block!important;white-space:nowrap!important;margin-left:5px!important}
+
+/* Final product table sizing: keep all five columns visible and action icons full size */
+.dashboard-shell .workspace .table-wrap{
+  width:100%!important;max-width:100%!important;overflow-x:auto!important;
+  overflow-y:hidden!important;direction:ltr!important;
+}
+.dashboard-shell .workspace .table-wrap table{
+  display:table!important;width:100%!important;min-width:0!important;
+  table-layout:fixed!important;
+}
+.dashboard-shell .workspace .table-wrap th:nth-child(1),
+.dashboard-shell .workspace .table-wrap td:nth-child(1){width:34%!important}
+.dashboard-shell .workspace .table-wrap th:nth-child(2),
+.dashboard-shell .workspace .table-wrap td:nth-child(2){width:18%!important}
+.dashboard-shell .workspace .table-wrap th:nth-child(3),
+.dashboard-shell .workspace .table-wrap td:nth-child(3){width:17%!important}
+.dashboard-shell .workspace .table-wrap th:nth-child(4),
+.dashboard-shell .workspace .table-wrap td:nth-child(4){width:13%!important}
+.dashboard-shell .workspace .table-wrap th:nth-child(5),
+.dashboard-shell .workspace .table-wrap td:nth-child(5){width:18%!important}
+.dashboard-shell .workspace .table-wrap td:last-child{overflow:visible!important}
+.dashboard-shell .workspace .table-actions{
+  display:flex!important;flex-flow:row nowrap!important;align-items:center!important;
+  justify-content:flex-start!important;gap:3px!important;min-width:124px!important;
+  overflow:visible!important;
+}
+.dashboard-shell .workspace .table-actions button{
+  display:inline-grid!important;place-items:center!important;
+  flex:0 0 28px!important;width:28px!important;min-width:28px!important;
+  max-width:28px!important;height:30px!important;min-height:30px!important;
+  padding:0!important;opacity:1!important;color:#66758a!important;
+}
+.dashboard-shell .workspace .table-actions button svg{
+  display:block!important;width:15px!important;height:15px!important;
+  min-width:15px!important;min-height:15px!important;opacity:1!important;
+}
+
