@@ -1282,3 +1282,104 @@ button,input,select,textarea{max-width:100%;touch-action:manipulation}
     gap: 8px !important;
   }
 }
+
+
+/* Orders: reuse the compact mobile card pattern from Products and Customers. */
+@media (max-width: 700px) {
+  .dashboard-shell .workspace .table-wrap.orders-table {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+  .dashboard-shell .workspace .table-wrap.orders-table > table {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    table-layout: auto !important;
+  }
+  .dashboard-shell .workspace .table-wrap.orders-table thead { display: none !important; }
+  .dashboard-shell .workspace .table-wrap.orders-table tbody {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+  .dashboard-shell .workspace .table-wrap.orders-table tbody tr {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    box-sizing: border-box !important;
+    padding: 13px !important;
+    border: 1px solid #e5eaf1 !important;
+    border-radius: 13px !important;
+    background: #fff !important;
+    box-shadow: 0 2px 8px rgba(28,45,70,.04) !important;
+  }
+  .dashboard-shell .workspace .table-wrap.orders-table tbody td {
+    display: grid !important;
+    grid-template-columns: minmax(88px, 36%) minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 5px 0 !important;
+    border: 0 !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: anywhere !important;
+    line-height: 1.4 !important;
+    text-align: left !important;
+  }
+  .dashboard-shell .workspace .table-wrap.orders-table tbody td:nth-child(1)::before { content: "Pedido"; }
+  .dashboard-shell .workspace .table-wrap.orders-table tbody td:nth-child(2)::before { content: "Cliente"; }
+  .dashboard-shell .workspace .table-wrap.orders-table tbody td:nth-child(3)::before { content: "Fecha"; }
+  .dashboard-shell .workspace .table-wrap.orders-table tbody td:nth-child(4)::before { content: "Entrega"; }
+  .dashboard-shell .workspace .table-wrap.orders-table tbody td:nth-child(5)::before { content: "Total"; }
+  .dashboard-shell .workspace .table-wrap.orders-table tbody td:nth-child(6)::before { content: "Estado"; }
+  .dashboard-shell .workspace .table-wrap.orders-table tbody td::before {
+    display: block !important;
+    min-width: 0 !important;
+    color: #8793a5 !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    white-space: normal !important;
+  }
+  .dashboard-shell .workspace .table-wrap.orders-table tbody td:nth-child(1) {
+    display: block !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 2px !important;
+    border-bottom: 1px solid #edf0f5 !important;
+  }
+  .dashboard-shell .workspace .table-wrap.orders-table tbody td:nth-child(1)::before { display: inline-block !important; margin-right: 8px !important; }
+  .dashboard-shell .workspace .table-wrap.orders-table tbody td:nth-child(2) .simple-cell {
+    min-width: 0 !important;
+    overflow-wrap: anywhere !important;
+  }
+  .dashboard-shell .workspace .table-wrap.orders-table tbody td:nth-child(5) b {
+    white-space: nowrap !important;
+    overflow-wrap: normal !important;
+  }
+  .dashboard-shell .workspace .table-wrap.orders-table tbody td:last-child {
+    display: flex !important;
+    justify-content: flex-end !important;
+    padding-top: 10px !important;
+    margin-top: 3px !important;
+    border-top: 1px solid #edf0f5 !important;
+  }
+}
