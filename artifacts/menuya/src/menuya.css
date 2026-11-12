@@ -5085,3 +5085,44 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
     border:0!important;
   }
 }
+
+
+/* Tablet storefront footer: match the landing brand scale and alignment */
+@media (min-width:701px) and (max-width:1100px) {
+  .public-store > footer.public-store-landing-footer > .footer-brand-group > .brand img {
+    height:29px!important;
+    max-width:180px!important;
+  }
+  .public-store > footer.public-store-landing-footer > .footer-brand-group > .atomlabs-credit {
+    color:#182331!important;
+    font-size:14px!important;
+    line-height:1!important;
+  }
+  .public-store > footer.public-store-landing-footer > .footer-brand-group > .atomlabs-credit b {
+    display:flex!important;
+    align-items:center!important;
+    gap:6px!important;
+    color:#182331!important;
+    font-family:'DM Sans',sans-serif!important;
+    font-size:14px!important;
+    font-weight:800!important;
+    line-height:1!important;
+    letter-spacing:-.4px!important;
+    white-space:nowrap!important;
+  }
+  .public-store > footer.public-store-landing-footer > .footer-brand-group > .atomlabs-credit .atomlabs-symbol {
+    display:block!important;
+    width:20px!important;
+    height:20px!important;
+    min-width:20px!important;
+    min-height:20px!important;
+    flex:0 0 20px!important;
+    overflow:visible!important;
+  }
+  .public-store > footer.public-store-landing-footer > .footer-brand-group > .atomlabs-credit sup {
+    align-self:flex-start!important;
+    margin:0 0 0 -4px!important;
+    font-size:7px!important;
+    line-height:1!important;
+  }
+}
