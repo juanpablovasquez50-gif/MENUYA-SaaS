@@ -877,22 +877,18 @@ function PublicStore({ data, slug, update }: { data: DemoData; slug: string; upd
   useEffect(() => {
     let alive = true;
     const loadStorePlan = async () => {
-      const { data: subscription, error } = await supabase
-        .from('subscriptions')
-        .select('status,plans(name,features)')
-        .eq('business_id', business.id)
-        .maybeSingle();
+      // La suscripción no es legible por visitantes anónimos (RLS).
+      // Esta RPC devuelve únicamente un booleano para vitrinas publicadas.
+      const { data: isPro, error } = await supabase.rpc('is_published_business_pro', {
+        p_business_id: business.id,
+      });
       if (!alive) return;
       if (error) {
-        console.warn('No se pudo verificar el plan de la vitrina:', error.message);
+        console.warn('No se pudo verificar el plan Pro de la vitrina:', error.message);
         setIsProStore(false);
         return;
       }
-      const status = String(subscription?.status || '').toLowerCase();
-      const plan = Array.isArray(subscription?.plans) ? subscription.plans[0] : subscription?.plans;
-      const planName = String(plan?.name || '').toLowerCase();
-      const features = Array.isArray(plan?.features) ? plan.features : [];
-      setIsProStore(['active','activa'].includes(status) && (planName.includes('pro') || features.some((feature: unknown) => /quitar.*marca|sin.*marca|white.?label/i.test(String(feature)))));
+      setIsProStore(isPro === true);
     };
     void loadStorePlan();
     return () => { alive = false; };
