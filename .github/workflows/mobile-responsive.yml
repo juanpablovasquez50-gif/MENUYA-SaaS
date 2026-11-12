@@ -28,7 +28,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Install Playwright test runner
-        run: npm install --no-save --package-lock=false @playwright/test
+        run: npm install --no-save --package-lock=false --ignore-scripts @playwright/test
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Build Menuya
