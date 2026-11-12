@@ -4958,3 +4958,21 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 @media (max-width: 640px) {
   .landing .btn { min-height: 42px; }
 }
+
+/* Landing buttons: squared dashboard silhouette with softly rounded corners */
+.landing a.btn,
+.landing button.btn,
+.landing .landing-actions .btn,
+.landing .hero-ctas .btn,
+.landing .closing-cta .btn {
+  border-radius: 11px !important;
+}
+@media (max-width: 640px) {
+  .landing a.btn,
+  .landing button.btn,
+  .landing .landing-actions .btn,
+  .landing .hero-ctas .btn,
+  .landing .closing-cta .btn {
+    border-radius: 11px !important;
+  }
+}
