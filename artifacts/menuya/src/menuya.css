@@ -3972,3 +3972,40 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
     font-size:14px!important;
   }
 }
+
+
+/* Encabezado móvil: seguimiento a la izquierda y estado a la derecha */
+.public-store .public-header{
+  min-height:68px!important;
+  height:auto!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:12px!important;
+}
+.public-store .public-header-actions{
+  width:100%!important;
+  min-width:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:12px!important;
+}
+.public-store .public-header-actions .public-track-link{
+  flex:1 1 auto!important;
+  min-width:0!important;
+}
+.public-store .public-header-actions .open-label{
+  position:static!important;
+  flex:0 0 auto!important;
+  margin:0!important;
+  min-height:44px!important;
+  padding:10px 17px!important;
+  font-size:14px!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+.public-store .public-header-actions .open-label i{
+  width:9px!important;height:9px!important;flex:0 0 9px!important;
+}
+.public-store .public-store-intro{padding-top:12px!important}
