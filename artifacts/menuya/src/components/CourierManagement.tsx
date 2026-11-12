@@ -23,7 +23,7 @@ export default function CourierManagement({businessId}:{businessId:string}){
  const [enabled,setEnabled]=useState(false),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[error,setError]=useState(''),[couriers,setCouriers]=useState<Courier[]>([]),[orders,setOrders]=useState<DeliveryOrder[]>([]),[assignments,setAssignments]=useState<Assignment[]>([]);
  const [name,setName]=useState(''),[phone,setPhone]=useState(''),[pin,setPin]=useState(''),[newCode,setNewCode]=useState(''),[courierId,setCourierId]=useState(''),[orderId,setOrderId]=useState('');
  const [mapError,setMapError]=useState(''),[selected,setSelected]=useState<Assignment|null>(null),[geocoding,setGeocoding]=useState(false),[locationTick,setLocationTick]=useState(0);
- const mapRef=useRef<HTMLDivElement>(null),mapInstance=useRef<any>(null),routeLayer=useRef<any>(null),markers=useRef<any[]>([]);
+ const mapRef=useRef<HTMLDivElement>(null),mapInstance=useRef<any>(null),routeLayer=useRef<any>(null),markers=useRef<any[]>([]),geocodeAttempted=useRef<Set<string>>(new Set());
  const refresh=async()=>{
   setLoading(true);setError('');
   const [moduleRes,cRes,oRes,aRes]=await Promise.all([
@@ -42,9 +42,10 @@ export default function CourierManagement({businessId}:{businessId:string}){
  const assign=async()=>{if(!courierId||!orderId)return;setSaving(true);setError('');const {error}=await supabase.from('delivery_assignments').insert({business_id:businessId,courier_id:courierId,order_id:orderId});if(error)setError(error.message);else{setCourierId('');setOrderId('');await refresh();}setSaving(false);};
  const geocodeAddress=async(a:Assignment)=>{const address=a.orders?.delivery_address?.trim();if(!address){setMapError('Este pedido no tiene una dirección de entrega. Completa la dirección en el pedido para mostrar el mapa.');return;}setGeocoding(true);setMapError('Buscando la dirección en Google Maps…');try{await loadGoogleMaps();const g=window.google.maps;const {Geocoder}=await g.importLibrary('geocoding');const result=await new Geocoder().geocode({address:address+', Colombia',componentRestrictions:{country:'CO'}});const hit=result.results?.[0];if(!hit)throw new Error('Google Maps no encontró esa dirección. Agrega barrio, municipio y departamento.');const lat=hit.geometry.location.lat(),lng=hit.geometry.location.lng();const {error}=await supabase.from('orders').update({delivery_latitude:lat,delivery_longitude:lng}).eq('id',a.order_id).eq('business_id',businessId);if(error)throw new Error('Encontramos la dirección, pero no pudimos guardar su ubicación: '+error.message);const updated={...a,orders:{...a.orders!,delivery_latitude:lat,delivery_longitude:lng}};setSelected(updated);setAssignments(current=>current.map(item=>item.id===a.id?updated:item));setMapError('');}catch(e){setMapError(e instanceof Error?e.message:'No fue posible localizar la dirección.');}finally{setGeocoding(false);}};
 
+ useEffect(()=>{if(!selected?.orders?.delivery_address||selected.orders.delivery_latitude!=null&&selected.orders.delivery_longitude!=null)return;const key=selected.id+'|'+selected.orders.delivery_address;if(geocodeAttempted.current.has(key))return;geocodeAttempted.current.add(key);void geocodeAddress(selected);},[selected?.id,selected?.orders?.delivery_address,selected?.orders?.delivery_latitude,selected?.orders?.delivery_longitude]);
  const updateStatus=async(a:Assignment,status:string)=>{const patch:any={status,updated_at:new Date().toISOString()};if(status==='picked_up')patch.picked_up_at=new Date().toISOString();if(status==='delivered')patch.delivered_at=new Date().toISOString();const {error}=await supabase.from('delivery_assignments').update(patch).eq('id',a.id).eq('business_id',businessId);if(error)setError(error.message);else await refresh();};
  useEffect(()=>{
-  if(!enabled||!mapRef.current||!selected?.orders?.delivery_latitude||!selected.orders.delivery_longitude)return;
+  if(!enabled||!mapRef.current||selected?.orders?.delivery_latitude==null||selected?.orders?.delivery_longitude==null)return;
   let cancelled=false;
   void loadGoogleMaps().then(async()=>{
    if(cancelled||!mapRef.current)return;const g=window.google.maps;
@@ -62,7 +63,8 @@ export default function CourierManagement({businessId}:{businessId:string}){
    }catch{setMapError('No fue posible consultar la ubicación del domiciliario.');}
   }).catch(e=>setMapError(e.message||'No se pudo cargar Google Maps.'));
   return()=>{cancelled=true;};
- },[enabled,selected?.id,locationTick]);
+ },[enabled,selected?.id,selected?.orders?.delivery_latitude,selected?.orders?.delivery_longitude,locationTick]);
+ useEffect(()=>{if(!selected)return;const timer=window.setInterval(()=>setLocationTick(value=>value+1),5000);return()=>window.clearInterval(timer);},[selected?.id]);
 
  const statusText=(s:string)=>({assigned:'Asignado',picked_up:'En camino',delivered:'Entregado',cancelled:'Cancelado'} as Record<string,string>)[s]||s;
  if(loading)return <div className="panel"><p>Cargando módulo de domiciliarios…</p></div>;
