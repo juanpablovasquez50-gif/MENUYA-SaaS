@@ -4165,10 +4165,17 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
   padding:22px 17px 18px;text-align:left
  }
  .public-store .public-store-landing-footer .footer-brand-group{
-  grid-column:1/-1;width:100%;display:flex;align-items:center;justify-content:center;gap:24px;margin:0
+  grid-column:1/-1;width:100%;display:grid;grid-template-columns:max-content max-content;
+  align-items:center;justify-content:center;justify-items:center;column-gap:24px;margin:0
  }
- .public-store .public-store-landing-footer .footer-brand-group>.brand{margin:0}
- .public-store .public-store-landing-footer .footer-brand-group .atomlabs-credit{display:flex;align-items:center;margin:0}
+ .public-store .public-store-landing-footer .footer-brand-group>.brand{
+  display:flex;align-items:center;justify-self:end;flex:0 0 auto;width:max-content!important;margin:0!important
+ }
+ .public-store .public-store-landing-footer .footer-brand-group>.atomlabs-credit{
+  display:flex;align-items:center;justify-self:start;flex:0 0 auto;width:max-content!important;
+  margin:0!important;padding:0!important;white-space:nowrap
+ }
+ .public-store .public-store-landing-footer .footer-brand-group .atomlabs-credit b{white-space:nowrap}
  .public-store .public-store-landing-footer>span:first-of-type{grid-column:1;grid-row:2;width:auto;margin:0;text-align:left}
  .public-store .public-store-landing-footer>span:nth-of-type(2){display:none}
  .public-store .public-store-landing-footer>a:not(.atomlabs-credit){grid-column:2;grid-row:2;justify-self:end;white-space:nowrap}
