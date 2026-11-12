@@ -3884,9 +3884,7 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
     padding:12px 14px 6px!important;
     gap:9px!important;
   }
-  .public-store.public-store-pro .public-store-intro .public-logo{
-    display:none!important;
-  }
+  /* El logo del comercio debe permanecer visible incluso en vitrinas Pro. */
   .public-store .public-store-intro h1{
     margin:0 0 3px!important;
     font-size:18px!important;
