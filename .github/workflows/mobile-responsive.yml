@@ -26,11 +26,9 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Install Playwright test runner
-        run: npm install --no-save --package-lock=false --ignore-scripts @playwright/test
+      - run: pnpm install --no-frozen-lockfile
       - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
       - name: Build Menuya
         run: pnpm --filter @workspace/menuya build
       - name: Run responsive audit
