@@ -1643,3 +1643,57 @@ button,input,select,textarea{max-width:100%;touch-action:manipulation}
  .stripe-inspired .ck-footer>.footer-brand-group .atomlabs-symbol{width:14px!important;height:14px!important;flex-basis:14px!important}
  .stripe-inspired .ck-footer>.legal-footer-links{gap:8px 14px!important}
 }
+
+
+/* Fix: keep both footer brand marks fully visible on narrow screens */
+@media(max-width:700px){
+ .stripe-inspired footer.ck-footer>.footer-brand-group{
+  display:flex!important;
+  flex-direction:row!important;
+  flex-wrap:nowrap!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  justify-self:stretch!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  overflow:visible!important;
+  gap:14px!important;
+ }
+ .stripe-inspired footer.ck-footer>.footer-brand-group>.brand{
+  display:flex!important;
+  flex:0 1 auto!important;
+  width:auto!important;
+  max-width:48%!important;
+  min-width:0!important;
+  overflow:visible!important;
+ }
+ .stripe-inspired footer.ck-footer>.footer-brand-group>.brand img{
+  display:block!important;
+  width:auto!important;
+  max-width:100%!important;
+  height:27px!important;
+  object-fit:contain!important;
+ }
+ .stripe-inspired footer.ck-footer>.footer-brand-group>a.atомlabs-credit,
+ .stripe-inspired footer.ck-footer>.footer-brand-group>.atomlabs-credit{
+  display:flex!important;
+  flex:0 0 auto!important;
+  width:auto!important;
+  max-width:none!important;
+  min-width:max-content!important;
+  visibility:visible!important;
+  opacity:1!important;
+  overflow:visible!important;
+  margin:0!important;
+ }
+ .stripe-inspired footer.ck-footer>.footer-brand-group>.atomlabs-credit>b{
+  white-space:nowrap!important;
+ }
+}
+@media(max-width:380px){
+ .stripe-inspired footer.ck-footer>.footer-brand-group{gap:10px!important}
+ .stripe-inspired footer.ck-footer>.footer-brand-group>.brand img{height:24px!important}
+ .stripe-inspired footer.ck-footer>.footer-brand-group>.atomlabs-credit{padding-left:10px!important}
+ .stripe-inspired footer.ck-footer>.footer-brand-group>.atomlabs-credit>b{font-size:11px!important}
+}
