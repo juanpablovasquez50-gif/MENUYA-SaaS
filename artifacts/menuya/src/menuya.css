@@ -3567,3 +3567,33 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
  .public-store .public-category-section .public-product-info .product-current-price,
  .public-store .public-main > .public-products .public-product-info .product-current-price{font-size:16px!important}
 }
+
+
+/* Vitrina: precios visibles y agrupados debajo de la descripcion */
+.public-store .public-product-info .public-product-prices{
+  display:flex!important;
+  align-items:baseline!important;
+  justify-content:flex-start!important;
+  flex-wrap:wrap!important;
+  gap:8px!important;
+  width:100%!important;
+  min-width:0!important;
+  margin-top:7px!important;
+  color:var(--store-text)!important;
+}
+.public-store .public-product-info .public-product-prices .product-current-price{
+  display:inline-block!important;
+  visibility:visible!important;
+  color:var(--store-text)!important;
+  font-size:clamp(16px,1.7vw,20px)!important;
+  font-weight:900!important;
+  line-height:1.25!important;
+  opacity:1!important;
+}
+.public-store .public-product-info .public-product-prices del{
+  display:inline-block!important;
+  color:var(--store-muted)!important;
+  font-size:12px!important;
+  font-weight:600!important;
+  opacity:.85!important;
+}
