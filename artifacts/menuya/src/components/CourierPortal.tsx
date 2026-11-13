@@ -2,7 +2,7 @@ import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {supabase} from '@/lib/supabase';
 import {Bike,MapPin,Navigation,LogOut,RefreshCw,CheckCircle2,Package,MapPinned,Clock3,Route,LocateFixed} from 'lucide-react';
 type Assignment={id:string;status:string;orders:any};
-const normalizeGeo=(value:string)=>String(value||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().trim();
+const normalizeGeo=(value:string)=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
 const resultMatchesBusinessRegion=(hit:any,city:string,department:string)=>{const parts=hit?.address_components||[];const values=(type:string)=>parts.filter((part:any)=>part.types?.includes(type)).map((part:any)=>normalizeGeo(part.long_name));const cityValues=[...values('locality'),...values('postal_town'),...values('administrative_area_level_2')];const departmentValues=values('administrative_area_level_1');const cityOk=!city||cityValues.some(v=>v===normalizeGeo(city));const departmentOk=!department||departmentValues.some(v=>v===normalizeGeo(department));return cityOk&&departmentOk;};
 
 const money=(v:any)=>Number(v||0).toLocaleString('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0});
