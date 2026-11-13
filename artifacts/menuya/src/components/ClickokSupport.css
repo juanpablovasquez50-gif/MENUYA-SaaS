@@ -58,3 +58,15 @@
 .cks-footer{padding:0 3px 6px}
 @media(max-width:850px){.cks-layout{grid-template-columns:1fr}.cks-inbox{grid-template-columns:1fr;min-height:0}.cks-list{border-bottom:1px solid #ececf2}.cks-messages{min-height:270px;max-height:420px}.cks-conversation{min-height:420px}.cks-thread-head{align-items:flex-start;flex-direction:column}.cks-thread-actions{width:100%;flex-wrap:wrap}.cks-thread-actions select{flex:1;max-width:none}}
 @media(max-width:520px){.cks-heading h1{font-size:25px}.cks-main{padding:22px 14px}.cks-inbox{border-radius:13px}.cks-stats{grid-template-columns:1fr 1fr}.cks-stats article:last-child{grid-column:1/-1}.cks-message{max-width:92%}.cks-footer{gap:10px;flex-direction:column}}
+
+.cks-login-page{min-height:100vh;background:radial-gradient(ellipse at 50% 0%,#eeecff 0%,#f7f7fb 52%,#f7f7fb 100%)}
+.cks-login-card{width:min(440px,calc(100% - 32px));margin:clamp(50px,10vh,110px) auto;padding:34px;border:1px solid #e9e8f3;border-radius:24px;background:#fff;box-shadow:0 24px 80px rgba(32,28,80,.09)}
+.cks-login-icon{display:grid;place-items:center;width:52px;height:52px;margin-bottom:22px;border:1px solid #e6e1ff;border-radius:16px;background:#f2f0ff;color:#6554df}
+.cks-login-card h1{margin:8px 0;color:#20212c;font-size:27px;letter-spacing:-.04em}.cks-login-card>p{margin:0 0 25px;color:#77798a;font-size:13px;line-height:1.6}
+.cks-login-card form{display:flex;flex-direction:column;gap:16px}.cks-login-card form>label{display:flex;flex-direction:column;gap:7px;color:#343548;font-size:12px;font-weight:700}
+.cks-login-input{display:flex;align-items:center;gap:10px;height:46px;padding:0 13px;border:1px solid #e5e5ed;border-radius:12px;background:#fbfbfd;color:#9293a4}.cks-login-input:focus-within{border-color:#aaa0ff;box-shadow:0 0 0 3px rgba(111,94,235,.08)}
+.cks-login-input input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:#242536;font:inherit;font-size:13px}
+.cks-login-card .cks-primary{display:flex;justify-content:center;align-items:center;min-height:46px;margin-top:3px;border:0;border-radius:12px;background:#6252df;color:white;font:700 13px inherit;cursor:pointer}.cks-login-card .cks-primary:disabled{opacity:.55;cursor:not-allowed}
+.cks-login-foot{display:flex;justify-content:center;align-items:center;gap:6px;margin-top:22px;color:#9293a2;font-size:10px}
+.cks-modal label{display:flex;flex-direction:column;gap:7px;margin:12px 0;color:#45465a;font-size:12px;font-weight:700}.cks-modal label input{width:100%;min-height:40px;padding:9px 11px;border:1px solid #e5e5ed;border-radius:10px;background:#fbfbfd;color:#222;font:inherit;font-weight:500}
+.cks-modal form .cks-primary:disabled{opacity:.5;cursor:not-allowed}
