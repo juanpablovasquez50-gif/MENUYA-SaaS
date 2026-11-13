@@ -5382,3 +5382,25 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
     grid-template-columns:minmax(310px,390px) minmax(0,1fr);
   }
 }
+
+
+/* Stickers promocionales dentro de la configuración individual del producto */
+.product-sticker-field{display:flex;flex-direction:column;gap:12px}
+.product-sticker-field-heading{display:flex;flex-direction:column;gap:4px}
+.product-sticker-field-heading>span{font-weight:750;color:var(--text,#202124)}
+.product-sticker-field-heading>small,.product-sticker-hint{font-size:12px;color:var(--muted,#777);line-height:1.45}
+.product-sticker-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.product-sticker-choice{position:relative;min-height:82px;border:1px solid var(--border,#e7e7e7);border-radius:13px;background:var(--surface,#fff);padding:11px 7px 9px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;cursor:pointer;transition:border-color .18s,box-shadow .18s,transform .18s}
+.product-sticker-choice:hover{transform:translateY(-2px);border-color:#b7b7b7}
+.product-sticker-choice.is-selected{border:2px solid var(--primary,#242424);padding:10px 6px 8px;box-shadow:0 0 0 3px color-mix(in srgb,var(--primary,#242424) 9%,transparent)}
+.product-sticker-preview{display:inline-flex;align-items:center;justify-content:center;min-height:27px;padding:5px 10px;border-radius:5px;font-size:12px;font-weight:900;letter-spacing:-.25px;white-space:nowrap;box-shadow:0 2px 5px #00000012}
+.sticker-none{background:#f0f1f3;color:#626873}
+.sticker-discount{background:#ff4b32;color:#fff;border-radius:3px 7px 7px 3px}
+.sticker-deal{background:#171717;color:#fff;border-radius:5px 12px 5px 5px}
+.sticker-new{background:#20b86a;color:#fff;border-radius:12px}
+.sticker-top{background:#f8cf28;color:#211b00;border-radius:4px 11px 4px 11px}
+.sticker-limited{background:#f04483;color:#fff;transform:rotate(-3deg);border-radius:4px}
+.sticker-favorite{background:#7856d8;color:#fff;border-radius:14px 5px 14px 5px}
+.product-sticker-choice-label{font-size:11px;font-weight:650;color:var(--text,#333);text-align:center;line-height:1.25}
+.product-sticker-check{position:absolute;right:6px;top:6px;color:var(--primary,#222)}
+@media(max-width:520px){.product-sticker-options{grid-template-columns:repeat(2,minmax(0,1fr))}.product-sticker-choice{min-height:76px}}
