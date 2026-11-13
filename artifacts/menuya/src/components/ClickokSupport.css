@@ -195,3 +195,13 @@
 .cks-compose label input{accent-color:#6c5ce7}
 @media(max-width:850px){.cks-thread-title{width:100%;flex:none}.cks-business-profile{flex-wrap:wrap}.cks-sla{margin-left:45px}}
 @media(max-width:520px){.cks-business-profile{padding:9px 12px}.cks-sla{margin-left:0}.cks-priority-control{flex:1}.cks-priority-control select{width:100%}.cks-thread-actions select{min-width:0}}
+
+
+.cks-unread-pill{display:inline-flex;align-items:center;margin:5px 5px 0 0;padding:3px 7px;border-radius:20px;background:#e9f5ff;color:#2874b8;font-size:9px;font-weight:800}
+.cks-stats article:first-child{border-color:#e7e3ff;background:linear-gradient(145deg,#fff,#f7f5ff)}
+.cks-stats article:first-child>b{color:#6956df}
+.cks-modal textarea{width:100%;min-height:110px;padding:11px;border:1px solid #e5e5ee;border-radius:10px;background:#fbfbfd;color:#222;font:inherit;font-size:12px;resize:vertical}
+.cks-agent-row small{display:block;max-width:400px;margin-top:4px;color:#8b8d9e;font-size:10px;line-height:1.5}
+.cks-admin-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+@media(max-width:850px){.cks-heading>.cks-outline{align-self:flex-start}.cks-stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:520px){.cks-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.cks-stats article:last-child{grid-column:auto}}
