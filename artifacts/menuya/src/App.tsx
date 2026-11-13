@@ -269,6 +269,7 @@ function AuthPage({ mode, data, onLogin, onRegister, onForgot, onReset }: {
         <Button type="submit" className="full-btn" disabled={busy || (mode === "reset" && !recoveryReady)} testId="button-auth-submit">{busy ? 'Procesando...' : mode === 'register' ? 'Crear mi cuenta y tienda' : mode === 'forgot' ? 'Enviar instrucciones' : mode === 'reset' ? 'Actualizar contraseña' : 'Entrar'} <ArrowRight size={16} /></Button>
       </form>
       {mode === 'login' && <Link href="/forgot-password" className="text-link">¿Olvidaste tu contraseña?</Link>}
+      {mode === 'login' && <p className="auth-switch">¿Eres asesor de soporte? <Link href="/support/login">Ingresa al panel de asesores</Link></p>}
       {(mode === 'login' || mode === 'register') && <p className="auth-switch">{mode === 'register' ? '¿Ya tienes cuenta?' : '¿Tienes un comercio?'} <Link href={mode === 'register' ? '/login' : '/register'}>{mode === 'register' ? 'Inicia sesión' : 'Crea tu tienda'}</Link></p>}
       {(mode === 'forgot' || mode === 'reset') && <Link href="/login" className="back-link"><ArrowLeft size={15} /> Volver a iniciar sesión</Link>}
       <p className="security-note"><ShieldCheck size={14} /> Acceso protegido y conexión segura.</p>
