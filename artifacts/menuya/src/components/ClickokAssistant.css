@@ -23,3 +23,42 @@
 .clickok-ai-composer input{flex:1;min-width:0;height:37px;border:0;outline:0;background:transparent;color:#20212a;font:inherit;font-size:12px}.clickok-ai-composer input::placeholder{color:#a0a1af}.clickok-ai-composer button{display:grid;place-items:center;flex:0 0 37px;height:37px;border:0;border-radius:11px;background:#6355e4;color:#fff;cursor:pointer}.clickok-ai-composer button:disabled{opacity:.38;cursor:not-allowed}
 .clickok-ai-footer-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px}.clickok-ai-disclaimer{display:flex;align-items:center;justify-content:center;gap:5px;padding-top:8px;color:#a0a1af;font-size:9px}.clickok-ai-footer-bottom>button{display:flex;align-items:center;gap:4px;padding:7px 0 0;border:0;background:transparent;color:#6656d7;font:700 9px inherit;cursor:pointer}
 @media(max-width:620px){.clickok-ai-root{right:14px;bottom:calc(14px + env(safe-area-inset-bottom))}.clickok-ai-panel{right:-2px;bottom:67px;width:min(410px,calc(100vw - 24px));height:min(690px,calc(100dvh - 104px));border-radius:21px}.clickok-ai-launcher{height:54px;min-width:54px;padding:0 16px;border-radius:17px}}
+
+
+/* Premium chat polish + circular 3D receptionist launcher */
+.clickok-ai-root{right:24px;bottom:24px}
+.clickok-ai-launcher{position:relative;display:grid;place-items:center;width:76px;height:76px;min-width:76px;padding:0;overflow:visible;border:3px solid rgba(255,255,255,.94);border-radius:50%;background:radial-gradient(circle at 32% 20%,#a99fff 0%,#7564f3 45%,#5140ca 100%);box-shadow:0 9px 26px rgba(74,57,184,.35),inset 0 2px 5px rgba(255,255,255,.42);transition:transform .22s,box-shadow .22s}
+.clickok-ai-launcher:hover{transform:translateY(-4px) scale(1.04);box-shadow:0 15px 32px rgba(74,57,184,.42),inset 0 2px 5px rgba(255,255,255,.45)}
+.clickok-ai-launcher.is-open{width:54px;height:54px;min-width:54px;border:1px solid rgba(255,255,255,.2);border-radius:50%;background:#20212c}
+.clickok-ai-secretary{position:relative;display:block;width:66px;height:66px;overflow:hidden;border-radius:50%;background:radial-gradient(circle at 50% 20%,#e4dfff 0%,#9d8fff 60%,#6250d9 100%);isolation:isolate}
+.clickok-ai-secretary-glow{position:absolute;inset:4px;border:1px solid rgba(255,255,255,.36);border-radius:50%;box-shadow:inset 0 0 12px rgba(255,255,255,.22);pointer-events:none}
+.clickok-ai-secretary-hair{position:absolute;z-index:2;top:8px;left:17px;width:34px;height:35px;border-radius:48% 48% 38% 38%;background:linear-gradient(120deg,#332b48,#171525 58%,#4b3a63);box-shadow:inset 4px 0 4px rgba(255,255,255,.16),2px 3px 5px rgba(25,17,48,.25)}
+.clickok-ai-secretary-face{position:absolute;z-index:3;top:15px;left:20px;width:28px;height:31px;border-radius:44% 44% 48% 48%;background:linear-gradient(145deg,#ffe1c9,#e9ad91 85%);box-shadow:inset -3px -3px 5px rgba(151,76,69,.13),0 2px 3px rgba(45,27,57,.16)}
+.clickok-ai-secretary-face .eye{position:absolute;top:12px;width:3px;height:3px;border-radius:50%;background:#35283a;box-shadow:0 1px 0 rgba(255,255,255,.6)}
+.clickok-ai-secretary-face .eye.left{left:7px}.clickok-ai-secretary-face .eye.right{right:7px}
+.clickok-ai-secretary-face .smile{position:absolute;left:9px;bottom:6px;width:11px;height:6px;border-bottom:2px solid #a94f62;border-radius:0 0 12px 12px}
+.clickok-ai-secretary-neck{position:absolute;z-index:2;top:42px;left:28px;width:12px;height:10px;border-radius:0 0 5px 5px;background:linear-gradient(90deg,#d99b82,#f5c3a7)}
+.clickok-ai-secretary-body{position:absolute;z-index:1;left:13px;bottom:-12px;width:42px;height:29px;border-radius:18px 18px 0 0;background:linear-gradient(120deg,#fff,#dedaff 45%,#8a7af0);box-shadow:inset 0 3px 5px rgba(255,255,255,.65)}
+.clickok-ai-secretary-headset{position:absolute;z-index:4;top:10px;left:15px;width:37px;height:29px;border:3px solid #d8d2ff;border-bottom-color:transparent;border-radius:22px 22px 0 0;filter:drop-shadow(0 1px 1px rgba(40,24,90,.25))}
+.clickok-ai-secretary-headset:after{content:"";position:absolute;right:-3px;bottom:-4px;width:7px;height:7px;border-radius:50%;background:#f4f0ff;box-shadow:0 0 0 2px #7260e8}
+.clickok-ai-panel{width:min(430px,calc(100vw - 28px));height:min(720px,calc(100dvh - 112px));border-radius:27px;box-shadow:0 30px 100px rgba(20,22,45,.27)}
+.clickok-ai-header{padding:18px 17px}
+.clickok-ai-body{padding:19px 17px;background:radial-gradient(ellipse at 0% 0%,#eeecff 0%,transparent 42%),linear-gradient(180deg,#f8f8fc,#f4f4fa)}
+.clickok-ai-conversation{gap:17px}
+.clickok-ai-message-content{max-width:min(86%,330px)}
+.clickok-ai-message-content p{padding:13px 15px;font-size:13px;line-height:1.6;box-shadow:0 5px 16px rgba(25,25,50,.045)}
+.clickok-ai-message.user .clickok-ai-message-content p{background:linear-gradient(135deg,#7767f6,#5948d9);box-shadow:0 5px 14px rgba(86,68,213,.18)}
+.clickok-ai-message-avatar{width:32px;height:32px;flex-basis:32px;border-radius:11px}
+.clickok-ai-footer{padding:13px 15px 11px}
+.clickok-ai-composer{min-height:54px;border-radius:17px;background:#fafaff}
+.clickok-ai-composer input{font-size:13px}
+.clickok-ai-composer button{flex-basis:40px;height:40px;border-radius:13px}
+@media(max-width:620px){
+ .clickok-ai-root{right:14px;bottom:calc(14px + env(safe-area-inset-bottom))}
+ .clickok-ai-launcher{width:70px;height:70px;min-width:70px}
+ .clickok-ai-secretary{width:60px;height:60px}
+ .clickok-ai-panel{right:-2px;bottom:79px;width:min(430px,calc(100vw - 24px));height:min(720px,calc(100dvh - 106px));border-radius:23px}
+ .clickok-ai-body{padding:16px 13px}
+ .clickok-ai-message-content{max-width:88%}
+}
+@media(prefers-reduced-motion:reduce){.clickok-ai-launcher,.clickok-ai-panel{animation:none;transition:none}}
