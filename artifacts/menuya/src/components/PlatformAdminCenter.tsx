@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button as AstryxButton } from '@astryxdesign/core/Button';
 import type { FormEvent, ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
-import { Activity, ArrowRight, Check, CheckCircle2, ChevronDown, ChevronRight, Clock3, CreditCard, LayoutDashboard, LogOut, Plus, RefreshCw, Search, ShieldCheck, Store, Tag, Users } from 'lucide-react';
+import { Activity, ArrowRight, Check, CheckCircle2, ChevronDown, ChevronRight, Clock3, CreditCard, Headset, LayoutDashboard, LogOut, Plus, RefreshCw, Search, ShieldCheck, Store, Tag, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { MenuyaAuthContext } from '@/lib/menuya-auth';
 import PartnersManager from '@/components/PartnersManager';
@@ -11,7 +11,7 @@ type BusinessRow={id:string;name:string;slug:string;business_type:string;status:
 type PlanRow={id:string;code:string;name:string;price:number;billing_period:'month'|'year';max_products:number;features:unknown;is_active:boolean;created_at:string;subscription_count:number};
 type SubscriptionRow={id:string;business_id:string;business_name:string;owner_id:string;owner_name:string|null;owner_email:string|null;plan_id:string;plan_name:string;price:number;status:string;starts_at:string|null;ends_at:string|null;external_reference:string|null;created_at:string};
 type UserRow={user_id:string;email:string|null;full_name:string|null;phone:string|null;created_at:string;business_count:number};
-const nav=[['/admin','Resumen',LayoutDashboard],['/admin/businesses','Comercios',Store],['/admin/requests','Solicitudes',Clock3],['/admin/users','Usuarios',Users],['/admin/plans','Planes',Tag],['/admin/subscriptions','Suscripciones',CreditCard],['/admin/partners','Partners',Users],['/admin/settings','Ajustes',ShieldCheck],['/admin/audit','Auditoría',Activity]] as const;
+const nav=[['/admin','Resumen',LayoutDashboard],['/admin/businesses','Comercios',Store],['/admin/requests','Solicitudes',Clock3],['/admin/users','Usuarios',Users],['/admin/plans','Planes',Tag],['/admin/subscriptions','Suscripciones',CreditCard],['/admin/partners','Partners',Users],['/admin/settings','Ajustes',ShieldCheck],['/admin/audit','Auditoría',Activity],['/support','Asesores de soporte',Headset]] as const;
 const cop=(n:number)=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(Number(n)||0);
 const date=(v:string|null)=>v?new Intl.DateTimeFormat('es-CO',{dateStyle:'medium'}).format(new Date(v)):'Sin fecha';
 export default function PlatformAdminCenter({context,onLogout}:{context:MenuyaAuthContext;onLogout:()=>void}){
