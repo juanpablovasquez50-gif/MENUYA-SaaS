@@ -5172,3 +5172,62 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 @media(max-width:700px){
   .studio-browser-live{max-height:68vh;min-height:420px}
 }
+
+
+/* Platform admin: consistent CLICKOK action buttons */
+.sa-content .sa-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 0 17px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1;
+  letter-spacing: -.01em;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.sa-content .sa-action-button-primary {
+  background: #7656ed !important;
+  color: #fff !important;
+  border: 1px solid #7656ed !important;
+  box-shadow: 0 2px 5px rgba(76, 51, 174, .16);
+}
+.sa-content .sa-action-button-primary:hover:not([aria-disabled="true"]) {
+  background: #6544dc !important;
+  border-color: #6544dc !important;
+  box-shadow: 0 4px 10px rgba(76, 51, 174, .22);
+  transform: translateY(-1px);
+}
+.sa-content .sa-action-button-primary:active:not([aria-disabled="true"]) {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(76, 51, 174, .16);
+}
+.sa-content .sa-action-button-secondary {
+  background: #fff;
+  color: #5b43c7;
+  border: 1px solid #ded7f8;
+  box-shadow: 0 1px 2px rgba(27, 24, 48, .04);
+}
+.sa-content .sa-action-button-secondary:hover {
+  background: #f7f4ff;
+  border-color: #c9bdf5;
+  box-shadow: 0 3px 8px rgba(76, 51, 174, .09);
+  transform: translateY(-1px);
+}
+.sa-content .sa-action-button:focus-visible {
+  outline: 3px solid rgba(118, 86, 237, .28);
+  outline-offset: 2px;
+}
+.sa-content .sa-welcome .sa-action-button { flex: 0 0 auto; }
+.sa-content .sa-panel-heading .sa-action-button { flex: 0 0 auto; }
+@media (max-width: 700px) {
+  .sa-content .sa-welcome .sa-action-button { min-height: 40px; padding-inline: 13px; }
+  .sa-content .sa-panel-heading { align-items: flex-start; gap: 14px; }
+}
