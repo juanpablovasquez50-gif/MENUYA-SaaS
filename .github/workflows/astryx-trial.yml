@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - test/astryx-ui-trial
+      - test/astryx-refresh
   workflow_dispatch:
 
 permissions:
