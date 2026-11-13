@@ -3,3 +3,58 @@
 
 .cks-loading{padding:40px;text-align:center;color:#888}.cks-logout{margin-top:14px;border:0;background:transparent;color:#777;font-size:11px}.cks-error{background:#fff3f1;border:1px solid #ffd9d2;color:#a33;border-radius:9px;padding:12px;margin-top:15px;font-size:11px}.cks-search{display:flex;align-items:center;gap:5px;background:#f6f6fa;padding:6px;border-radius:7px}.cks-search input{width:90px;border:0;background:transparent;outline:0;font-size:10px}.cks-ticket{width:100%;text-align:left;border:0;background:#fff;cursor:pointer}.cks-ticket.selected{background:#f5f2ff}.cks-thread-head{padding:16px 18px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;gap:10px}.cks-thread-head b{font-size:13px}.cks-thread-head small{display:block;font-size:10px;color:#999;margin-top:5px}.cks-thread-actions{display:flex;gap:6px}.cks-thread-actions select{max-width:130px;padding:7px;border:1px solid #ddd;border-radius:7px;font-size:10px}.cks-messages{padding:18px;display:flex;flex-direction:column;gap:12px;flex:1;max-height:440px;overflow:auto}.cks-message{align-self:flex-start;max-width:80%;background:#f3f3f7;padding:10px 13px;border-radius:12px}.cks-message.mine{align-self:flex-end;background:#eeeaff}.cks-message.internal{background:#fff8e8;border:1px dashed #d7a94e}.cks-message small{font-size:9px;color:#888}.cks-message p{font-size:12px;white-space:pre-wrap;line-height:1.5;margin:5px 0 0}.cks-compose{padding:12px 18px;border-top:1px solid #eee}.cks-compose label{display:block;font-size:10px;margin-bottom:7px}.cks-compose form{display:flex;gap:8px}.cks-compose textarea{flex:1;min-height:58px;border:1px solid #ddd;border-radius:9px;padding:10px}.cks-compose button{width:42px;border:0;border-radius:9px;background:#7656ed;color:white}.cks-empty-state{text-align:center;margin:auto;padding:30px}.cks-empty-state h2{font-size:16px}.cks-empty-state p,.cks-no-results{font-size:11px;color:#999}.cks-modal-backdrop{position:fixed;inset:0;background:#11182777;display:grid;place-items:center;z-index:1000;padding:20px}.cks-modal{background:#fff;border-radius:14px;padding:20px;width:min(440px,100%);display:flex;flex-direction:column;gap:14px;max-height:85vh;overflow:auto}.cks-modal header{display:flex;justify-content:space-between;align-items:center}.cks-modal header button{border:0;background:transparent}.cks-modal label{display:flex;flex-direction:column;gap:6px;font-size:11px}.cks-modal input,.cks-modal select{padding:10px;border:1px solid #ddd;border-radius:8px}.cks-agent-row{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid #eee;font-size:10px;overflow-wrap:anywhere}.cks-agent-row button{border:1px solid #ddd;background:white;border-radius:7px;padding:6px 9px}
 .cks-admin-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.cks-enabled,.cks-disabled{font-size:10px;padding:7px 9px;border-radius:20px;background:#e9f8ef;color:#237a45}.cks-disabled{background:#fff2e7;color:#a65b1c}@media(max-width:520px){.cks-admin-actions{width:100%}.cks-admin-actions button{flex:1;justify-content:center}}
+/* CLICKOK Support · unified premium workspace */
+.cks-page{background:#f4f5fa;color:#191a28;font-family:inherit}
+.cks-topbar{height:72px;padding:0 clamp(18px,3vw,42px);box-shadow:0 2px 12px rgba(24,25,45,.025)}
+.cks-mark{width:34px;height:34px;border-radius:11px;background:linear-gradient(145deg,#7665f5,#5142ce);box-shadow:0 6px 14px rgba(95,78,219,.2)}
+.cks-layout{grid-template-columns:258px minmax(0,1fr);min-height:calc(100vh - 72px)}
+.cks-sidebar{padding:25px 17px;border-color:#ececf2}
+.cks-workspace{padding:5px 8px 30px}
+.cks-workspace-icon{width:42px;height:42px;border-radius:13px;background:#f0edff;color:#6756e7}
+.cks-nav-item{height:43px;border-radius:11px;font-size:12px;transition:background .16s,color .16s}
+.cks-nav-item.active{background:#f0edff;color:#5e4bd7}
+.cks-nav-item b{background:#6654e4}
+.cks-secure{border-radius:13px;background:linear-gradient(145deg,#faf9ff,#f5f4fb);border-color:#ebe8fb;padding:15px}
+.cks-main{padding:clamp(25px,3vw,42px) clamp(20px,4vw,58px);max-width:1600px}
+.cks-heading{align-items:flex-start;flex-wrap:wrap}
+.cks-heading h1{font-size:30px;letter-spacing:-1.2px;font-weight:800}
+.cks-heading p{font-size:13px;line-height:1.6}
+.cks-stats{gap:16px;margin:29px 0 22px}
+.cks-stats article{border:1px solid #e9eaf2;border-radius:15px;padding:19px 21px;box-shadow:0 5px 18px rgba(22,23,48,.025)}
+.cks-stats article>b{font-size:29px;letter-spacing:-1.2px}
+.cks-inbox{grid-template-columns:minmax(285px,350px) minmax(0,1fr);min-height:570px;border:1px solid #e8e9f0;border-radius:17px;box-shadow:0 9px 30px rgba(25,25,52,.035)}
+.cks-list{min-width:0;background:#fff}
+.cks-list-head{min-height:74px;padding:17px 18px}
+.cks-search{width:auto;max-width:145px;padding:7px 9px}
+.cks-search input{width:88px}
+.cks-ticket{padding:17px 16px;transition:background .15s;border-left:3px solid transparent}
+.cks-ticket:hover{background:#faf9ff}
+.cks-ticket.selected{background:#f5f3ff;border-left-color:#6b59e8}
+.cks-ticket-avatar{width:38px;height:38px;border-radius:12px}
+.cks-ticket-body b{font-size:11px}
+.cks-ticket-body p{font-size:11px;line-height:1.45}
+.cks-conversation{max-width:none;width:100%;min-width:0;margin:0;align-items:stretch;justify-content:flex-start;text-align:left;padding:0}
+.cks-thread-head{min-height:74px;padding:16px 20px;align-items:center;background:#fff}
+.cks-thread-head>div:first-child{min-width:0}
+.cks-thread-head b{font-size:13px}
+.cks-thread-actions select{max-width:145px;padding:8px 10px;border-color:#e5e5ee;background:#fff}
+.cks-messages{width:100%;max-width:none;max-height:none;flex:1;padding:22px;background:linear-gradient(180deg,#fbfbfe,#f7f7fb);gap:14px}
+.cks-message{max-width:min(78%,620px);padding:12px 15px;border:1px solid #ececf3;border-radius:5px 15px 15px 15px;background:#fff;box-shadow:0 3px 12px rgba(22,23,45,.025)}
+.cks-message.mine{border-color:#e5e1ff;border-radius:15px 5px 15px 15px;background:#f0edff}
+.cks-message.internal{background:#fff8e8;border-color:#f1dcae}
+.cks-message p{font-size:12px;line-height:1.65}
+.cks-compose{width:100%;padding:15px 18px;background:#fff}
+.cks-compose textarea{min-height:66px;border-color:#e5e5ed;border-radius:12px;font:inherit;font-size:12px;resize:vertical}
+.cks-compose button{width:44px;border-radius:12px;background:linear-gradient(145deg,#7665f5,#5544d7)}
+.cks-empty-state{align-self:center;text-align:center;margin:auto;padding:40px}
+.cks-empty-state .cks-empty-icon{margin:0 auto}
+.cks-empty-state p{max-width:330px;line-height:1.65}
+.cks-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 15px;border:0;border-radius:11px;background:linear-gradient(145deg,#7665f5,#5544d7);color:#fff;font:700 11px inherit;cursor:pointer;box-shadow:0 6px 15px rgba(94,77,215,.16)}
+.cks-primary:disabled{opacity:.45;cursor:not-allowed}
+.cks-outline{border-radius:10px;padding:10px 13px;font:600 11px inherit;cursor:pointer}
+.cks-enabled,.cks-disabled{font-weight:700}
+.cks-modal{border:1px solid #ececf4;border-radius:18px;box-shadow:0 24px 80px rgba(18,19,38,.2);padding:23px}
+.cks-modal input,.cks-modal select{border-color:#e5e5ee;border-radius:10px;font:inherit;font-size:12px}
+.cks-footer{padding:0 3px 6px}
+@media(max-width:850px){.cks-layout{grid-template-columns:1fr}.cks-inbox{grid-template-columns:1fr;min-height:0}.cks-list{border-bottom:1px solid #ececf2}.cks-messages{min-height:270px;max-height:420px}.cks-conversation{min-height:420px}.cks-thread-head{align-items:flex-start;flex-direction:column}.cks-thread-actions{width:100%;flex-wrap:wrap}.cks-thread-actions select{flex:1;max-width:none}}
+@media(max-width:520px){.cks-heading h1{font-size:25px}.cks-main{padding:22px 14px}.cks-inbox{border-radius:13px}.cks-stats{grid-template-columns:1fr 1fr}.cks-stats article:last-child{grid-column:1/-1}.cks-message{max-width:92%}.cks-footer{gap:10px;flex-direction:column}}
