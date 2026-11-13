@@ -6,12 +6,13 @@ import { Activity, ArrowRight, Check, CheckCircle2, ChevronDown, ChevronRight, C
 import { supabase } from '@/lib/supabase';
 import type { MenuyaAuthContext } from '@/lib/menuya-auth';
 import PartnersManager from '@/components/PartnersManager';
+import SupportAgentsAdmin from '@/components/SupportAgentsAdmin';
 
 type BusinessRow={id:string;name:string;slug:string;business_type:string;status:string;is_published:boolean;created_at:string;email:string|null;phone:string|null};
 type PlanRow={id:string;code:string;name:string;price:number;billing_period:'month'|'year';max_products:number;features:unknown;is_active:boolean;created_at:string;subscription_count:number};
 type SubscriptionRow={id:string;business_id:string;business_name:string;owner_id:string;owner_name:string|null;owner_email:string|null;plan_id:string;plan_name:string;price:number;status:string;starts_at:string|null;ends_at:string|null;external_reference:string|null;created_at:string};
 type UserRow={user_id:string;email:string|null;full_name:string|null;phone:string|null;created_at:string;business_count:number};
-const nav=[['/admin','Resumen',LayoutDashboard],['/admin/businesses','Comercios',Store],['/admin/requests','Solicitudes',Clock3],['/admin/users','Usuarios',Users],['/admin/plans','Planes',Tag],['/admin/subscriptions','Suscripciones',CreditCard],['/admin/partners','Partners',Users],['/admin/settings','Ajustes',ShieldCheck],['/admin/audit','Auditoría',Activity],['/support','Asesores de soporte',Headset]] as const;
+const nav=[['/admin','Resumen',LayoutDashboard],['/admin/businesses','Comercios',Store],['/admin/requests','Solicitudes',Clock3],['/admin/users','Usuarios',Users],['/admin/plans','Planes',Tag],['/admin/subscriptions','Suscripciones',CreditCard],['/admin/partners','Partners',Users],['/admin/settings','Ajustes',ShieldCheck],['/admin/audit','Auditoría',Activity],['/admin/support','Asesores de soporte',Headset]] as const;
 const cop=(n:number)=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(Number(n)||0);
 const date=(v:string|null)=>v?new Intl.DateTimeFormat('es-CO',{dateStyle:'medium'}).format(new Date(v)):'Sin fecha';
 export default function PlatformAdminCenter({context,onLogout}:{context:MenuyaAuthContext;onLogout:()=>void}){
@@ -86,6 +87,7 @@ export default function PlatformAdminCenter({context,onLogout}:{context:MenuyaAu
     {section==='settings'&&<><section className="sa-panel"><PanelHead title="Ajustes globales" subtitle="Configuraciones operativas de CLICKOK. No guardes claves, tokens ni secretos aquí."/><form className="form-stack" onSubmit={saveSetting}><label className="field"><span>Clave (minúsculas, números, punto, guion)</span><input required pattern="[a-z][a-z0-9_.-]{1,79}" value={settingKey} onChange={e=>setSettingKey(e.target.value)} placeholder="platform.maintenance_mode"/></label><label className="field"><span>Valor en JSON</span><textarea required rows={4} value={settingValue} onChange={e=>setSettingValue(e.target.value)} /></label><label className="field"><span>Descripción</span><input value={settingDescription} onChange={e=>setSettingDescription(e.target.value)} placeholder="Descripción del ajuste"/></label><button className="sa-submit" disabled={busy==='setting'||!settingKey.trim()}>{busy==='setting'?'Guardando…':'Guardar ajuste'}</button></form></section><section className="sa-panel"><PanelHead title="Configuraciones guardadas" subtitle="Los cambios quedan registrados en auditoría." count={settings.length}/><DataTable headers={['CLAVE','VALOR','DESCRIPCIÓN','ACTUALIZADO']} rows={settings.map(x=>[<b>{x.setting_key}</b>,<code>{JSON.stringify(x.setting_value)}</code>,x.description||'—',date(x.updated_at)])}/></section></>}
     {section==='audit'&&<section className="sa-panel"><PanelHead title="Auditoría de plataforma" subtitle="Registro cronológico de acciones administrativas en comercios, planes y suscripciones."/><AuditList/></section>}
     {section==='partners'&&<PartnersManager/>}
+    {section==='support'&&<SupportAgentsAdmin/>}
     <footer className="sa-footer"><span>CLICKOK · ATOM LABS</span><span><ShieldCheck size={14}/> Sesión protegida · Operaciones verificadas</span></footer>
    </div>
   </main>
