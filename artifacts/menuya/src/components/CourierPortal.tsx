@@ -77,4 +77,47 @@ const courierStyles=`
 .cp-login{display:grid;place-items:center;padding:22px;background:radial-gradient(circle at 20% 10%,#ece8ff,transparent 38%),#f3f6fb}.cp-login-card{width:min(100%,420px);background:#fff;border:1px solid #e8edf4;border-radius:23px;padding:30px;box-shadow:0 18px 55px #25204412;display:flex;flex-direction:column;gap:13px}.cp-login-card .cp-brand{margin-bottom:13px}.cp-login-card h1{font-size:29px;line-height:1.1;letter-spacing:-.04em;margin:0}.cp-login-card>p{font-size:13px;color:#7b8799;line-height:1.5;margin:0 0 7px}.cp-login-card label{font-size:11px;font-weight:800;color:#4f5b70;display:flex;flex-direction:column;gap:7px}.cp-login-card input{height:46px;border:1px solid #dfe5ef;border-radius:11px;padding:0 13px;font-size:14px;outline:none}.cp-login-card input:focus{border-color:#7656df;box-shadow:0 0 0 3px #7656df18}.cp-login-foot{text-align:center;color:#a0a9b7;font-size:10px;margin-top:4px}
 @media(max-width:940px){.cp-hero,.cp-stats,.cp-section-head,.cp-deliveries,.cp-gps{margin-left:16px;margin-right:16px}.cp-topbar{padding:0 17px}}
 @media(max-width:560px){.cp-city-editor .cp-address-fields{grid-template-columns:1fr}.cp-topbar{height:62px}.cp-brand img{width:142px}.cp-brand-icon{width:37px;height:37px}.cp-hero{margin-top:16px;padding:22px 19px;border-radius:19px}.cp-hero-art{width:88px;height:88px}.cp-hero-art svg{width:52px}.cp-hero-art span{font-size:7px}.cp-hero h1{font-size:27px}.cp-hero p{font-size:12px;max-width:205px}.cp-stats{gap:8px;margin-bottom:23px}.cp-stats article{padding:12px 9px;grid-template-columns:30px 1fr;column-gap:6px}.cp-stat-icon{width:29px;height:29px;border-radius:9px}.cp-stats b{font-size:19px}.cp-stats small{font-size:9px}.cp-section-head h2{font-size:22px}.cp-delivery{padding:13px;border-radius:16px}.cp-live-map{height:230px}.cp-login-card{padding:24px 20px}}
+/* Premium delivery-card refresh */
+.cp-deliveries{gap:19px}
+.cp-delivery{position:relative;padding:0;border:1px solid #e4e9f2;border-radius:22px;overflow:hidden;box-shadow:0 10px 30px #1827470b;transition:box-shadow .2s,border-color .2s}
+.cp-delivery:before{content:"";position:absolute;inset:0 0 auto;height:4px;background:linear-gradient(90deg,#6848df,#a18cf4);z-index:2}
+.cp-delivery-head{padding:18px 20px 15px;margin:0;align-items:center;background:linear-gradient(180deg,#fff,#fcfcff);border-bottom:1px solid #eef1f6}
+.cp-order-label{display:inline-flex;align-items:center;gap:6px;color:#8a93a5;font-size:9px;letter-spacing:.15em}
+.cp-delivery-head h3{font-size:25px;line-height:1.1;letter-spacing:-.045em;font-weight:850;margin:5px 0 0;color:#19243a}
+.cp-status{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #f3dfb8;font-size:10px;letter-spacing:.01em}
+.cp-status:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.cp-status.on-route{border-color:#c9edda;background:#eaf9f1;color:#138354}
+.cp-map-wrap{margin:0 15px;border:1px solid #e6eaf2;border-radius:15px;background:#f7f8fc}
+.cp-map-heading{height:42px;padding:0 13px}
+.cp-live-map{height:280px}
+.cp-nav-guidance{padding:13px 14px;background:linear-gradient(105deg,#21194d,#30236c);min-height:86px}
+.cp-nav-arrow{background:#ffffff1c;border:1px solid #ffffff22}
+.cp-nav-copy b{font-size:14px;line-height:1.3}
+.cp-nav-guidance>strong{font-size:19px;font-weight:850;letter-spacing:-.03em}
+.cp-order-info{margin:14px 15px 0;padding:0;gap:10px;display:grid;grid-template-columns:1fr 1fr}
+.cp-order-info>div{padding:12px 14px;border:1px solid #edf0f5;border-radius:13px;background:#fafbfe;gap:5px}
+.cp-order-info small{font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#8a95a7}
+.cp-order-info b{font-size:16px;font-weight:850;letter-spacing:-.02em;color:#202b40}
+.cp-notes{margin:12px 15px 0;border:1px solid #f0e7d7;background:#fffbf3;color:#78664c}
+.cp-delivery footer{margin:14px 15px 16px}
+.cp-complete,.cp-primary{min-height:49px;border-radius:13px;font-size:12px;letter-spacing:.01em}
+.cp-empty{border-radius:22px}
+@media(max-width:560px){
+ .cp-delivery{border-radius:19px}
+ .cp-delivery-head{padding:15px 15px 13px}
+ .cp-delivery-head h3{font-size:23px}
+ .cp-map-wrap{margin:0 10px;border-radius:13px}
+ .cp-map-heading{font-size:10px;padding:0 10px}
+ .cp-live-map{height:235px}
+ .cp-nav-guidance{padding:11px;gap:9px}
+ .cp-nav-arrow{width:38px;height:38px}
+ .cp-nav-copy b{font-size:12px}
+ .cp-nav-guidance>strong{font-size:16px}
+ .cp-order-info{margin:11px 10px 0;gap:8px}
+ .cp-order-info>div{padding:10px;border-radius:11px}
+ .cp-order-info b{font-size:14px}
+ .cp-delivery footer{margin:12px 10px 12px}
+ .cp-notes{margin:10px 10px 0}
+}
+
 `;
