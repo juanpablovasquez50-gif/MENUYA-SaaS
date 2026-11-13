@@ -22,9 +22,12 @@ Deno.serve(async (req: Request) => {
   const { data: caller, error: authError } = await callerClient.auth.getUser(authorization.slice(7));
   if (authError || !caller.user) return json({ error: 'La sesión no es válida.' }, 401);
   const admin = createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { data: manager, error: roleError } = await admin.from('clickok_support_admins').select('user_id').eq('user_id', caller.user.id).eq('is_active', true).maybeSingle();
-  if (roleError) return json({ error: 'No se pudo validar el rol de administrador de soporte.' }, 500);
-  if (!manager) return json({ error: 'Solo el administrador de CLICKOK Support puede crear asesores.' }, 403);
+  const [{ data: manager, error: managerError }, { data: platformAdmin, error: platformError }] = await Promise.all([
+    admin.from('clickok_support_admins').select('user_id').eq('user_id', caller.user.id).eq('is_active', true).maybeSingle(),
+    admin.from('platform_admins').select('user_id').eq('user_id', caller.user.id).maybeSingle(),
+  ]);
+  if (managerError || platformError) return json({ error: 'No se pudo validar el rol administrativo.' }, 500);
+  if (!manager && !platformAdmin) return json({ error: 'Solo el Súper Admin o un administrador activo de soporte puede crear asesores.' }, 403);
   let input: { displayName?: string; username?: string; password?: string };
   try { input = await req.json(); } catch { return json({ error: 'Solicitud inválida.' }, 400); }
   const displayName = String(input.displayName || '').trim();
