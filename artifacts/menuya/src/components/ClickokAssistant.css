@@ -2,18 +2,34 @@
 .clickok-ai-launcher{display:flex;align-items:center;justify-content:center;gap:9px;min-width:58px;height:58px;padding:0 19px;border:0;border-radius:999px;background:#635bff;color:#fff;box-shadow:0 12px 34px rgba(63,55,190,.32);font:inherit;font-weight:750;cursor:pointer;transition:transform .18s,box-shadow .18s}
 .clickok-ai-launcher:hover{transform:translateY(-2px);box-shadow:0 16px 38px rgba(63,55,190,.4)}
 .clickok-ai-launcher.is-open{width:54px;min-width:54px;padding:0;background:#20212a}
-.clickok-ai-panel{position:absolute;right:0;bottom:72px;display:flex;flex-direction:column;width:min(390px,calc(100vw - 28px));height:min(620px,calc(100dvh - 120px));overflow:hidden;border:1px solid rgba(30,32,50,.1);border-radius:22px;background:#fff;color:#20212a;box-shadow:0 24px 80px rgba(20,22,45,.22);animation:clickok-ai-in .18s ease-out}
+.clickok-ai-panel{position:absolute;right:0;bottom:72px;display:flex;flex-direction:column;width:min(390px,calc(100vw - 28px));height:min(650px,calc(100dvh - 120px));overflow:hidden;border:1px solid rgba(30,32,50,.1);border-radius:22px;background:#fff;color:#20212a;box-shadow:0 24px 80px rgba(20,22,45,.22);animation:clickok-ai-in .18s ease-out}
 @keyframes clickok-ai-in{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
 .clickok-ai-header{display:flex;align-items:center;gap:10px;padding:16px 15px;background:#171827;color:#fff}
-.clickok-ai-avatar{display:grid;place-items:center;width:40px;height:40px;border-radius:13px;background:rgba(170,168,255,.16);color:#aaa8ff}
+.clickok-ai-avatar{position:relative;display:grid;place-items:center;width:40px;height:40px;border-radius:13px;background:rgba(170,168,255,.16);color:#aaa8ff}
+.clickok-ai-avatar>span{position:absolute;right:-2px;bottom:-2px;width:10px;height:10px;border:2px solid #171827;border-radius:50%;background:#47d69b}
 .clickok-ai-heading{display:flex;flex:1;flex-direction:column;gap:3px}.clickok-ai-heading b{font-size:14px;letter-spacing:.02em}.clickok-ai-heading span{display:flex;align-items:center;gap:6px;color:#c4c4d1;font-size:11px}.clickok-ai-heading i{width:7px;height:7px;border-radius:50%;background:#47d69b}
 .clickok-ai-icon-btn{display:grid;place-items:center;width:32px;height:32px;border:0;border-radius:9px;background:rgba(255,255,255,.08);color:#fff;cursor:pointer}
-.clickok-ai-body{flex:1;overflow:auto;padding:17px;background:#fafaff}
-.clickok-ai-welcome{display:grid;justify-items:start;gap:8px;margin-bottom:17px}.clickok-ai-welcome-icon{display:grid;place-items:center;width:35px;height:35px;border-radius:11px;background:#eeedff;color:#635bff}.clickok-ai-welcome b{font-size:17px;letter-spacing:-.03em}.clickok-ai-welcome p{margin:0;color:#747586;font-size:12px;line-height:1.5}
-.clickok-ai-search{display:flex;align-items:center;gap:9px;height:43px;padding:0 12px;border:1px solid #e7e7ef;border-radius:12px;background:#fff;color:#8b8c9b}.clickok-ai-search input{width:100%;border:0;outline:0;background:transparent;color:#20212a;font:inherit;font-size:12px}
-.clickok-ai-categories{display:flex;gap:7px;overflow-x:auto;padding:13px 0 7px;scrollbar-width:none}.clickok-ai-categories button,.clickok-ai-suggestions button{flex:0 0 auto;padding:7px 11px;border:1px solid #e8e8f0;border-radius:999px;background:#fff;color:#606174;font:inherit;font-size:11px;cursor:pointer}.clickok-ai-categories button.active{border-color:#635bff;background:#efeeff;color:#5148d8;font-weight:750}
-.clickok-ai-faq-title{margin:11px 0 8px;color:#77788a;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}.clickok-ai-questions{display:flex;flex-direction:column;gap:7px}.clickok-ai-questions>button{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;border:1px solid #e9e9f1;border-radius:11px;background:#fff;color:#292a37;text-align:left;font:inherit;font-size:12px;font-weight:650;cursor:pointer}.clickok-ai-questions>button svg{flex:0 0 auto;color:#7772db}.clickok-ai-empty{padding:15px;color:#77788a;font-size:12px;text-align:center}
-.clickok-ai-suggestions{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}.clickok-ai-suggestions button{border-color:#e2e0ff;color:#5148d8}
-.clickok-ai-conversation{display:flex;flex-direction:column;gap:13px}.clickok-ai-message{display:flex;align-items:flex-start;gap:8px}.clickok-ai-message>span{display:grid;place-items:center;flex:0 0 25px;height:25px;border-radius:8px;background:#eeedff;color:#635bff;font-size:10px;font-weight:800}.clickok-ai-message.user{flex-direction:row-reverse}.clickok-ai-message.user>span{background:#e9e9ef;color:#5d5e6c}.clickok-ai-message p{max-width:85%;margin:0;padding:11px 12px;border-radius:4px 13px 13px 13px;background:#fff;color:#383947;font-size:12px;line-height:1.65;white-space:pre-line;box-shadow:0 2px 9px rgba(25,25,50,.045)}.clickok-ai-message.user p{border-radius:13px 4px 13px 13px;background:#635bff;color:#fff}.clickok-ai-back{align-self:center;display:flex;align-items:center;gap:5px;margin-top:7px;border:0;background:transparent;color:#635bff;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
-.clickok-ai-footer{display:flex;align-items:center;gap:7px;padding:11px 14px;border-top:1px solid #ededf2;color:#88899a;font-size:10px}.clickok-ai-footer button{margin-left:auto;border:0;background:transparent;color:#635bff;font:inherit;font-weight:750;cursor:pointer}
-@media(max-width:620px){.clickok-ai-root{right:14px;bottom:calc(14px + env(safe-area-inset-bottom))}.clickok-ai-panel{right:-2px;bottom:68px;width:min(390px,calc(100vw - 24px));height:min(620px,calc(100dvh - 105px));border-radius:19px}.clickok-ai-launcher{height:54px;min-width:54px;padding:0 16px}}
+.clickok-ai-body{flex:1;overflow:auto;padding:16px;background:#f7f7fb;scroll-behavior:smooth}
+.clickok-ai-date{display:flex;align-items:center;justify-content:center;margin:1px 0 18px;color:#a0a1af;font-size:9px;font-weight:800;letter-spacing:.12em}
+.clickok-ai-conversation{display:flex;flex-direction:column;gap:15px}
+.clickok-ai-message{display:flex;align-items:flex-end;gap:8px;max-width:100%}
+.clickok-ai-message.user{justify-content:flex-end}
+.clickok-ai-message-avatar{display:grid;place-items:center;flex:0 0 28px;height:28px;border-radius:10px;background:#e9e7ff;color:#635bff}
+.clickok-ai-message-content{display:flex;flex-direction:column;gap:4px;max-width:84%}
+.clickok-ai-message-content small{padding:0 3px;color:#999aaa;font-size:9px;font-weight:750;letter-spacing:.04em}
+.clickok-ai-message.user .clickok-ai-message-content{align-items:flex-end}
+.clickok-ai-message-content p{margin:0;padding:11px 13px;border:1px solid #ececf2;border-radius:5px 15px 15px 15px;background:#fff;color:#373846;font-size:12px;line-height:1.65;white-space:pre-line;box-shadow:0 2px 8px rgba(25,25,50,.035)}
+.clickok-ai-message.user .clickok-ai-message-content p{border:0;border-radius:15px 5px 15px 15px;background:#635bff;color:#fff}
+.clickok-ai-quick-replies{display:flex;flex-direction:column;align-items:flex-start;gap:7px;margin:2px 0 0 36px}
+.clickok-ai-quick-replies>span{margin-bottom:2px;color:#999aaa;font-size:10px;font-weight:750}
+.clickok-ai-quick-replies button{padding:8px 11px;border:1px solid #e3e1ff;border-radius:13px;background:#fff;color:#5148d8;text-align:left;font:inherit;font-size:11px;cursor:pointer;transition:background .15s,border-color .15s}
+.clickok-ai-quick-replies button:hover{border-color:#aaa5ff;background:#f1f0ff}
+.clickok-ai-typing{display:flex;align-items:center;gap:4px;padding:12px 14px;border:1px solid #ececf2;border-radius:5px 15px 15px 15px;background:#fff}
+.clickok-ai-typing i{width:6px;height:6px;border-radius:50%;background:#9993e9;animation:clickok-ai-dot 1s infinite ease-in-out}.clickok-ai-typing i:nth-child(2){animation-delay:.15s}.clickok-ai-typing i:nth-child(3){animation-delay:.3s}
+@keyframes clickok-ai-dot{0%,60%,100%{opacity:.35;transform:translateY(0)}30%{opacity:1;transform:translateY(-4px)}}
+.clickok-ai-footer{padding:11px 13px 9px;border-top:1px solid #ededf2;background:#fff}
+.clickok-ai-composer{display:flex;align-items:center;gap:8px;padding:5px 6px 5px 14px;border:1px solid #e7e7ef;border-radius:15px;background:#fafaff}
+.clickok-ai-composer input{flex:1;min-width:0;height:36px;border:0;outline:0;background:transparent;color:#20212a;font:inherit;font-size:12px}.clickok-ai-composer input::placeholder{color:#a0a1af}
+.clickok-ai-composer button{display:grid;place-items:center;flex:0 0 36px;height:36px;border:0;border-radius:11px;background:#635bff;color:#fff;cursor:pointer;transition:opacity .15s}.clickok-ai-composer button:disabled{opacity:.38;cursor:not-allowed}
+.clickok-ai-disclaimer{display:flex;align-items:center;justify-content:center;gap:5px;padding-top:8px;color:#a0a1af;font-size:9px}
+@media(max-width:620px){.clickok-ai-root{right:14px;bottom:calc(14px + env(safe-area-inset-bottom))}.clickok-ai-panel{right:-2px;bottom:68px;width:min(390px,calc(100vw - 24px));height:min(650px,calc(100dvh - 105px));border-radius:19px}.clickok-ai-launcher{height:54px;min-width:54px;padding:0 16px}}
