@@ -25,7 +25,7 @@ begin
      set city = pg_catalog.btrim(p_city),
          department = pg_catalog.btrim(p_department)
    where id = p_business_id
-     and public.private_has_business_role(p_business_id, array['owner','admin']::text[]);
+     and private.has_business_role(p_business_id, array['owner','admin']::text[]);
   if not found then
     raise exception 'No tienes permisos para modificar este comercio.' using errcode = '42501';
   end if;
