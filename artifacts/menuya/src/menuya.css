@@ -5303,3 +5303,82 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .studio-identity-preview :not(svg):not(svg *) {
   font-family:var(--studio-font,'Manrope'),sans-serif!important;
 }
+
+
+/* CLICKOK Studio — iPad/tablet responsive workspace.
+   Keep the editor readable and give the live identity preview its own full-width row. */
+@media (min-width:761px) and (max-width:1100px) {
+  .studio-shell {
+    grid-template-columns:minmax(0,1fr)!important;
+    gap:18px!important;
+  }
+  .studio-controls,
+  .studio-preview {
+    width:100%!important;
+    min-width:0!important;
+  }
+  .studio-preview {
+    position:relative!important;
+    top:auto!important;
+    order:0!important;
+    padding:20px!important;
+  }
+  .studio-identity-preview {
+    width:100%!important;
+    min-width:0!important;
+    box-sizing:border-box!important;
+    grid-template-columns:minmax(0,1fr)!important;
+  }
+  .studio-sample-block,
+  .studio-sample-heading,
+  .studio-type-specimen,
+  .studio-component-stage,
+  .studio-component-card {
+    min-width:0!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+  }
+  .studio-type-specimen {
+    flex-wrap:wrap!important;
+  }
+  .studio-type-specimen>div {
+    flex:1 1 180px!important;
+    min-width:0!important;
+  }
+  .studio-component-card {
+    flex-wrap:wrap!important;
+  }
+  .studio-component-card>div {
+    flex:1 1 160px!important;
+  }
+  .studio-component-button {
+    max-width:100%!important;
+  }
+  .studio-preview-head {
+    flex-wrap:wrap!important;
+  }
+  .studio-preview-foot {
+    flex-wrap:wrap!important;
+  }
+  .studio-preview-live .studio-preview-foot small {
+    max-width:100%!important;
+    text-align:left!important;
+  }
+  .studio-controls .studio-section {
+    padding:20px 22px!important;
+  }
+  .studio-section .field input,
+  .studio-section .field select,
+  .studio-section .field textarea,
+  .studio-controls button,
+  .studio-controls select {
+    touch-action:manipulation;
+  }
+}
+
+/* Keep two columns only when a tablet has enough horizontal room. */
+@media (min-width:1101px) {
+  .studio-shell {
+    grid-template-columns:minmax(310px,390px) minmax(0,1fr);
+  }
+}
