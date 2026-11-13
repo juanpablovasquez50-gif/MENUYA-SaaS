@@ -5290,3 +5290,14 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
  .studio-preview-live .studio-preview-foot{gap:7px;flex-direction:column}
  .studio-preview-live .studio-preview-foot small{max-width:100%}
 }
+
+
+/* Respect selected commerce font; override the dashboard-wide DM Sans reset. */
+.dashboard-shell .public-store,
+.dashboard-shell .public-store :not(svg):not(svg *) {
+  font-family:var(--store-font-family,'Manrope'),sans-serif!important;
+}
+.dashboard-shell .studio-identity-preview,
+.dashboard-shell .studio-identity-preview :not(svg):not(svg *) {
+  font-family:var(--studio-font,'Manrope'),sans-serif!important;
+}
