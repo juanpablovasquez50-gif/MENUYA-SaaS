@@ -1,0 +1,11 @@
+revoke all on function public.clickok_support_is_agent() from public, anon;
+revoke all on function public.clickok_support_is_admin() from public, anon;
+revoke all on function public.clickok_support_can_access_business(uuid) from public, anon;
+revoke all on function public.clickok_support_is_enabled() from public, anon;
+revoke all on function public.clickok_support_touch_conversation() from public, anon, authenticated;
+grant execute on function public.clickok_support_is_agent() to authenticated;
+grant execute on function public.clickok_support_is_admin() to authenticated;
+grant execute on function public.clickok_support_can_access_business(uuid) to authenticated;
+grant execute on function public.clickok_support_is_enabled() to authenticated;
+drop policy if exists clickok_support_conversations_create on public.clickok_support_conversations;
+create policy clickok_support_conversations_create on public.clickok_support_conversations for insert to authenticated with check(created_by=auth.uid() and assigned_agent_id is null and status='open' and public.clickok_support_is_enabled() and public.clickok_support_can_access_business(business_id));
