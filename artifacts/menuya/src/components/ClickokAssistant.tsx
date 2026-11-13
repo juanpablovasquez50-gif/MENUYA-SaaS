@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Bot, MessageCircle, Plus, Send, Sparkles, X } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import './ClickokAssistant.css';
 
 type Answer = { id: string; category: string; question: string; answer: string; keywords: string };
-type Props = { businessName: string };
+type Props = { businessName: string; businessId: string };
 type Message = { role: 'bot' | 'user'; text: string };
 
 const answers: Answer[] = [
@@ -59,11 +60,12 @@ const isGreeting = (value: string) => /^(hola+|buen(os|as)? dias|buenas tardes|b
 const isThanks = (value: string) => /^(gracias+|muchas gracias|mil gracias|te agradezco|agradecido)(\s.*)?$/.test(value);
 const isFarewell = (value: string) => /^(chao+|adios|hasta luego|nos vemos|bye+|hasta pronto)(\s.*)?$/.test(value);
 
-export default function ClickokAssistant({ businessName }: Props) {
+export default function ClickokAssistant({ businessName, businessId }: Props) {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
   const [history, setHistory] = useState<Message[]>([]);
   const [typing, setTyping] = useState(false);
+  const [awaitingTicketNumber, setAwaitingTicketNumber] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const greeting = useMemo(() => `¡Hola! 👋 Soy el asistente de CLICKOK para ${businessName}. Estoy aquí para ayudarte a gestionar tu comercio. ¿Qué necesitas saber?`, [businessName]);
 
@@ -91,25 +93,50 @@ export default function ClickokAssistant({ businessName }: Props) {
     return bestScore >= 2 ? best : undefined;
   };
 
-  const ask = (raw: string) => {
+  const ask = async (raw: string) => {
     const question = raw.trim();
     if (!question || typing) return;
     const normalized = normalize(question);
-    const found = findAnswer(question);
-    const reply = isGreeting(normalized)
-      ? `¡Hola! 👋 Bienvenido a CLICKOK. Estoy aquí para ayudarte con tu negocio. Puedes escribirme como hablas normalmente, no necesitas usar signos de pregunta ni escribir perfectamente. ¿Qué necesitas?`
-      : isThanks(normalized)
-        ? '¡Con mucho gusto! 😊 Para eso estoy. Si necesitas algo más sobre tu negocio, aquí estaré.'
-        : isFarewell(normalized)
-          ? '¡Hasta pronto! 👋 Gracias por usar CLICKOK. Cuando necesites ayuda, aquí estaré.'
-          : found?.answer ?? 'Quiero ayudarte, pero todavía no tengo una respuesta confirmada para eso. Puedes preguntarme por productos, vitrina, pedidos, ventas, domicilios, pagos o configuración. También puedes escribirlo con abreviaturas o errores; intentaré entenderte.';
+    const ticketMatch = question.match(/\\bCOK\\s*[-#]?\\s*(\\d{1,})\\b/i);
+    const wantsTicket = /\\b(consultar|revisar|ver|estado|seguimiento)\\b/.test(normalized) && /\\b(ticket|solicitud|caso)\\b/.test(normalized);
     setHistory(current => [...current, { role: 'user', text: question }]);
     setInput('');
     setTyping(true);
+
+    let reply: string;
+    if (ticketMatch) {
+      const ticketNumber = Number(ticketMatch[1]);
+      const { data, error } = await supabase
+        .from('clickok_support_conversations')
+        .select('ticket_number,subject,status,last_message_at')
+        .eq('business_id', businessId)
+        .eq('ticket_number', ticketNumber)
+        .maybeSingle();
+      if (error) reply = 'No pude consultar el ticket en este momento. Inténtalo nuevamente en unos segundos.';
+      else if (!data) reply = 'No encontré ese ticket en las solicitudes de este comercio. Verifica el código, por ejemplo COK-000001.';
+      else {
+        const labels: Record<string, string> = { open: 'Abierto', pending: 'En espera del equipo', resolved: 'Resuelto', closed: 'Cerrado' };
+        const updated = new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(data.last_message_at));
+        reply = `Encontré tu ticket #COK-${String(data.ticket_number).padStart(6, '0')}.\\nAsunto: ${data.subject}\\nEstado: ${labels[data.status] || data.status}\\nÚltima actualización: ${updated}.`;
+      }
+      setAwaitingTicketNumber(false);
+    } else if (wantsTicket || (awaitingTicketNumber && !ticketMatch)) {
+      reply = 'Claro. Escríbeme el número de tu ticket para consultar su estado. Tiene este formato: COK-000001.';
+      setAwaitingTicketNumber(true);
+    } else {
+      const found = findAnswer(question);
+      reply = isGreeting(normalized)
+        ? `¡Hola! 👋 Bienvenido a CLICKOK. Estoy aquí para ayudarte con tu negocio. Puedes escribirme como hablas normalmente, no necesitas usar signos de pregunta ni escribir perfectamente. ¿Qué necesitas?`
+        : isThanks(normalized)
+          ? '¡Con mucho gusto! 😊 Para eso estoy. Si necesitas algo más sobre tu negocio, aquí estaré.'
+          : isFarewell(normalized)
+            ? '¡Hasta pronto! 👋 Gracias por usar CLICKOK. Cuando necesites ayuda, aquí estaré.'
+            : found?.answer ?? 'Quiero ayudarte, pero todavía no tengo una respuesta confirmada para eso. Puedes preguntarme por productos, vitrina, pedidos, ventas, domicilios, pagos o configuración. También puedes escribir “consultar mi ticket” para revisar una solicitud de soporte.';
+    }
     window.setTimeout(() => {
       setHistory(current => [...current, { role: 'bot', text: reply }]);
       setTyping(false);
-    }, 550);
+    }, 350);
   };
 
   const startNewChat = () => { setHistory([]); setInput(''); setTyping(false); };
