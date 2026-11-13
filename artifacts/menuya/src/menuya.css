@@ -5292,12 +5292,14 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 }
 
 
-/* Respect selected commerce font; override the dashboard-wide DM Sans reset. */
-.dashboard-shell .public-store,
-.dashboard-shell .public-store :not(svg):not(svg *) {
+/* Respect selected commerce font in both the live editor and the public storefront.
+   The published storefront is rendered outside .dashboard-shell, so this rule
+   must target .public-store directly rather than only dashboard descendants. */
+.public-store,
+.public-store :not(svg):not(svg *) {
   font-family:var(--store-font-family,'Manrope'),sans-serif!important;
 }
-.dashboard-shell .studio-identity-preview,
-.dashboard-shell .studio-identity-preview :not(svg):not(svg *) {
+.studio-identity-preview,
+.studio-identity-preview :not(svg):not(svg *) {
   font-family:var(--studio-font,'Manrope'),sans-serif!important;
 }
