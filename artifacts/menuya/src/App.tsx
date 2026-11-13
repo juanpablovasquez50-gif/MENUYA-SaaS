@@ -1651,6 +1651,7 @@ function Router() {
     <Route path="/legal/terminos"><LegalPages document="terms" /></Route>
     <Route path="/admin/login"><PlatformAdminLogin onLogin={login} /></Route>
     <Route path="/support/login"><ClickokSupportLogin /></Route>
+    <Route path="/support/track/:id"><ClickokSupport /></Route>
     <Route path="/support"><ClickokSupport /></Route>
     <Route path="/login"><AuthPage mode="login" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
     <Route path="/register"><AuthPage mode="register" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
