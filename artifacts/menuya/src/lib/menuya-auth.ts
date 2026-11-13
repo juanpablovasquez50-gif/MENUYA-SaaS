@@ -44,6 +44,7 @@ export async function signUpWithEmail(input: {
   phone: string;
   businessName: string;
   businessType: string;
+  businessCity: string;
   privacyPolicyVersion: string;
   privacyConsentAt: string;
   termsVersion: string;
@@ -59,6 +60,7 @@ export async function signUpWithEmail(input: {
         phone: input.phone.trim(),
         business_name: input.businessName.trim(),
         business_type: input.businessType.trim(),
+        business_city: input.businessCity.trim(),
         privacy_policy_version: input.privacyPolicyVersion,
         privacy_consent_at: input.privacyConsentAt,
         terms_version: input.termsVersion,
@@ -134,8 +136,9 @@ export async function ensureBusinessForCurrentUser(): Promise<MenuyaAuthContext 
   const metadata = context.user.user_metadata || {};
   const businessName = String(metadata.business_name || '').trim();
   const businessType = String(metadata.business_type || '').trim();
+  const businessCity = String(metadata.business_city || '').trim();
   const phone = String(metadata.phone || '').trim();
-  if (!businessName || !businessType) return context;
+  if (!businessName || !businessType || !businessCity) return context;
 
   const slugBase = businessName
     .normalize('NFD')
@@ -154,6 +157,8 @@ export async function ensureBusinessForCurrentUser(): Promise<MenuyaAuthContext 
     p_referral_code: String(metadata.referral_code || '').trim().toUpperCase() || null,
   });
   if (error) throw error;
+  const { error: cityError } = await supabase.rpc('set_business_city_for_current_user', { p_city: businessCity });
+  if (cityError) throw cityError;
   return getAuthContext();
 }
 
