@@ -15,8 +15,10 @@ Deno.serve(async (req: Request) => {
   const authorization = req.headers.get('Authorization');
   if (!authorization?.startsWith('Bearer ')) return json({ error: 'Sesión requerida.' }, 401);
   const url = Deno.env.get('SUPABASE_URL');
-  const anon = Deno.env.get('SUPABASE_ANON_KEY');
-  const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const publishableKeys = Deno.env.get('SUPABASE_PUBLISHABLE_KEYS');
+  const secretKeys = Deno.env.get('SUPABASE_SECRET_KEYS');
+  const anon = Deno.env.get('SUPABASE_ANON_KEY') || (publishableKeys ? JSON.parse(publishableKeys).default : undefined);
+  const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || (secretKeys ? JSON.parse(secretKeys).default : undefined);
   if (!url || !anon || !service) return json({ error: 'Credenciales del servidor no configuradas.' }, 500);
   const callerClient = createClient(url, anon, { global: { headers: { Authorization: authorization } }, auth: { persistSession: false, autoRefreshToken: false } });
   const { data: caller, error: authError } = await callerClient.auth.getUser(authorization.slice(7));
