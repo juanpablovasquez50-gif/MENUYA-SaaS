@@ -28,14 +28,14 @@ const normalize = (value: string) => value
   .replace(/[\u0300-\u036f]/g, '')
   .replace(/@/g, ' a ')
   .replace(/&/g, ' y ')
-  .replace(/[^a-z0-9\\s]/g, ' ')
-  .replace(/\\b(q|k)\\b/g, 'que')
-  .replace(/\\bxfa\\b|\\bxfa[vb]or\\b/g, 'por favor')
-  .replace(/\\bxq\\b/g, 'porque')
-  .replace(/\\b(pa|pal)\\b/g, 'para')
-  .replace(/\\btoy\\b/g, 'estoy')
-  .replace(/\\b(tmb|tb)\\b/g, 'tambien')
-  .replace(/\\s+/g, ' ')
+  .replace(/[^a-z0-9\s]/g, ' ')
+  .replace(/\b(q|k)\b/g, 'que')
+  .replace(/\bxfa\b|\bxfa[vb]or\b/g, 'por favor')
+  .replace(/\bxq\b/g, 'porque')
+  .replace(/\b(pa|pal)\b/g, 'para')
+  .replace(/\btoy\b/g, 'estoy')
+  .replace(/\b(tmb|tb)\b/g, 'tambien')
+  .replace(/\s+/g, ' ')
   .trim();
 
 const stopWords = new Set(['que','como','para','con','una','uno','unos','unas','por','del','los','las','de','el','la','mi','me','se','en','un','es','y','o','a','al','donde','cuando','cual','cuanto','puedo','quiero','necesito','hay','tiene','tengo','hacer','favor']);
@@ -55,9 +55,9 @@ const editDistance = (a: string, b: string) => {
   return row[b.length];
 };
 
-const isGreeting = (value: string) => /^(hola+|buen(os|as)? dias|buenas tardes|buenas noches|hey+|ey+|quiubo|que mas|saludos|holi+)(\\s.*)?$/.test(value);
-const isThanks = (value: string) => /^(gracias+|muchas gracias|mil gracias|te agradezco|agradecido)(\\s.*)?$/.test(value);
-const isFarewell = (value: string) => /^(chao+|adios|hasta luego|nos vemos|bye+|hasta pronto)(\\s.*)?$/.test(value);
+const isGreeting = (value: string) => /^(hola+|buen(os|as)? dias|buenas tardes|buenas noches|hey+|ey+|quiubo|que mas|saludos|holi+)(\s.*)?$/.test(value);
+const isThanks = (value: string) => /^(gracias+|muchas gracias|mil gracias|te agradezco|agradecido)(\s.*)?$/.test(value);
+const isFarewell = (value: string) => /^(chao+|adios|hasta luego|nos vemos|bye+|hasta pronto)(\s.*)?$/.test(value);
 
 export default function ClickokAssistant({ businessName }: Props) {
   const [open, setOpen] = useState(false);
