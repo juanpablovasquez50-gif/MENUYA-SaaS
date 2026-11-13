@@ -478,7 +478,6 @@ function MerchantPage({ path, data, business, update, modules = [] }: { path: st
   useEffect(() => { try { if (!window.localStorage.getItem(`clickok-help-welcome-${business.id}`)) setShowHelpWelcome(true); } catch { setShowHelpWelcome(false); } }, [business.id]);
   const dismissHelpWelcome = () => { setShowHelpWelcome(false); try { window.localStorage.setItem(`clickok-help-welcome-${business.id}`, '1'); } catch { /* Storage may be unavailable. */ } };
   const previewStoreColor = draftStoreColor || settings.color;
-  const studioPreviewData: DemoData = { ...data, settings: data.settings.map(item => item.business_id === business.id ? { ...item, color: previewStoreColor } : item) };
   const startSubscriptionCheckout = async (planId: string) => {
     setCheckoutBusy(planId); setCheckoutError('');
     try {
