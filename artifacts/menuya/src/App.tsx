@@ -12,6 +12,7 @@ import RestaurantOperations from '@/components/restaurant/RestaurantOperations';
 import WaiterPortal from '@/components/restaurant/WaiterPortal';
 import CourierManagement from '@/components/CourierManagement';
 import CourierPortal from '@/components/CourierPortal';
+import ClickokSupport from '@/components/ClickokSupport';
 import * as React from 'react';
 import { type FormEvent, type ReactNode, useCallback, useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -1647,6 +1648,7 @@ function Router() {
     <Route path="/legal/privacidad"><LegalPages document="privacy" /></Route>
     <Route path="/legal/terminos"><LegalPages document="terms" /></Route>
     <Route path="/admin/login"><PlatformAdminLogin onLogin={login} /></Route>
+    <Route path="/support"><ClickokSupport /></Route>
     <Route path="/login"><AuthPage mode="login" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
     <Route path="/register"><AuthPage mode="register" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
     <Route path="/forgot-password"><AuthPage mode="forgot" data={data} onLogin={login} onRegister={register} onForgot={forgot} onReset={reset} /></Route>
