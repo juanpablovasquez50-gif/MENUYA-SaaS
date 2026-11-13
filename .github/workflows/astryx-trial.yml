@@ -21,7 +21,9 @@ jobs:
         with:
           version: 10
       - name: Generate workspace lockfile
-        run: pnpm install --lockfile-only --no-frozen-lockfile
+        run: |
+          echo "Resolving Astryx packages declared in artifacts/menuya/package.json"
+          pnpm install --lockfile-only --no-frozen-lockfile
       - name: Commit generated lockfile
         run: |
           if ! git diff --quiet -- pnpm-lock.yaml; then
