@@ -31,14 +31,13 @@ export default function ClickokSupportLogin() {
       .select('user_id,is_active')
       .eq('user_id', data.user.id)
       .maybeSingle();
-    const { data: admin } = await supabase
-      .from('platform_admins')
-      .select('user_id')
-      .eq('user_id', data.user.id)
-      .maybeSingle();
-    if (agentError || (!admin && !agent?.is_active)) {
+    const [{ data: admin }, { data: manager, error: managerError }] = await Promise.all([
+      supabase.from('platform_admins').select('user_id').eq('user_id', data.user.id).maybeSingle(),
+      supabase.from('clickok_support_admins').select('user_id,is_active').eq('user_id', data.user.id).maybeSingle(),
+    ]);
+    if (agentError || managerError || (!admin && !manager?.is_active && !agent?.is_active)) {
       await supabase.auth.signOut();
-      setError(agentError?.message || 'Esta cuenta no tiene acceso activo al panel de soporte.');
+      setError(agentError?.message || managerError?.message || 'Esta cuenta no tiene acceso activo al panel de soporte.');
       setBusy(false);
       return;
     }
@@ -51,7 +50,7 @@ export default function ClickokSupportLogin() {
       <span className="cks-login-icon"><Headset size={23}/></span>
       <span className="cks-kicker">PORTAL DEL EQUIPO</span>
       <h1>Iniciar sesión</h1>
-      <p>Ingresa con el usuario y la contraseña asignados por el Súper Admin.</p>
+      <p>Ingresa con el usuario y la contraseña que te asignó el responsable de tu equipo.</p>
       <form onSubmit={submit}>
         <label>Usuario<span className="cks-login-input"><UserRound size={17}/><input required autoComplete="username" value={username} onChange={e=>setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g,''))} placeholder="Tu usuario"/></span></label>
         <label>Contraseña<span className="cks-login-input"><LockKeyhole size={17}/><input required type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Tu contraseña"/></span></label>
