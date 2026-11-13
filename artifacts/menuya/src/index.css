@@ -528,3 +528,12 @@
 .public-categories button.category-active { background: #7656ed; color: #fff; }
 .cart-button span { background: #7656ed; color: #fff; }
 .add-mobile { border-color: #b9e9f1; background: #e8f9fc; color: #184c58; }
+
+
+/* CLICKOK Studio: controles visuales de la maqueta aproximada */
+.studio-preview-add{position:absolute;right:10px;bottom:10px;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--store-color);color:var(--store-accent-text);font-size:22px;font-weight:600;box-shadow:0 5px 14px rgba(0,0,0,.12)}
+.studio-browser-live .public-header-actions{pointer-events:none}
+.studio-browser-live .public-main{pointer-events:none}
+.studio-browser-live .public-category-heading>span{display:inline-flex;align-items:center;gap:5px;color:var(--store-color);font-size:12px;font-weight:700}
+.studio-browser-live .public-product-art{position:relative}
+.studio-browser-live .public-product-info .product-title-button{display:block;color:var(--store-card-text);font:inherit;font-weight:700}
