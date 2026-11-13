@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Plus, RefreshCw, ShieldCheck, UserCheck, UserX } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import './SupportAgentsAdmin.css';
 
 type Agent = { user_id: string; display_name: string | null; is_active: boolean; created_at?: string };
 
