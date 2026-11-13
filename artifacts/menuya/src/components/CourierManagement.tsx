@@ -5,7 +5,7 @@ import { Bike, MapPin, Plus, RefreshCw, Truck, UserRound, Navigation, CheckCircl
 type Courier={id:string;full_name:string;phone:string;active:boolean;access_code:string};
 type DeliveryOrder={id:string;order_number:number;status:string;delivery_address:string|null;delivery_latitude:number|null;delivery_longitude:number|null;total:number;customer_id:string|null;customers?:{name:string;phone:string|null}|null};
 type Assignment={id:string;order_id:string;courier_id:string;status:string;orders:DeliveryOrder|null;delivery_couriers:Courier|null};
-const normalizeGeo=(value:string)=>String(value||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase().trim();
+const normalizeGeo=(value:string)=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
 const resultMatchesBusinessRegion=(hit:any,city:string,department:string)=>{const parts=hit?.address_components||[];const values=(type:string)=>parts.filter((part:any)=>part.types?.includes(type)).map((part:any)=>normalizeGeo(part.long_name));const cityValues=[...values('locality'),...values('postal_town'),...values('administrative_area_level_2')];const departmentValues=values('administrative_area_level_1');const cityOk=!city||cityValues.some(v=>v===normalizeGeo(city));const departmentOk=!department||departmentValues.some(v=>v===normalizeGeo(department));return cityOk&&departmentOk;};
 
 declare global { interface Window { google?: any } }
