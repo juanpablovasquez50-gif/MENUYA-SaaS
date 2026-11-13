@@ -22,7 +22,42 @@ const answers: Answer[] = [
 ];
 
 const suggestions = ['¿Cómo creo un producto?', '¿Cómo publico mi vitrina?', '¿Dónde veo mis pedidos?', '¿Cómo conecto Wompi?'];
-const normalize = (value: string) => value.toLocaleLowerCase('es-CO').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const normalize = (value: string) => value
+  .toLocaleLowerCase('es-CO')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .replace(/@/g, ' a ')
+  .replace(/&/g, ' y ')
+  .replace(/[^a-z0-9\\s]/g, ' ')
+  .replace(/\\b(q|k)\\b/g, 'que')
+  .replace(/\\bxfa\\b|\\bxfa[vb]or\\b/g, 'por favor')
+  .replace(/\\bxq\\b/g, 'porque')
+  .replace(/\\b(pa|pal)\\b/g, 'para')
+  .replace(/\\btoy\\b/g, 'estoy')
+  .replace(/\\b(tmb|tb)\\b/g, 'tambien')
+  .replace(/\\s+/g, ' ')
+  .trim();
+
+const stopWords = new Set(['que','como','para','con','una','uno','unos','unas','por','del','los','las','de','el','la','mi','me','se','en','un','es','y','o','a','al','donde','cuando','cual','cuanto','puedo','quiero','necesito','hay','tiene','tengo','hacer','favor']);
+
+const editDistance = (a: string, b: string) => {
+  if (Math.abs(a.length - b.length) > 2) return 99;
+  const row = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    let diagonal = row[0];
+    row[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const above = row[j];
+      row[j] = Math.min(row[j] + 1, row[j - 1] + 1, diagonal + (a[i - 1] === b[j - 1] ? 0 : 1));
+      diagonal = above;
+    }
+  }
+  return row[b.length];
+};
+
+const isGreeting = (value: string) => /^(hola+|buen(os|as)? dias|buenas tardes|buenas noches|hey+|ey+|quiubo|que mas|saludos|holi+)(\\s.*)?$/.test(value);
+const isThanks = (value: string) => /^(gracias+|muchas gracias|mil gracias|te agradezco|agradecido)(\\s.*)?$/.test(value);
+const isFarewell = (value: string) => /^(chao+|adios|hasta luego|nos vemos|bye+|hasta pronto)(\\s.*)?$/.test(value);
 
 export default function ClickokAssistant({ businessName }: Props) {
   const [open, setOpen] = useState(false);
@@ -38,13 +73,20 @@ export default function ClickokAssistant({ businessName }: Props) {
 
   const findAnswer = (question: string) => {
     const q = normalize(question);
-    const tokens = q.split(/[^a-z0-9]+/).filter(word => word.length > 2);
+    const tokens = q.split(' ').filter(word => word.length > 1 && !stopWords.has(word));
     let best: Answer | undefined;
     let bestScore = 0;
     for (const item of answers) {
       const haystack = normalize(`${item.question} ${item.keywords} ${item.category}`);
-      const score = tokens.reduce((total, token) => total + (haystack.includes(token) ? (item.question.toLowerCase().includes(token) ? 3 : 1) : 0), 0);
-      if (score > bestScore) { best = item; bestScore = score; }
+      const targetTokens = [...new Set(haystack.split(' ').filter(word => word.length > 1 && !stopWords.has(word)))];
+      const score = tokens.reduce((total, token) => {
+        if (targetTokens.some(target => target === token)) return total + 2;
+        if (token.length >= 4 && targetTokens.some(target => Math.min(token.length, target.length) >= 4 && editDistance(token, target) <= 1)) return total + 1;
+        return total;
+      }, 0);
+      const coverage = tokens.length ? score / (tokens.length * 2) : 0;
+      const adjusted = score + (coverage >= 0.6 ? 1 : 0);
+      if (adjusted > bestScore) { best = item; bestScore = adjusted; }
     }
     return bestScore >= 2 ? best : undefined;
   };
@@ -52,12 +94,20 @@ export default function ClickokAssistant({ businessName }: Props) {
   const ask = (raw: string) => {
     const question = raw.trim();
     if (!question || typing) return;
+    const normalized = normalize(question);
     const found = findAnswer(question);
+    const reply = isGreeting(normalized)
+      ? `¡Hola! 👋 Bienvenido a CLICKOK. Estoy aquí para ayudarte con tu negocio. Puedes escribirme como hablas normalmente, no necesitas usar signos de pregunta ni escribir perfectamente. ¿Qué necesitas?`
+      : isThanks(normalized)
+        ? '¡Con mucho gusto! 😊 Para eso estoy. Si necesitas algo más sobre tu negocio, aquí estaré.'
+        : isFarewell(normalized)
+          ? '¡Hasta pronto! 👋 Gracias por usar CLICKOK. Cuando necesites ayuda, aquí estaré.'
+          : found?.answer ?? 'Quiero ayudarte, pero todavía no tengo una respuesta confirmada para eso. Puedes preguntarme por productos, vitrina, pedidos, ventas, domicilios, pagos o configuración. También puedes escribirlo con abreviaturas o errores; intentaré entenderte.';
     setHistory(current => [...current, { role: 'user', text: question }]);
     setInput('');
     setTyping(true);
     window.setTimeout(() => {
-      setHistory(current => [...current, { role: 'bot', text: found ? found.answer : 'No tengo una respuesta confirmada para esa consulta todavía. Puedes preguntarme por productos, vitrina, pedidos, ventas, domicilios, pagos o configuración. Si necesitas ayuda adicional, te orientaré para contactar al equipo de soporte de CLICKOK.' }]);
+      setHistory(current => [...current, { role: 'bot', text: reply }]);
       setTyping(false);
     }, 550);
   };
