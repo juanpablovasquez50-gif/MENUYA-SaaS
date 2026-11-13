@@ -97,8 +97,8 @@ export default function ClickokAssistant({ businessName, businessId }: Props) {
     const question = raw.trim();
     if (!question || typing) return;
     const normalized = normalize(question);
-    const ticketMatch = question.match(/\\bCOK\\s*[-#]?\\s*(\\d{1,})\\b/i);
-    const wantsTicket = /\\b(consultar|revisar|ver|estado|seguimiento)\\b/.test(normalized) && /\\b(ticket|solicitud|caso)\\b/.test(normalized);
+    const ticketMatch = question.match(/\bCOK\s*[-#]?\s*(\d{1,})\b/i);
+    const wantsTicket = /\b(consultar|revisar|ver|estado|seguimiento)\b/.test(normalized) && /\b(ticket|solicitud|caso)\b/.test(normalized);
     setHistory(current => [...current, { role: 'user', text: question }]);
     setInput('');
     setTyping(true);
@@ -117,7 +117,7 @@ export default function ClickokAssistant({ businessName, businessId }: Props) {
       else {
         const labels: Record<string, string> = { open: 'Abierto', pending: 'En espera del equipo', resolved: 'Resuelto', closed: 'Cerrado' };
         const updated = new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(data.last_message_at));
-        reply = `Encontré tu ticket #COK-${String(data.ticket_number).padStart(6, '0')}.\\nAsunto: ${data.subject}\\nEstado: ${labels[data.status] || data.status}\\nÚltima actualización: ${updated}.`;
+        reply = `Encontré tu ticket #COK-${String(data.ticket_number).padStart(6, '0')}.\nAsunto: ${data.subject}\nEstado: ${labels[data.status] || data.status}\nÚltima actualización: ${updated}.`;
       }
       setAwaitingTicketNumber(false);
     } else if (wantsTicket || (awaitingTicketNumber && !ticketMatch)) {
