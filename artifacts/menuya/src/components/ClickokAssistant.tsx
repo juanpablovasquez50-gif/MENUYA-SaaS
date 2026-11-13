@@ -1,150 +1,48 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Bot, MessageCircle, Plus, Send, Sparkles, X } from 'lucide-react';
+import {useEffect,useMemo,useRef,useState} from 'react';
+import {Bot,MessageCircle,Plus,Send,Sparkles,X,Headset,CheckCircle2,ArrowUpRight} from 'lucide-react';
+import {supabase} from '@/lib/supabase';
 import './ClickokAssistant.css';
-
-type Answer = { id: string; category: string; question: string; answer: string; keywords: string };
-type Props = { businessName: string };
-type Message = { role: 'bot' | 'user'; text: string };
-
-const answers: Answer[] = [
-  { id: 'product', category: 'Productos', question: '¿Cómo creo un producto?', answer: 'Para crear un producto:\n1. Entra a **Productos** en el menú lateral.\n2. Pulsa **Crear producto**.\n3. Completa el nombre, descripción, precio y categoría.\n4. Agrega una foto y guarda.\n\nDespués revisa que aparezca correctamente en tu catálogo.', keywords: 'crear agregar nuevo editar producto foto imagen precio catálogo' },
-  { id: 'category', category: 'Productos', question: '¿Cómo creo categorías?', answer: 'Abre **Categorías** desde el menú lateral, crea una categoría con un nombre claro y guarda. Luego asígnala a tus productos desde su edición para que tus clientes puedan encontrarlos más fácilmente.', keywords: 'categoría organizar clasificar grupos' },
-  { id: 'store', category: 'Vitrina', question: '¿Cómo publico mi vitrina?', answer: 'Para publicar tu vitrina:\n1. Entra a **CLICKOK Studio**.\n2. Elige una plantilla y personaliza el diseño.\n3. Revisa la vista previa.\n4. Guarda y pulsa **Publicar**.\n5. Abre **Ver tienda pública** para comprobar el resultado y copiar el enlace.', keywords: 'publicar vitrina tienda link enlace compartir catálogo' },
-  { id: 'studio', category: 'Vitrina', question: '¿Cómo cambio el diseño de mi vitrina?', answer: 'Abre **CLICKOK Studio** desde el menú lateral. Allí puedes explorar las plantillas, ajustar los colores y la identidad visual, revisar los cambios en la vista previa y publicar cuando estés conforme.', keywords: 'clickstudio click studio diseño colores plantilla logo apariencia' },
-  { id: 'orders', category: 'Pedidos', question: '¿Dónde veo los pedidos?', answer: 'Entra a **Pedidos** desde el menú lateral. Abre cualquier pedido para consultar sus productos, cantidades y datos de entrega. Desde el detalle puedes actualizar el estado según el flujo habilitado para tu comercio.', keywords: 'pedido compra orden venta estado cliente' },
-  { id: 'pos', category: 'Ventas', question: '¿Cómo registro una venta en el POS?', answer: 'Abre **Punto de venta** en el menú lateral, busca y agrega los productos, revisa cantidades y total, selecciona el medio de pago y confirma solo cuando hayas recibido el pago. Después verifica el registro de la venta.', keywords: 'pos punto venta caja vender presencial' },
-  { id: 'courier', category: 'Domicilios', question: '¿Cómo gestiono los domiciliarios?', answer: 'Abre **Domiciliarios** en el menú lateral. Desde ese módulo puedes consultar y administrar los repartidores disponibles para tu comercio y revisar la asignación de entregas según las opciones habilitadas.', keywords: 'domiciliario repartidor entrega mensajero asignar' },
-  { id: 'wompi', category: 'Pagos', question: '¿Cómo conecto Wompi?', answer: 'Entra a los ajustes de pagos habilitados para tu comercio y configura la cuenta Wompi correspondiente. Realiza primero las pruebas en sandbox y verifica que la cuenta esté habilitada antes de pasar a producción. Nunca compartas claves privadas ni secretos por el chat.', keywords: 'wompi pasarela pago cobrar tarjeta credenciales' },
-  { id: 'push', category: 'Notificaciones', question: '¿Cómo activo las notificaciones?', answer: 'Entra a **Ajustes del negocio** y busca **Notificaciones push**. Pulsa Activar notificaciones y acepta el permiso del navegador o del sistema. En iPhone y iPad, abre CLICKOK desde el icono añadido a la pantalla de inicio para habilitarlas.', keywords: 'notificación push aviso pedido alerta activar' },
-  { id: 'settings', category: 'Configuración', question: '¿Dónde cambio los datos de mi negocio?', answer: 'Abre **Ajustes** desde el menú lateral. Allí puedes revisar la información pública, teléfono, correo, redes sociales, métodos de pago y opciones de entrega. Guarda los cambios y comprueba cómo se muestran en tu vitrina.', keywords: 'ajustes configuración negocio teléfono correo dirección datos' },
-  { id: 'subscription', category: 'Cuenta y plan', question: '¿Cómo consulto mi plan?', answer: 'Entra a **Mi plan** desde el menú lateral. Allí puedes revisar el plan activo, sus funciones y la información de renovación que aparece en tu cuenta.', keywords: 'plan suscripción mensualidad renovar precio' },
-  { id: 'customers', category: 'Ventas', question: '¿Dónde consulto mis clientes?', answer: 'Abre **Clientes** en el menú lateral. Utiliza la búsqueda para localizar un registro y entra al detalle para consultar la información disponible de ese cliente.', keywords: 'clientes compradores contactos buscar' },
+type Props={businessName:string;businessId:string};
+type Message={role:'bot'|'user';text:string};
+type SupportMessage={id:string;sender_type:string;body:string;created_at:string};
+const faq=[
+{q:'¿Cómo creo un producto?',k:'crear agregar nuevo editar producto foto imagen precio catálogo',a:'Entra a Productos, pulsa Crear producto, completa nombre, descripción, precio y categoría, agrega una foto y guarda.'},
+{q:'¿Cómo creo categorías?',k:'categoría organizar clasificar grupos',a:'Abre Categorías desde el menú lateral, crea una categoría y guarda. Luego asígnala a tus productos desde su edición.'},
+{q:'¿Cómo publico mi vitrina?',k:'publicar vitrina tienda link enlace compartir catálogo',a:'Entra a CLICKOK Studio, elige una plantilla, personaliza el diseño, revisa la vista previa y pulsa Publicar.'},
+{q:'¿Cómo cambio el diseño de mi vitrina?',k:'clickstudio click studio diseño colores plantilla logo apariencia',a:'Abre CLICKOK Studio para explorar plantillas, ajustar colores e identidad visual, revisar la vista previa y publicar.'},
+{q:'¿Dónde veo los pedidos?',k:'pedido compra orden venta estado cliente',a:'Entra a Pedidos desde el menú lateral. Abre cualquier pedido para consultar productos, cantidades y datos de entrega.'},
+{q:'¿Cómo registro una venta en el POS?',k:'pos punto venta caja vender presencial',a:'Abre Punto de venta, agrega los productos, revisa cantidades y total, selecciona el medio de pago y confirma cuando hayas recibido el pago.'},
+{q:'¿Cómo gestiono los domiciliarios?',k:'domiciliario repartidor entrega mensajero asignar',a:'Abre Domiciliarios en el menú lateral para administrar repartidores y revisar la asignación de entregas.'},
+{q:'¿Cómo conecto Wompi?',k:'wompi pasarela pago cobrar tarjeta credenciales',a:'Entra a los ajustes de pagos y configura Wompi. Prueba primero en sandbox y nunca compartas claves privadas por el chat.'},
+{q:'¿Cómo activo las notificaciones?',k:'notificación push aviso pedido alerta activar',a:'Entra a Ajustes del negocio, busca Notificaciones push, pulsa Activar y acepta el permiso del navegador o sistema.'},
+{q:'¿Dónde cambio los datos de mi negocio?',k:'ajustes configuración negocio teléfono correo dirección datos',a:'Abre Ajustes desde el menú lateral para actualizar información pública, teléfono, correo, redes, pagos y opciones de entrega.'},
+{q:'¿Cómo consulto mi plan?',k:'plan suscripción mensualidad renovar precio',a:'Entra a Mi plan desde el menú lateral para revisar el plan activo y sus funciones.'},
+{q:'¿Dónde consulto mis clientes?',k:'clientes compradores contactos buscar',a:'Abre Clientes desde el menú lateral. Usa la búsqueda para localizar un registro y consultar su detalle.'}
 ];
-
-const suggestions = ['¿Cómo creo un producto?', '¿Cómo publico mi vitrina?', '¿Dónde veo mis pedidos?', '¿Cómo conecto Wompi?'];
-const normalize = (value: string) => value
-  .toLocaleLowerCase('es-CO')
-  .normalize('NFD')
-  .replace(/[\u0300-\u036f]/g, '')
-  .replace(/@/g, ' a ')
-  .replace(/&/g, ' y ')
-  .replace(/[^a-z0-9\s]/g, ' ')
-  .replace(/\b(q|k)\b/g, 'que')
-  .replace(/\bxfa\b|\bxfa[vb]or\b/g, 'por favor')
-  .replace(/\bxq\b/g, 'porque')
-  .replace(/\b(pa|pal)\b/g, 'para')
-  .replace(/\btoy\b/g, 'estoy')
-  .replace(/\b(tmb|tb)\b/g, 'tambien')
-  .replace(/\s+/g, ' ')
-  .trim();
-
-const stopWords = new Set(['que','como','para','con','una','uno','unos','unas','por','del','los','las','de','el','la','mi','me','se','en','un','es','y','o','a','al','donde','cuando','cual','cuanto','puedo','quiero','necesito','hay','tiene','tengo','hacer','favor']);
-
-const editDistance = (a: string, b: string) => {
-  if (Math.abs(a.length - b.length) > 2) return 99;
-  const row = Array.from({ length: b.length + 1 }, (_, i) => i);
-  for (let i = 1; i <= a.length; i++) {
-    let diagonal = row[0];
-    row[0] = i;
-    for (let j = 1; j <= b.length; j++) {
-      const above = row[j];
-      row[j] = Math.min(row[j] + 1, row[j - 1] + 1, diagonal + (a[i - 1] === b[j - 1] ? 0 : 1));
-      diagonal = above;
-    }
-  }
-  return row[b.length];
-};
-
-const isGreeting = (value: string) => /^(hola+|buen(os|as)? dias|buenas tardes|buenas noches|hey+|ey+|quiubo|que mas|saludos|holi+)(\s.*)?$/.test(value);
-const isThanks = (value: string) => /^(gracias+|muchas gracias|mil gracias|te agradezco|agradecido)(\s.*)?$/.test(value);
-const isFarewell = (value: string) => /^(chao+|adios|hasta luego|nos vemos|bye+|hasta pronto)(\s.*)?$/.test(value);
-
-export default function ClickokAssistant({ businessName }: Props) {
-  const [open, setOpen] = useState(false);
-  const [input, setInput] = useState('');
-  const [history, setHistory] = useState<Message[]>([]);
-  const [typing, setTyping] = useState(false);
-  const endRef = useRef<HTMLDivElement>(null);
-  const greeting = useMemo(() => `¡Hola! 👋 Soy el asistente de CLICKOK para ${businessName}. Estoy aquí para ayudarte a gestionar tu comercio. ¿Qué necesitas saber?`, [businessName]);
-
-  useEffect(() => {
-    if (open) endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [open, history, typing]);
-
-  const findAnswer = (question: string) => {
-    const q = normalize(question);
-    const tokens = q.split(' ').filter(word => word.length > 1 && !stopWords.has(word));
-    let best: Answer | undefined;
-    let bestScore = 0;
-    for (const item of answers) {
-      const haystack = normalize(`${item.question} ${item.keywords} ${item.category}`);
-      const targetTokens = [...new Set(haystack.split(' ').filter(word => word.length > 1 && !stopWords.has(word)))];
-      const score = tokens.reduce((total, token) => {
-        if (targetTokens.some(target => target === token)) return total + 2;
-        if (token.length >= 4 && targetTokens.some(target => Math.min(token.length, target.length) >= 4 && editDistance(token, target) <= 1)) return total + 1;
-        return total;
-      }, 0);
-      const coverage = tokens.length ? score / (tokens.length * 2) : 0;
-      const adjusted = score + (coverage >= 0.6 ? 1 : 0);
-      if (adjusted > bestScore) { best = item; bestScore = adjusted; }
-    }
-    return bestScore >= 2 ? best : undefined;
-  };
-
-  const ask = (raw: string) => {
-    const question = raw.trim();
-    if (!question || typing) return;
-    const normalized = normalize(question);
-    const found = findAnswer(question);
-    const reply = isGreeting(normalized)
-      ? `¡Hola! 👋 Bienvenido a CLICKOK. Estoy aquí para ayudarte con tu negocio. Puedes escribirme como hablas normalmente, no necesitas usar signos de pregunta ni escribir perfectamente. ¿Qué necesitas?`
-      : isThanks(normalized)
-        ? '¡Con mucho gusto! 😊 Para eso estoy. Si necesitas algo más sobre tu negocio, aquí estaré.'
-        : isFarewell(normalized)
-          ? '¡Hasta pronto! 👋 Gracias por usar CLICKOK. Cuando necesites ayuda, aquí estaré.'
-          : found?.answer ?? 'Quiero ayudarte, pero todavía no tengo una respuesta confirmada para eso. Puedes preguntarme por productos, vitrina, pedidos, ventas, domicilios, pagos o configuración. También puedes escribirlo con abreviaturas o errores; intentaré entenderte.';
-    setHistory(current => [...current, { role: 'user', text: question }]);
-    setInput('');
-    setTyping(true);
-    window.setTimeout(() => {
-      setHistory(current => [...current, { role: 'bot', text: reply }]);
-      setTyping(false);
-    }, 550);
-  };
-
-  const startNewChat = () => { setHistory([]); setInput(''); setTyping(false); };
-  const messages = history.length ? history : [{ role: 'bot' as const, text: greeting }];
-
-  return <div className="clickok-ai-root">
-    {open && <section className="clickok-ai-panel" role="dialog" aria-label="Chat de ayuda CLICKOK">
-      <header className="clickok-ai-header">
-        <div className="clickok-ai-avatar"><Bot size={21}/><span/></div>
-        <div className="clickok-ai-heading"><b>CLICKOK AI</b><span><i/> En línea · Ayuda para tu negocio</span></div>
-        <button type="button" className="clickok-ai-icon-btn" onClick={startNewChat} title="Nueva conversación" aria-label="Nueva conversación"><Plus size={19}/></button>
-        <button type="button" className="clickok-ai-icon-btn" onClick={() => setOpen(false)} aria-label="Cerrar chat"><X size={19}/></button>
-      </header>
-      <div className="clickok-ai-body">
-        <div className="clickok-ai-date"><span>CHAT DE SOPORTE</span></div>
-        <div className="clickok-ai-conversation">
-          {messages.map((item, index) => <div className={`clickok-ai-message ${item.role}`} key={index}>
-            {item.role === 'bot' && <span className="clickok-ai-message-avatar"><Bot size={15}/></span>}
-            <div className="clickok-ai-message-content"><small>{item.role === 'bot' ? 'CLICKOK AI' : 'Tú'}</small><p>{item.text}</p></div>
-          </div>)}
-          {history.length === 0 && <div className="clickok-ai-quick-replies"><span>Preguntas frecuentes</span>{suggestions.map(item => <button type="button" key={item} onClick={() => ask(item)}>{item}</button>)}</div>}
-          {typing && <div className="clickok-ai-message bot"><span className="clickok-ai-message-avatar"><Bot size={15}/></span><div className="clickok-ai-typing"><i/><i/><i/></div></div>}
-          <div ref={endRef}/>
-        </div>
-      </div>
-      <footer className="clickok-ai-footer">
-        <form className="clickok-ai-composer" onSubmit={event => { event.preventDefault(); ask(input); }}>
-          <input value={input} onChange={event => setInput(event.target.value)} placeholder="Escribe tu pregunta…" aria-label="Escribe tu pregunta" disabled={typing}/>
-          <button type="submit" disabled={!input.trim() || typing} aria-label="Enviar mensaje"><Send size={17}/></button>
-        </form>
-        <div className="clickok-ai-disclaimer"><Sparkles size={12}/><span>Asistente de respuestas rápidas de CLICKOK</span></div>
-      </footer>
-    </section>}
-    <button type="button" className={`clickok-ai-launcher ${open ? 'is-open' : ''}`} onClick={() => setOpen(value => !value)} aria-label={open ? 'Cerrar CLICKOK AI' : 'Abrir CLICKOK AI'} aria-expanded={open}>
-      {open ? <X size={23}/> : <><MessageCircle size={22}/><span>Chat</span></>}
-    </button>
-  </div>;
+const norm=(s:string)=>s.toLocaleLowerCase('es-CO').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+const stop=new Set(['que','como','para','con','una','uno','por','del','los','las','de','el','la','mi','me','se','en','un','es','y','o','a','al','donde','cuando','puedo','quiero','necesito','favor']);
+const human=/\b(asesor|asesora|persona|humano|humana|agente|representante|alguien|hablar con|contactar soporte)\b/i;
+const suggestions=['¿Cómo creo un producto?','¿Cómo publico mi vitrina?','¿Dónde veo mis pedidos?','¿Cómo conecto Wompi?'];
+export default function ClickokAssistant({businessName,businessId}:Props){
+ const [open,setOpen]=useState(false),[input,setInput]=useState(''),[history,setHistory]=useState<Message[]>([]),[typing,setTyping]=useState(false),[offer,setOffer]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(''),[enabled,setEnabled]=useState(false),[conversationId,setConversationId]=useState(''),[userId,setUserId]=useState(''),[replies,setReplies]=useState<SupportMessage[]>([]);
+ const endRef=useRef<HTMLDivElement>(null),greeting=useMemo(()=>`¡Hola! Soy el asistente de CLICKOK para ${businessName}. Puedo orientarte sobre las funciones de tu comercio y, si lo necesitas, conectarte con nuestro equipo de soporte. ¿En qué te ayudo?`,[businessName]);
+ useEffect(()=>{let live=true;supabase.rpc('clickok_support_is_enabled').then(({data})=>{if(live)setEnabled(data===true)});return()=>{live=false}},[]);
+ useEffect(()=>{if(open)endRef.current?.scrollIntoView({behavior:'smooth',block:'end'})},[open,history,typing,replies,offer]);
+ useEffect(()=>{if(!conversationId)return;let live=true;const load=async()=>{const {data,error}=await supabase.from('clickok_support_messages').select('id,sender_type,body,created_at').eq('conversation_id',conversationId).order('created_at');if(!error&&live)setReplies((data||[]).filter((m:SupportMessage)=>m.sender_type==='agent'||m.sender_type==='admin') as SupportMessage[])};void load();const ch=supabase.channel('clickok-assistant-'+conversationId).on('postgres_changes',{event:'INSERT',schema:'public',table:'clickok_support_messages',filter:'conversation_id=eq.'+conversationId},p=>{const m=p.new as SupportMessage;if((m.sender_type==='agent'||m.sender_type==='admin')&&live)setReplies(v=>v.some(x=>x.id===m.id)?v:[...v,m])}).subscribe();return()=>{live=false;void supabase.removeChannel(ch)}},[conversationId]);
+ const find=(q:string)=>{const ts=norm(q).split(' ').filter(x=>x.length>1&&!stop.has(x));let best:any,score=0;for(const x of faq){const targets=norm(x.q+' '+x.k).split(' '),n=ts.reduce((s,t)=>s+(targets.includes(t)?2:targets.some(y=>t.length>=4&&y.length>=4&&Math.abs(t.length-y.length)<=1&&(y.startsWith(t)||t.startsWith(y))?1:0),0);if(n>score){best=x;score=n}}return score>=2?best:undefined};
+ const transfer=async()=>{if(!enabled||!businessId||busy||conversationId)return;setBusy(true);setError('');try{const {data:{user}}=await supabase.auth.getUser();if(!user)throw new Error('Tu sesión no está activa. Vuelve a iniciar sesión.');const last=[...history].reverse().find(x=>x.role==='user')?.text||'Solicitud de acompañamiento';const transcript=history.map(x=>(x.role==='user'?'Comercio':'CLICKOK Assistant')+': '+x.text).join('\n\n');const {data:ticket,error:te}=await supabase.from('clickok_support_conversations').insert({business_id:businessId,created_by:user.id,subject:last.slice(0,180),source:'assistant'}).select('id').single();if(te)throw te;const {error:me}=await supabase.from('clickok_support_messages').insert({conversation_id:ticket.id,sender_user_id:user.id,sender_type:'merchant',body:'El comercio solicita atención humana desde CLICKOK Assistant.\n\nHistorial del chat:\n'+transcript});if(me)throw me;setUserId(user.id);setConversationId(ticket.id);setOffer(false);setHistory(v=>[...v,{role:'bot',text:'Tu solicitud ya está en la bandeja de CLICKOK Support. Un asesor podrá continuar la conversación desde aquí.'}])}catch(e){setError(e instanceof Error?e.message:'No fue posible enviar tu solicitud. Inténtalo nuevamente.')}finally{setBusy(false)}};
+ const ask=(raw:string)=>{const q=raw.trim();if(!q||typing)return;setHistory(v=>[...v,{role:'user',text:q}]);setInput('');setError('');if(conversationId){void supabase.from('clickok_support_messages').insert({conversation_id:conversationId,sender_user_id:userId,sender_type:'merchant',body:q}).then(({error:e})=>{if(e)setError('No se pudo enviar el mensaje al asesor. Abre Soporte para continuar.')});return}const n=norm(q),isHuman=human.test(n),found=find(q),hello=/^(hola+|buen(os|as)? dias|buenas tardes|buenas noches|hey+)$/.test(n),thanks=/^(gracias+|muchas gracias)$/.test(n);const reply=isHuman?'Claro. Puedo pasar tu solicitud al equipo de soporte para que una persona te atienda.':hello?'¡Hola! Bienvenido a CLICKOK. Estoy aquí para orientarte sobre tu comercio. ¿Qué necesitas?':thanks?'¡Con mucho gusto! Si necesitas algo más, aquí estaré.':found?.a||'No tengo una respuesta confirmada para esa consulta. Para evitar darte información incorrecta, puedo conectarte con un asesor de CLICKOK Support.';setTyping(true);window.setTimeout(()=>{setHistory(v=>[...v,{role:'bot',text:reply}]);if(isHuman||(!found&&!hello&&!thanks))setOffer(true);setTyping(false)},350)};
+ const messages=history.length?history:[{role:'bot' as const,text:greeting}];
+ return <div className="clickok-ai-root">{open&&<section className="clickok-ai-panel" role="dialog" aria-label="Asistente y soporte CLICKOK">
+ <header className="clickok-ai-header"><div className="clickok-ai-avatar"><Bot size={21}/><span/></div><div className="clickok-ai-heading"><b>CLICKOK <em>ASSISTANT</em></b><span><i/>{conversationId?'Conectado con soporte':'Asistencia para tu negocio'}</span></div><button className="clickok-ai-icon-btn" onClick={()=>{if(!conversationId){setHistory([]);setOffer(false);setError('')}}} disabled={!!conversationId} title="Nueva conversación" aria-label="Nueva conversación"><Plus size={18}/></button><button className="clickok-ai-icon-btn" onClick={()=>setOpen(false)} aria-label="Cerrar chat"><X size={18}/></button></header>
+ <div className="clickok-ai-body"><div className="clickok-ai-date"><span>{conversationId?'CONVERSACIÓN CON SOPORTE':'CENTRO DE AYUDA'}</span></div><div className="clickok-ai-conversation">
+ {messages.map((m,i)=><div className={'clickok-ai-message '+m.role} key={i}>{m.role==='bot'&&<span className="clickok-ai-message-avatar"><Bot size={15}/></span>}<div className="clickok-ai-message-content"><small>{m.role==='user'?'TÚ':'CLICKOK ASSISTANT'}</small><p>{m.text}</p></div></div>)}
+ {replies.map(m=><div className="clickok-ai-message support" key={m.id}><span className="clickok-ai-message-avatar"><Headset size={15}/></span><div className="clickok-ai-message-content"><small>ASESOR · {new Date(m.created_at).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})}</small><p>{m.body}</p></div></div>)}
+ {history.length===0&&<div className="clickok-ai-quick-replies"><span>CONSULTAS FRECUENTES</span>{suggestions.map(x=><button key={x} onClick={()=>ask(x)}>{x}<ArrowUpRight size={13}/></button>)}</div>}
+ {typing&&<div className="clickok-ai-message bot"><span className="clickok-ai-message-avatar"><Bot size={15}/></span><div className="clickok-ai-typing"><i/><i/><i/></div></div>}
+ {offer&&!conversationId&&<div className="clickok-ai-handoff"><div><Headset size={17}/><span><b>¿Necesitas ayuda de una persona?</b><small>Un asesor puede continuar contigo.</small></span></div><button onClick={()=>void transfer()} disabled={!enabled||busy}>{busy?'Enviando…':'Hablar con un asesor'}</button>{!enabled&&<small>El equipo de soporte aún no está habilitado.</small>}</div>}
+ {error&&<p className="clickok-ai-error" role="alert">{error}</p>}
+ {conversationId&&<div className="clickok-ai-connected"><CheckCircle2 size={15}/> Solicitud creada · <a href="/support">Ver seguimiento</a></div>}<div ref={endRef}/></div></div>
+ <footer className="clickok-ai-footer"><form className="clickok-ai-composer" onSubmit={e=>{e.preventDefault();ask(input)}}><input value={input} onChange={e=>setInput(e.target.value)} placeholder={conversationId?'Escribe al equipo de soporte…':'Escribe tu pregunta…'} aria-label="Escribe tu pregunta" disabled={typing}/><button type="submit" disabled={!input.trim()||typing} aria-label="Enviar mensaje"><Send size={17}/></button></form><div className="clickok-ai-footer-bottom"><div className="clickok-ai-disclaimer"><Sparkles size={12}/><span>Respuestas rápidas · CLICKOK</span></div>{!conversationId&&enabled&&<button onClick={()=>setOffer(true)}><Headset size={12}/> Hablar con soporte</button>}</div></footer>
+ </section>}<button type="button" className={'clickok-ai-launcher '+(open?'is-open':'')} onClick={()=>setOpen(v=>!v)} aria-label={open?'Cerrar CLICKOK Assistant':'Abrir CLICKOK Assistant'} aria-expanded={open}>{open?<X size={22}/>:<><MessageCircle size={21}/><span>Ayuda</span></>}</button></div>;
 }
