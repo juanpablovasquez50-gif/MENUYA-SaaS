@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,8 +19,10 @@ Deno.serve(async (req: Request) => {
   if (!authHeader?.startsWith('Bearer ')) return json({ error: 'Sesión requerida.' }, 401);
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
-  const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
-  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const publishableKeys = Deno.env.get('SUPABASE_PUBLISHABLE_KEYS');
+  const secretKeys = Deno.env.get('SUPABASE_SECRET_KEYS');
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || (publishableKeys ? JSON.parse(publishableKeys).default : undefined);
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || (secretKeys ? JSON.parse(secretKeys).default : undefined);
   if (!supabaseUrl || !anonKey || !serviceRoleKey) {
     return json({ error: 'La función no tiene configuradas las credenciales de Supabase.' }, 500);
   }
