@@ -42,7 +42,7 @@
 .cks-message{max-width:min(78%,620px);padding:12px 15px;border:1px solid #ececf3;border-radius:5px 15px 15px 15px;background:#fff;box-shadow:0 3px 12px rgba(22,23,45,.025)}
 .cks-message.mine{border-color:#e5e1ff;border-radius:15px 5px 15px 15px;background:#f0edff}
 .cks-message.internal{background:#fff8e8;border-color:#f1dcae}
-.cks-message p{font-size:12px;line-height:1.65}
+.cks-message p{font-size:12px;line-height:1.65};color:#343548}.cks-message.mine p{color:#5545b8
 .cks-compose{width:100%;padding:15px 18px;background:#fff}
 .cks-compose textarea{min-height:66px;border-color:#e5e5ed;border-radius:12px;font:inherit;font-size:12px;resize:vertical}
 .cks-compose button{width:44px;border-radius:12px;background:linear-gradient(145deg,#7665f5,#5544d7)}
