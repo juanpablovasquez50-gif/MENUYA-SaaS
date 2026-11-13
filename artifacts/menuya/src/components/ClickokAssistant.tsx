@@ -3,7 +3,7 @@ import { Bot, ChevronDown, ChevronRight, CircleHelp, MessageCircle, Search, Send
 import './ClickokAssistant.css';
 
 type Answer = { id: string; category: string; question: string; answer: string; keywords: string };
-type Props = { businessName: string; activePath: string };
+type Props = { businessName: string };
 
 const answers: Answer[] = [
   { id: 'product', category: 'Productos', question: '¿Cómo creo un producto?', answer: '1. Entra a Productos en el menú lateral.\n2. Pulsa el botón para crear un producto.\n3. Completa nombre, descripción, precio y categoría.\n4. Agrega una foto y guarda.\n\nDespués revisa que aparezca correctamente en tu catálogo.', keywords: 'crear agregar nuevo editar producto foto imagen precio' },
@@ -23,11 +23,10 @@ const answers: Answer[] = [
 const categories = ['Todos', 'Productos', 'Vitrina', 'Pedidos', 'Ventas', 'Domicilios', 'Pagos', 'Notificaciones', 'Configuración', 'Cuenta y plan'];
 const suggestions = ['¿Cómo creo un producto?', '¿Cómo publico mi vitrina?', '¿Dónde veo mis pedidos?', '¿Cómo conecto Wompi?'];
 
-export default function ClickokAssistant({ businessName, activePath }: Props) {
+export default function ClickokAssistant({ businessName }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('Todos');
-  const [selected, setSelected] = useState<Answer | null>(null);
   const [history, setHistory] = useState<{ role: 'bot' | 'user'; text: string }[]>([]);
   const matches = useMemo(() => {
     const q = query.trim().toLocaleLowerCase('es-CO');
@@ -41,10 +40,9 @@ export default function ClickokAssistant({ businessName, activePath }: Props) {
       return terms.some(term => normalized.includes(term));
     });
     setHistory(current => [...current, { role: 'user', text }, { role: 'bot', text: found ? found.answer : 'Todavía no tengo una respuesta aprobada para esa consulta. Prueba con una de las categorías o preguntas frecuentes. Si necesitas ayuda adicional, contacta al equipo de soporte de CLICKOK.' }]);
-    setSelected(found || null);
     setQuery('');
   };
-  const reset = () => { setHistory([]); setSelected(null); setQuery(''); setCategory('Todos'); };
+  const reset = () => { setHistory([]); setQuery(''); setCategory('Todos'); };
   return <div className="clickok-ai-root">
     {open && <section className="clickok-ai-panel" role="dialog" aria-label="Asistente CLICKOK AI">
       <header className="clickok-ai-header">
@@ -59,14 +57,14 @@ export default function ClickokAssistant({ businessName, activePath }: Props) {
           <label className="clickok-ai-search"><Search size={16}/><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Busca una pregunta o función…"/></label>
           <div className="clickok-ai-categories">{categories.map(item => <button type="button" key={item} className={category === item ? 'active' : ''} onClick={() => setCategory(item)}>{item}</button>)}</div>
           <div className="clickok-ai-faq-title">{query || category !== 'Todos' ? 'Resultados' : 'Preguntas frecuentes'}</div>
-          <div className="clickok-ai-questions">{matches.map(item => <button type="button" key={item.id} onClick={() => { setSelected(item); setHistory([{ role: 'user', text: item.question }, { role: 'bot', text: item.answer }]); }}><span>{item.question}</span><ChevronRight size={16}/></button>)}{matches.length === 0 && <p className="clickok-ai-empty">No encontramos esa pregunta. Prueba con otras palabras.</p>}</div>
+          <div className="clickok-ai-questions">{matches.map(item => <button type="button" key={item.id} onClick={() => { setHistory([{ role: 'user', text: item.question }, { role: 'bot', text: item.answer }]); }}><span>{item.question}</span><ChevronRight size={16}/></button>)}{matches.length === 0 && <p className="clickok-ai-empty">No encontramos esa pregunta. Prueba con otras palabras.</p>}</div>
           {!query && category === 'Todos' && <div className="clickok-ai-suggestions">{suggestions.map(item => <button type="button" key={item} onClick={() => ask(item)}>{item}</button>)}</div>}
         </> : <div className="clickok-ai-conversation">
           {history.map((item, index) => <div className={`clickok-ai-message ${item.role}`} key={index}><span>{item.role === 'bot' ? <Bot size={15}/> : 'Tú'}</span><p>{item.text}</p></div>)}
           <button type="button" className="clickok-ai-back" onClick={reset}><ChevronDown size={15}/> Volver a las preguntas</button>
         </div>}
       </div>
-      <footer className="clickok-ai-footer"><CircleHelp size={15}/><span>Respuestas predefinidas · Sin IA externa</span><button type="button" onClick={() => { setHistory([]); setSelected(null); setQuery(''); }}>Inicio</button></footer>
+      <footer className="clickok-ai-footer"><CircleHelp size={15}/><span>Respuestas predefinidas · Sin IA externa</span><button type="button" onClick={() => { setHistory([]); setQuery(''); }}>Inicio</button></footer>
     </section>}
     <button type="button" className={`clickok-ai-launcher ${open ? 'is-open' : ''}`} onClick={() => setOpen(value => !value)} aria-label={open ? 'Cerrar CLICKOK AI' : 'Abrir CLICKOK AI'} aria-expanded={open}>
       {open ? <X size={23}/> : <><MessageCircle size={22}/><span>Ayuda</span></>}
