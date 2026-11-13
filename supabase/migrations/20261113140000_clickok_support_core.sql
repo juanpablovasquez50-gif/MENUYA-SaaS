@@ -152,7 +152,7 @@ grant execute on function public.clickok_support_is_admin() to authenticated;
 grant execute on function public.clickok_support_can_access_business(uuid) to authenticated;
 
 create or replace function public.clickok_support_touch_conversation()
-returns trigger language plpgsql set search_path = ''
+returns trigger language plpgsql security definer set search_path = ''
 as $$
 begin
   update public.clickok_support_conversations
