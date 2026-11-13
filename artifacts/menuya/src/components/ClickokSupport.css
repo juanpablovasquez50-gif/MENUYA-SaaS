@@ -166,3 +166,32 @@
  .cks-compose button{width:42px;min-height:48px}
  .cks-footer{font-size:8px}
 }
+
+
+/* Agent workspace upgrade: priority, customer context, SLA and saved replies */
+.cks-nav-item{cursor:pointer}
+.cks-ticket-priority{display:inline-flex;align-items:center;width:max-content;margin:5px 5px 0 0;padding:3px 7px;border-radius:20px;background:#f0eff7;color:#6b6d80;font-size:9px;font-weight:800}
+.cks-ticket-priority.priority-low{background:#eef3f7;color:#62768a}
+.cks-ticket-priority.priority-normal{background:#f0eff7;color:#696b7e}
+.cks-ticket-priority.priority-high{background:#fff2df;color:#a66a18}
+.cks-ticket-priority.priority-urgent{background:#ffe8e8;color:#c33d4b}
+.cks-thread-title{display:flex;flex-direction:column;gap:5px;min-width:180px;flex:1}
+.cks-thread-title b{font-size:14px;color:#202133}
+.cks-thread-title small{font-size:10px;color:#9295a6}
+.cks-thread-actions{align-items:flex-end}
+.cks-priority-control{display:flex;flex-direction:column;gap:4px;color:#9295a6;font-size:9px;font-weight:700}
+.cks-priority-control select{min-width:100px}
+.cks-profile-toggle{display:inline-flex;align-items:center;gap:7px;align-self:flex-start;margin:0;padding:8px 16px;border:0;border-top:1px solid #f0eff6;background:#fff;color:#6654d9;font:600 10px inherit;cursor:pointer}
+.cks-business-profile{display:flex;align-items:center;gap:11px;padding:11px 17px;border-top:1px solid #f0eff6;border-bottom:1px solid #ececf3;background:#fff}
+.cks-profile-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:#f0edff;color:#6754dc}
+.cks-business-profile>div{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.cks-business-profile>div b{font-size:11px;color:#28293b}
+.cks-business-profile>div small{font-size:9px;color:#9295a6}
+.cks-sla{display:inline-flex;align-items:center;gap:5px;padding:6px 9px;border-radius:8px;background:#f2f8f5;color:#398567;font-size:9px;font-weight:700}
+.cks-saved-replies{width:100%;max-width:260px;min-height:34px;margin:0 0 9px;padding:7px 10px;border:1px solid #e7e6f0;border-radius:9px;background:#fbfbfe;color:#5f54ad;font:600 10px inherit}
+.cks-message.internal{align-self:flex-start;border-style:dashed;background:#fff8e8}
+.cks-message.internal small:before{content:"◆";margin-right:5px;color:#c28a28}
+.cks-compose label{display:flex;align-items:center;gap:7px;margin-bottom:8px;color:#7c7f91;font-size:10px}
+.cks-compose label input{accent-color:#6c5ce7}
+@media(max-width:850px){.cks-thread-title{width:100%;flex:none}.cks-business-profile{flex-wrap:wrap}.cks-sla{margin-left:45px}}
+@media(max-width:520px){.cks-business-profile{padding:9px 12px}.cks-sla{margin-left:0}.cks-priority-control{flex:1}.cks-priority-control select{width:100%}.cks-thread-actions select{min-width:0}}
