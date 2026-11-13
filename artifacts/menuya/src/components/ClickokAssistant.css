@@ -62,3 +62,42 @@
  .clickok-ai-message-content{max-width:88%}
 }
 @media(prefers-reduced-motion:reduce){.clickok-ai-launcher,.clickok-ai-panel{animation:none;transition:none}}
+
+
+/* Chat layout v2: compact, structured and comfortable on tablet */
+.clickok-ai-panel{width:min(390px,calc(100vw - 32px));height:min(610px,calc(100dvh - 110px));border-radius:24px}
+.clickok-ai-header{min-height:76px;padding:15px 16px;gap:10px}
+.clickok-ai-avatar{width:44px;height:44px;border-radius:15px}
+.clickok-ai-heading b{font-size:13px}
+.clickok-ai-heading span{font-size:10px}
+.clickok-ai-body{display:flex;flex-direction:column;gap:0;min-height:0;padding:16px 15px 12px;overflow-y:auto}
+.clickok-ai-date{margin:0 0 14px;font-size:9px}
+.clickok-ai-conversation{width:100%;gap:14px}
+.clickok-ai-message{width:100%;gap:9px}
+.clickok-ai-message-content{max-width:calc(100% - 42px)}
+.clickok-ai-message-content p{padding:12px 14px;font-size:12px;line-height:1.55;border-radius:6px 15px 15px 15px}
+.clickok-ai-message.user .clickok-ai-message-content p{border-radius:15px 6px 15px 15px}
+.clickok-ai-message-content small{font-size:9px}
+.clickok-ai-quick-replies{margin:5px 0 0 41px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.clickok-ai-quick-replies>span{grid-column:1/-1;margin-bottom:1px}
+.clickok-ai-quick-replies button{min-height:54px;padding:10px;border-radius:12px;font-size:10px;line-height:1.35}
+.clickok-ai-quick-replies button svg{flex:0 0 13px}
+.clickok-ai-footer{padding:11px 13px 10px}
+.clickok-ai-composer{min-height:51px;padding:4px 5px 4px 13px;border-radius:15px}
+.clickok-ai-composer input{height:39px;font-size:12px}
+.clickok-ai-composer button{flex-basis:39px;height:39px;border-radius:12px}
+.clickok-ai-footer-bottom{min-height:24px}
+.clickok-ai-disclaimer{font-size:9px}
+.clickok-ai-footer-bottom>button{font-size:10px}
+.clickok-ai-handoff{margin-left:41px}
+.clickok-ai-connected,.clickok-ai-error{margin-left:41px}
+@media(min-width:621px){
+ .clickok-ai-panel{right:0;bottom:88px}
+}
+@media(max-width:620px){
+ .clickok-ai-root{right:14px;bottom:calc(14px + env(safe-area-inset-bottom))}
+ .clickok-ai-panel{right:-2px;bottom:80px;width:min(390px,calc(100vw - 24px));height:min(620px,calc(100dvh - 105px));border-radius:22px}
+ .clickok-ai-body{padding:14px 12px 10px}
+ .clickok-ai-quick-replies{grid-template-columns:1fr;margin-left:40px}
+ .clickok-ai-quick-replies button{min-height:43px}
+}
