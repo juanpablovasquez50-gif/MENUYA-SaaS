@@ -16,6 +16,7 @@ type VerificationRow = {
   verification_note: string | null;
   approved_at: string | null;
   product_count: number;
+  sales_count: number;
   completed_orders: number;
   eligible_orders: number;
   completion_rate: number;
@@ -121,7 +122,7 @@ export default function VerificationCenter() {
               <span className={`vc-tier-mark ${currentLevel}`}><CurrentIcon size={19}/></span>
               <span className="vc-business-main"><b>{row.business_name}</b><small>{row.business_type || 'Comercio'} · {row.email || 'Sin correo'}</small></span>
               <span className={`vc-status ${row.verification_status}`}>{row.verification_status === 'approved' ? `Verificada ${tierLabel(row.verification_level)}` : row.verification_status === 'suspended' ? 'Suspendida' : 'Pendiente'}</span>
-              <span className="vc-business-metrics"><b>{row.completed_orders}</b><small>ventas entregadas</small></span>
+              <span className="vc-business-metrics"><b>{row.sales_count}</b><small>ventas registradas</small></span>
               <span className="vc-business-metrics"><b>{row.product_count}</b><small>productos activos</small></span>
               <span className="vc-expand">{open ? 'Cerrar' : 'Ver logros'}</span>
             </button>
@@ -135,13 +136,13 @@ export default function VerificationCenter() {
                 <TierCard level="purple" title="Morada" subtitle="Verificación documental actual" active={row.has_purple} ready={row.has_purple} items={[['Aprobación documental vigente',row.has_purple]]}/>
                 <TierCard level="silver" title="Plata" subtitle="Actividad y gestión constante" active={['silver','gold'].includes(row.verification_level) && row.verification_status === 'approved'} ready={silverReady} items={[
                   [`30 días de actividad (actual: ${row.days_active})`,row.days_active >= 30],
-                  [`30 ventas entregadas (actual: ${row.completed_orders})`,row.completed_orders >= 30],
+                  [`30 ventas registradas (actual: ${row.sales_count})`,row.sales_count >= 30],
                   [`10 productos activos (actual: ${row.product_count})`,row.product_count >= 10],
                   ['Perfil comercial completo',row.profile_complete],
                 ]}/>
                 <TierCard level="gold" title="Oro" subtitle="Máximo reconocimiento CLICKOK" active={row.verification_level === 'gold' && row.verification_status === 'approved'} ready={goldReady} items={[
                   [`90 días de actividad (actual: ${row.days_active})`,row.days_active >= 90],
-                  [`200 ventas entregadas (actual: ${row.completed_orders})`,row.completed_orders >= 200],
+                  [`200 ventas registradas (actual: ${row.sales_count})`,row.sales_count >= 200],
                   [`20 productos activos (actual: ${row.product_count})`,row.product_count >= 20],
                   [`95% de pedidos completados (actual: ${row.completion_rate}%)`,row.completion_rate >= 95],
                   ['CLICKOK Plata aprobada',row.verification_level === 'silver' || row.verification_level === 'gold'],
@@ -166,11 +167,11 @@ export default function VerificationCenter() {
 }
 
 function canSilver(row: VerificationRow) {
-  return row.business_status === 'active' && row.has_purple && row.days_active >= 30 && row.completed_orders >= 30 && row.product_count >= 10 && row.profile_complete;
+  return row.business_status === 'active' && row.has_purple && row.days_active >= 30 && row.sales_count >= 30 && row.product_count >= 10 && row.profile_complete;
 }
 function canGold(row: VerificationRow) {
   const hasSilverPath = (row.verification_level === 'silver' && row.verification_status === 'approved') || (row.verification_level === 'gold' && row.verification_status === 'suspended');
-  return row.business_status === 'active' && row.has_purple && hasSilverPath && row.days_active >= 90 && row.completed_orders >= 200 && row.product_count >= 20 && row.eligible_orders > 0 && row.completion_rate >= 95;
+  return row.business_status === 'active' && row.has_purple && hasSilverPath && row.days_active >= 90 && row.sales_count >= 200 && row.product_count >= 20 && row.eligible_orders > 0 && row.completion_rate >= 95;
 }
 function TierCard({level,title,subtitle,active,ready,items}:{level:'purple'|'silver'|'gold';title:string;subtitle:string;active:boolean;ready:boolean;items:[string,boolean][]}) {
   return <section className={`vc-tier-card ${level} ${active?'active':''}`}>
