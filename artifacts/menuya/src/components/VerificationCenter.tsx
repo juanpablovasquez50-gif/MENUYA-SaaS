@@ -134,7 +134,7 @@ export default function VerificationCenter() {
               </div>
               <div className="vc-tiers">
                 <TierCard level="purple" title="Morada" subtitle="Verificación documental actual" active={row.has_purple} ready={row.has_purple} items={[['Aprobación documental vigente',row.has_purple]]}/>
-                <TierCard level="silver" title="Plata" subtitle="Actividad y gestión constante" active={['silver','gold'].includes(row.verification_level) && row.verification_status === 'approved'} ready={silverReady} items={[
+                <TierCard level="silver" title="Plata" subtitle="Actividad y gestión constante" active={row.verification_level === 'gold' || (row.verification_level === 'silver' && row.verification_status === 'approved')} ready={silverReady} items={[
                   [`30 días de actividad (actual: ${row.days_active})`,row.days_active >= 30],
                   [`30 ventas registradas (actual: ${row.sales_count})`,row.sales_count >= 30],
                   [`10 productos activos (actual: ${row.product_count})`,row.product_count >= 10],
