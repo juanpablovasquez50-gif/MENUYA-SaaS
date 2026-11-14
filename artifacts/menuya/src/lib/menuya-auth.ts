@@ -56,6 +56,7 @@ export async function signUpWithEmail(input: {
     email: input.email.trim().toLowerCase(),
     password: input.password,
     options: {
+      emailRedirectTo: `${window.location.origin}/?email_confirmed=1`,
       data: {
         full_name: input.fullName.trim(),
         phone: input.phone.trim(),
