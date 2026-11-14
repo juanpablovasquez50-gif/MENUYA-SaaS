@@ -531,7 +531,7 @@ function MerchantVerification({ businessId }: { businessId: string }) {
       await supabase.storage.from('business-verification').remove([storagePath]);
       setError('El archivo se subió, pero no se pudo registrar. Inténtalo nuevamente.');
     } else {
-      setNotice('Documento enviado. Puedes seguir usando Menuya mientras se revisa.');
+      setNotice('Documento enviado. Puedes seguir usando CLICKOK mientras se revisa.');
       await loadDocuments();
     }
     setUploading(null);
@@ -553,7 +553,7 @@ function MerchantVerification({ businessId }: { businessId: string }) {
     <PageTitle eyebrow="CUENTA DEL COMERCIO" title="Verificación del negocio" description="Comparte los documentos de tu establecimiento para validar su información. Este proceso es independiente de tu acceso al panel." />
     <section className="verification-intro">
       <div className="verification-intro-icon"><ShieldCheck size={23}/></div>
-      <div><b>Tu negocio puede seguir operando en Menuya</b><p>Subir estos documentos no es un requisito para entrar al panel, gestionar productos o recibir pedidos. La verificación se realiza por separado.</p></div>
+      <div><b>Tu negocio puede seguir operando en CLICKOK</b><p>Subir estos documentos no es un requisito para entrar al panel, gestionar productos o recibir pedidos. La verificación se realiza por separado.</p></div>
     </section>
     <div className="verification-summary">
       <div><span className="eyebrow">DOCUMENTOS</span><b>{documents.length} enviados</b></div>
