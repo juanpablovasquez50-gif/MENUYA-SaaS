@@ -290,14 +290,14 @@ function AuthPage({ mode, data, onLogin, onRegister, onForgot, onReset }: {
   return <div className="auth-layout"><aside className="auth-story"><Brand inverse /><div className="story-copy"><span className="eyebrow light">UNA TIENDA PROPIA, EN SERIO</span><h1>Tu negocio<br />merece su<br /><em>propia vitrina.</em></h1><p>Un catálogo que se siente tuyo. Pedidos organizados. Todo en un solo lugar.</p><div className="mini-store-preview"><div className="mini-preview-top"><span className="mini-avatar">{sampleBiz?.nombre.charAt(0) || 'M'}</span><span><b>{sampleBiz?.nombre || 'Tu negocio'}</b><small>Catálogo digital · Tu marca</small></span><ArrowRight size={17} /></div><div className="preview-products"><span /><span /><span /></div><div className="preview-caption">Así podría verse tu tienda</div></div></div><div className="auth-foot">Hecho para el comercio de aquí. <span>CLICKOK</span></div></aside>
     <main className="auth-main"><div className="auth-mobile-brand"><Brand /></div><div className="auth-form-wrap"><span className="eyebrow">{mode === 'register' ? 'EMPIEZA EN MINUTOS' : mode === 'forgot' || mode === 'reset' ? 'RECUPERA EL ACCESO' : 'QUÉ BUENO VERTE'}</span><h2>{mode === 'register' ? 'Abre tu tienda digital' : mode === 'forgot' ? '¿Olvidaste tu clave?' : mode === 'reset' ? 'Crea una nueva clave' : 'Entra a tu espacio'}</h2><p className="subtle">{mode === 'register' ? 'Crea tu cuenta y registra los datos de tu comercio.' : mode === 'forgot' ? 'Te enviaremos las instrucciones para recuperar tu cuenta.' : mode === 'reset' ? 'Elige una contraseña nueva para tu cuenta.' : 'Ingresa con el correo y la contraseña de tu cuenta.'}</p>
       {error && <div className="notice notice-error" role="alert">{error}</div>}
-      {done && <div className="notice notice-success" role="status">{mode === 'forgot' ? 'Si el correo está registrado, recibirás instrucciones para recuperar el acceso.' : mode === 'reset' ? 'Tu contraseña fue actualizada. Ya puedes iniciar sesión.' : 'Tu cuenta fue creada. Revisa tu correo para confirmar la dirección; después inicia sesión y CLICKOK terminará de registrar tu comercio.'}</div>}
+      {done && <div className="notice notice-success" role="status">{mode === 'forgot' ? 'Si el correo está registrado, recibirás instrucciones para recuperar el acceso.' : mode === 'reset' ? 'Tu contraseña fue actualizada. Ya puedes iniciar sesión.' : 'Cuenta creada. Revisa tu correo y confirma la dirección; al regresar a Menuya, tu comercio se activará automáticamente y podrás entrar al panel.'}</div>}
       <form onSubmit={submit} className="form-stack">
         {mode === 'register' && <><Field field={{ name: 'nombre', label: 'Tu nombre', required: true }} onChange={() => {}} /><Field field={{ name: 'negocio', label: 'Nombre del negocio', required: true }} onChange={() => {}} /><div className="field"><span>Sector *</span><select name="sector" required data-testid="select-sector">{['Restaurante', 'Ropa', 'Barbería', 'Tecnología', 'Panadería', 'Servicios', 'Otro'].map(x => <option key={x}>{x}</option>)}</select></div><Field field={{ name: 'ciudad', label: 'Ciudad donde opera tu negocio', required: true }} onChange={() => {}} /><Field field={{ name: 'departamento', label: 'Departamento', required: true }} onChange={() => {}} /><small className="fine-print">Esta ubicación definirá dónde podrás recibir pedidos a domicilio. Podrás cambiarla después en Ajustes.</small><Field field={{ name: 'telefono', label: 'Teléfono', type: 'tel', required: true }} onChange={() => {}} /></>}
         {mode !== 'reset' && <Field field={{ name: 'email', label: 'Correo electrónico', type: 'email', required: true }} onChange={() => {}} />}
         {mode !== 'forgot' && <><label className="field"><span>{mode === 'reset' ? 'Nueva contraseña *' : 'Contraseña *'}</span><div className="password-wrap"><input name="password" required minLength={8} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} type={showPassword ? 'text' : 'password'} data-testid="input-password" /><button type="button" className="password-eye" onClick={() => setShowPassword(!showPassword)} aria-label="Mostrar u ocultar contraseña">{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div></label>
           {(mode === 'register' || mode === 'reset') && <Field field={{ name: 'confirmPassword', label: 'Confirma tu contraseña', type: 'password', required: true }} onChange={() => {}} />}
         </>}
-        {mode === 'register' && <><p className="fine-print">Tu comercio se crea inicialmente privado y pendiente de revisión. No se publicará automáticamente.</p><label className="legal-consent"><input type="checkbox" name="aceptaDatos" required/><span>He leído y acepto la <Link href="/legal/privacidad" target="_blank">Política de tratamiento de datos personales</Link> y los <Link href="/legal/terminos" target="_blank">Términos y condiciones</Link>. Autorizo el tratamiento de mis datos para crear y administrar mi cuenta.</span></label></>}
+        {mode === 'register' && <><p className="fine-print">Confirma tu correo para activar el acceso a tu panel. La revisión de documentos del comercio se realiza después y no bloquea el uso de la plataforma.</p><label className="legal-consent"><input type="checkbox" name="aceptaDatos" required/><span>He leído y acepto la <Link href="/legal/privacidad" target="_blank">Política de tratamiento de datos personales</Link> y los <Link href="/legal/terminos" target="_blank">Términos y condiciones</Link>. Autorizo el tratamiento de mis datos para crear y administrar mi cuenta.</span></label></>}
         <Button type="submit" className="full-btn" disabled={busy || (mode === "reset" && !recoveryReady)} testId="button-auth-submit">{busy ? 'Procesando...' : mode === 'register' ? 'Crear mi cuenta y tienda' : mode === 'forgot' ? 'Enviar instrucciones' : mode === 'reset' ? 'Actualizar contraseña' : 'Entrar'} <ArrowRight size={16} /></Button>
       </form>
       {mode === 'login' && <Link href="/forgot-password" className="text-link">¿Olvidaste tu contraseña?</Link>}
@@ -1323,7 +1323,7 @@ function RemoteAccessGate({ context, onLogout }: { context: MenuyaAuthContext; o
       })),
       plans:allPlans.some(item => item.id === plan.id) ? allPlans : [...allPlans, plan],
       subscriptions:sub ? [{id:sub.id,business_id:sub.business_id,plan_id:sub.plan_id,estado:sub.status,inicio:sub.starts_at || '',vencimiento:sub.ends_at || ''}] : [],
-      settings:[settings],audit:[],catalog_events:(catalogEventResult.data || []).map(event => ({id:event.id,business_id:event.business_id,product_id:event.product_id || undefined,tipo:event.event_type === 'visit' ? 'visita' as const : 'consulta' as const,created_at:event.created_at})),platform:{name:'CLICKOK',approval:'manual',default_plan:plan.id},
+      settings:[settings],audit:[],catalog_events:(catalogEventResult.data || []).map(event => ({id:event.id,business_id:event.business_id,product_id:event.product_id || undefined,tipo:event.event_type === 'visit' ? 'visita' as const : 'consulta' as const,created_at:event.created_at})),platform:{name:'CLICKOK',approval:'automatica',default_plan:plan.id},
     };
     setRemoteData(data); setLoading(false);
   };
@@ -1586,7 +1586,15 @@ function Router() {
     }
     getAuthContext()
       .then(async context => context ? (context.isPlatformAdmin ? context : ensureBusinessForCurrentUser()) : null)
-      .then(context => { if (mounted) setRemoteContext(context); })
+      .then(context => {
+        if (!mounted) return;
+        setRemoteContext(context);
+        const emailConfirmed = new URLSearchParams(window.location.search).get('email_confirmed') === '1';
+        if (context && emailConfirmed) {
+          window.history.replaceState({}, '', window.location.pathname);
+          setLocation('/app');
+        }
+      })
       .catch(error => { if (mounted) setAuthInitError(error instanceof Error ? error.message : 'No se pudo recuperar la sesión.'); })
       .finally(() => { if (mounted) setAuthLoading(false); });
     return () => { mounted = false; };
