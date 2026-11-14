@@ -666,7 +666,7 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .auth-form-wrap .field input:focus,.auth-form-wrap .field select:focus,.auth-form-wrap .field textarea:focus{border-color:#8178ff;box-shadow:0 0 0 4px rgba(99,91,255,.12);background:#fff}
 .auth-form-wrap .password-wrap input{padding-right:48px}.auth-form-wrap .password-eye{right:13px;color:#7e8ba0}
 .auth-form-wrap .form-stack{gap:18px}
-.auth-form-wrap .full-btn{min-height:54px;border:0;border-radius:12px;background:linear-gradient(105deg,#635bff,#8154e9);box-shadow:0 10px 24px rgba(99,91,255,.22);font-size:15px;font-weight:700;letter-spacing:.1px;transition:transform .2s ease,box-shadow .2s ease}
+.auth-form-wrap .full-btn{min-height:54px;border:0;border-radius:12px;background:linear-gradient(105deg,#635bff 0%,#8154e9 100%)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;box-shadow:0 10px 24px rgba(99,91,255,.22);font-size:15px;font-weight:700;letter-spacing:.1px;transition:transform .2s ease,box-shadow .2s ease}
 .auth-form-wrap .full-btn:hover{transform:translateY(-1px);box-shadow:0 14px 28px rgba(99,91,255,.28)}
 .auth-form-wrap .text-link{display:inline-block;margin-top:13px;color:#635bff;font-size:13px;font-weight:700;text-decoration:none}
 .auth-form-wrap .auth-switch{margin:25px 0 0;color:#7b8798;font-size:13px}.auth-form-wrap .auth-switch a{color:#635bff}
