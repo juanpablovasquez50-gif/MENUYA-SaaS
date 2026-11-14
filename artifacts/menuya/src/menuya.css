@@ -5427,3 +5427,41 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 @media(max-width:700px){
  .public-store .public-product-art .product-sticker{top:7px!important;right:7px!important;left:auto!important;padding:5px 8px!important;min-height:22px!important;font-size:9px!important}
 }
+
+
+/* Merchant document verification */
+.verification-intro{display:flex;align-items:flex-start;gap:14px;padding:18px 20px;margin:0 0 20px;border:1px solid var(--border);border-radius:16px;background:var(--card, #fff)}
+.verification-intro-icon,.verification-icon{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border-radius:13px;background:var(--muted, #f3f4f6);color:var(--foreground, #20242b)}
+.verification-intro b{display:block;font-size:14px;font-weight:700;color:var(--foreground)}
+.verification-intro p{margin:5px 0 0;color:var(--muted-foreground, #687080);font-size:13px;line-height:1.55}
+.verification-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0 0 20px}
+.verification-summary>div{display:flex;flex-direction:column;gap:7px;padding:15px 17px;border:1px solid var(--border);border-radius:14px;background:var(--card, #fff)}
+.verification-summary .eyebrow{font-size:10px;letter-spacing:.08em}
+.verification-summary b{font-size:22px;line-height:1.2;font-weight:750;color:var(--foreground)}
+.verification-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.verification-card{display:flex;flex-direction:column;min-width:0;padding:20px}
+.verification-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.verification-card-head h2{margin:5px 0 4px;font-size:18px;font-weight:750;color:var(--foreground)}
+.verification-card-head p{margin:0;color:var(--muted-foreground, #687080);font-size:13px;line-height:1.5}
+.verification-icon{flex:0 0 38px;width:38px;height:38px}
+.verification-empty{margin:18px 0 14px;padding:14px;border:1px dashed var(--border);border-radius:11px;color:var(--muted-foreground, #687080);font-size:12px}
+.verification-file{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:18px 0 14px;padding:13px;border:1px solid var(--border);border-radius:12px}
+.verification-file-meta{display:flex;flex:1 1 100%;flex-direction:column;gap:4px;min-width:0}
+.verification-file-meta b{overflow:hidden;color:var(--foreground);font-size:12px;text-overflow:ellipsis;white-space:nowrap}
+.verification-file-meta small,.verification-hint{color:var(--muted-foreground, #687080);font-size:11px}
+.verification-status{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:999px;background:var(--muted, #f3f4f6);color:var(--foreground);font-size:11px;font-weight:650}
+.verification-status-approved{background:#e9f7ef;color:#187443}
+.verification-status-rejected{background:#fff0ed;color:#a13b2b}
+.verification-status-pending{background:#fff7e6;color:#8b5b0a}
+.verification-reason{flex-basis:100%;margin:0;color:#a13b2b;font-size:12px;line-height:1.45}
+.verification-link{display:inline-flex;align-items:center;gap:5px;margin-left:auto;border:0;background:none;color:var(--foreground);font-size:12px;font-weight:700;cursor:pointer}
+.verification-upload{display:flex;align-items:center;justify-content:center;gap:8px;min-height:42px;margin-top:auto;padding:10px 14px;border:1px solid var(--border);border-radius:11px;background:var(--background, #fff);color:var(--foreground);font-size:13px;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s}
+.verification-upload:hover{border-color:var(--foreground);background:var(--muted, #f7f7f7)}
+.verification-upload input{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;clip-path:inset(50%)}
+.verification-upload.is-uploading{opacity:.65;cursor:wait}
+.verification-hint{display:block;margin-top:8px;text-align:center}
+.verification-loading{margin:14px 0;color:var(--muted-foreground, #687080);font-size:12px}
+.verification-spinner{animation:verification-spin 1s linear infinite}
+@keyframes verification-spin{to{transform:rotate(360deg)}}
+@media(max-width:760px){.verification-grid{grid-template-columns:1fr}.verification-summary{gap:8px}.verification-summary>div{padding:12px}.verification-summary b{font-size:19px}.verification-card{padding:16px}}
+@media(max-width:420px){.verification-intro{padding:14px}.verification-summary .eyebrow{font-size:9px}.verification-summary b{font-size:17px}}
