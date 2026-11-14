@@ -150,7 +150,7 @@ export default function VerificationCenter() {
               </div>
               {row.verification_note && <p className="vc-note">Última nota: {row.verification_note}</p>}
               <div className="vc-actions">
-                {row.business_status !== 'active' ? <span className="vc-warning"><ShieldAlert size={15}/> El comercio no tiene vigente la aprobación documental morada.</span> : <>
+                {row.business_status !== 'active' || !row.has_purple ? <span className="vc-warning"><ShieldAlert size={15}/> El comercio necesita estar activo y tener vigente la verificación documental morada.</span> : <>
                   {silverReady && !(row.verification_level === 'silver' && row.verification_status === 'approved') && <button className="vc-action silver" disabled={busy === row.business_id} onClick={() => void review(row,'silver','approved')}><Check size={15}/> Aprobar Plata</button>}
                   {goldReady && !(row.verification_level === 'gold' && row.verification_status === 'approved') && <button className="vc-action gold" disabled={busy === row.business_id} onClick={() => void review(row,'gold','approved')}><Crown size={15}/> Aprobar Oro</button>}
                   {row.verification_level !== 'purple' && row.verification_status === 'approved' && <button className="vc-action suspend" disabled={busy === row.business_id} onClick={() => void review(row,row.verification_level as 'silver'|'gold','suspended')}><ShieldAlert size={15}/> Suspender nivel</button>}
