@@ -5494,3 +5494,9 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .verification-upload:focus-within{outline:3px solid rgba(118,86,237,.28);outline-offset:2px}
 .verification-upload.is-uploading{background:#8b79d8;border-color:#8b79d8;color:#fff;opacity:.8}
 .verification-icon{background:#f0ecff;color:#7656ed}
+
+/* CLICKOK verification intro icon — match the upload accent */
+.verification-intro-icon{
+  background:#f0ecff !important;
+  color:#7656ed !important;
+}
