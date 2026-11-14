@@ -553,7 +553,7 @@ function MerchantVerification({ businessId }: { businessId: string }) {
     <PageTitle eyebrow="CUENTA DEL COMERCIO" title="Verificación del negocio" description="Comparte los documentos de tu establecimiento para validar su información. Este proceso es independiente de tu acceso al panel." />
     <section className="verification-intro">
       <div className="verification-intro-icon"><ShieldCheck size={23}/></div>
-      <div><b>Tu negocio puede seguir operando en CLICKOK</b><p>Subir estos documentos no es un requisito para entrar al panel, gestionar productos o recibir pedidos. La verificación se realiza por separado.</p></div>
+      <div><b>Obtén la verificación de tu negocio para tu vitrina</b><p>Envía los documentos requeridos y, una vez aprobados, podrás mostrar que tu negocio está verificado en tu vitrina de CLICKOK y transmitir mayor confianza a tus clientes.</p></div>
     </section>
     <div className="verification-summary">
       <div><span className="eyebrow">DOCUMENTOS</span><b>{documents.length} enviados</b></div>
