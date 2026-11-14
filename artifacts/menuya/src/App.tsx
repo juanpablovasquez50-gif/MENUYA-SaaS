@@ -63,7 +63,7 @@ const shortDate = (date: string) => new Intl.DateTimeFormat('es-CO', { day: 'num
 const statusLabel: Record<string, string> = { pendiente: 'Pendiente', confirmado: 'Confirmado', preparando: 'En preparación', listo: 'Listo', en_camino: 'En camino', entregado: 'Entregado', cancelado: 'Cancelado', activo: 'Activo', rechazado: 'Rechazado', suspendido: 'Suspendido', activa: 'Activa', vencida: 'Vencida' };
 const productLimitLabel = (limit: number) => limit >= 999999 ? 'ilimitados' : String(limit);
 const adminLinks = [['/admin', 'Resumen', LayoutDashboard], ['/admin/businesses', 'Comercios', Store], ['/admin/requests', 'Solicitudes', ClipboardList], ['/admin/users', 'Usuarios', Users], ['/admin/plans', 'Planes', Tag], ['/admin/subscriptions', 'Suscripciones', CreditCard], ['/admin/partners', 'Partners', Users], ['/admin/settings', 'Ajustes', Settings], ['/admin/audit', 'Auditoría', Activity], ['/admin/support', 'Administrador de soporte', Headset]] as const;
-const shopLinks = [['/app', 'Inicio', LayoutDashboard], ['/app/catalog', 'Catálogo', ShoppingBag], ['/app/products', 'Productos', Package], ['/app/categories', 'Categorías', Tag], ['/app/orders', 'Pedidos', ClipboardList], ['/app/couriers', 'Domiciliarios', Truck], ['/app/customers', 'Clientes', Users], ['/app/editor', 'CLICKOK Studio', Pencil], ['/app/analytics', 'Analítica', BarChart3], ['/app/help', 'Centro de ayuda', HelpCircle], ['/app/settings', 'Ajustes', Settings], ['/app/subscription', 'Mi plan', CreditCard]] as const;
+const shopLinks = [['/app', 'Inicio', LayoutDashboard], ['/app/catalog', 'Catálogo', ShoppingBag], ['/app/products', 'Productos', Package], ['/app/categories', 'Categorías', Tag], ['/app/orders', 'Pedidos', ClipboardList], ['/app/couriers', 'Domiciliarios', Truck], ['/app/customers', 'Clientes', Users], ['/app/editor', 'CLICKOK Studio', Pencil], ['/app/analytics', 'Analítica', BarChart3], ['/app/verification', 'Verificación', ShieldCheck], ['/app/help', 'Centro de ayuda', HelpCircle], ['/app/settings', 'Ajustes', Settings], ['/app/subscription', 'Mi plan', CreditCard]] as const;
 type Session = { userId: string; role: 'admin' | 'owner' } | null;
 type FormField = { name: string; label: string; type?: string; value?: string | number | boolean; options?: string[]; optionLabels?: Record<string, string>; required?: boolean };
 type CartLine = { key: string; productId: string; cantidad: number; variantes?: { choice: ProductChoice; cantidad: number }[]; complementos: ProductChoice[] };
@@ -455,6 +455,139 @@ function FormModal({ title, fields, close, submit, submitText = 'Guardar', busin
   return <Modal title={title} close={close}><form className="modal-form" onSubmit={e => { e.preventDefault(); submit(values); }}><div className="form-grid">{fields.map(f => <Field key={f.name} field={{...f, value: values[f.name]}} businessId={businessId} onChange={(n, v) => setValues(prev => ({ ...prev, [n]: v }))} />)}</div><div className="modal-actions"><Button kind="ghost" onClick={close}>Cancelar</Button><Button type="submit" testId="button-save-form"><Check size={16} /> {submitText}</Button></div></form></Modal>;
 }
 
+
+type VerificationDocument = {
+  id: string;
+  business_id: string;
+  document_type: 'rut' | 'chamber' | 'facade';
+  file_name: string;
+  storage_path: string;
+  mime_type: string;
+  file_size: number;
+  status: 'pending' | 'approved' | 'rejected';
+  rejection_reason: string | null;
+  created_at: string;
+};
+
+const verificationTypes = [
+  { id: 'rut', title: 'RUT', description: 'Registro Único Tributario actualizado.', accept: '.pdf,.jpg,.jpeg,.png,.webp' },
+  { id: 'chamber', title: 'Cámara de Comercio', description: 'Certificado de existencia y representación legal, si aplica.', accept: '.pdf,.jpg,.jpeg,.png,.webp' },
+  { id: 'facade', title: 'Foto de la fachada', description: 'Una foto reciente y clara del establecimiento o lugar de operación.', accept: '.jpg,.jpeg,.png,.webp' },
+] as const;
+
+function MerchantVerification({ businessId }: { businessId: string }) {
+  const [documents, setDocuments] = useState<VerificationDocument[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+
+  const loadDocuments = async () => {
+    setLoading(true);
+    const { data, error: queryError } = await supabase
+      .from('business_verification_documents')
+      .select('id,business_id,document_type,file_name,storage_path,mime_type,file_size,status,rejection_reason,created_at')
+      .eq('business_id', businessId)
+      .order('created_at', { ascending: false });
+    if (queryError) setError('No fue posible cargar los documentos. Inténtalo nuevamente.');
+    else setDocuments((data || []) as VerificationDocument[]);
+    setLoading(false);
+  };
+
+  useEffect(() => { void loadDocuments(); }, [businessId]);
+
+  const uploadDocument = async (documentType: string, file?: File) => {
+    if (!file) return;
+    setError(''); setNotice('');
+    const allowed = ['application/pdf','image/jpeg','image/png','image/webp'];
+    if (!allowed.includes(file.type)) {
+      setError('Formato no permitido. Sube un PDF, JPG, PNG o WEBP.');
+      return;
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      setError('El archivo supera el límite de 15 MB.');
+      return;
+    }
+    setUploading(documentType);
+    const safeName = file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9._-]/g, '-').slice(-90);
+    const storagePath = `${businessId}/${documentType}/${Date.now()}-${safeName}`;
+    const { error: storageError } = await supabase.storage.from('business-verification').upload(storagePath, file, {
+      cacheControl: '3600', upsert: false, contentType: file.type,
+    });
+    if (storageError) {
+      setError('No se pudo subir el archivo. Verifica tu conexión e inténtalo otra vez.');
+      setUploading(null);
+      return;
+    }
+    const { error: insertError } = await supabase.from('business_verification_documents').insert({
+      business_id: businessId,
+      document_type: documentType,
+      file_name: file.name,
+      storage_path: storagePath,
+      mime_type: file.type,
+      file_size: file.size,
+    });
+    if (insertError) {
+      await supabase.storage.from('business-verification').remove([storagePath]);
+      setError('El archivo se subió, pero no se pudo registrar. Inténtalo nuevamente.');
+    } else {
+      setNotice('Documento enviado. Puedes seguir usando Menuya mientras se revisa.');
+      await loadDocuments();
+    }
+    setUploading(null);
+  };
+
+  const openDocument = async (path: string) => {
+    const { data, error: signedError } = await supabase.storage.from('business-verification').createSignedUrl(path, 60);
+    if (signedError || !data?.signedUrl) {
+      setError('No fue posible abrir el documento.');
+      return;
+    }
+    window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const statusText = (status: VerificationDocument['status']) =>
+    status === 'approved' ? 'Aprobado' : status === 'rejected' ? 'Requiere corrección' : 'En revisión';
+
+  return <>
+    <PageTitle eyebrow="CUENTA DEL COMERCIO" title="Verificación del negocio" description="Comparte los documentos de tu establecimiento para validar su información. Este proceso es independiente de tu acceso al panel." />
+    <section className="verification-intro">
+      <div className="verification-intro-icon"><ShieldCheck size={23}/></div>
+      <div><b>Tu negocio puede seguir operando en Menuya</b><p>Subir estos documentos no es un requisito para entrar al panel, gestionar productos o recibir pedidos. La verificación se realiza por separado.</p></div>
+    </section>
+    <div className="verification-summary">
+      <div><span className="eyebrow">DOCUMENTOS</span><b>{documents.length} enviados</b></div>
+      <div><span className="eyebrow">APROBADOS</span><b>{documents.filter(doc => doc.status === 'approved').length}</b></div>
+      <div><span className="eyebrow">EN REVISIÓN</span><b>{documents.filter(doc => doc.status === 'pending').length}</b></div>
+    </div>
+    <div className="verification-grid">
+      {verificationTypes.map(type => {
+        const latest = documents.find(doc => doc.document_type === type.id);
+        return <section className="panel verification-card" key={type.id}>
+          <div className="verification-card-head">
+            <div><span className="eyebrow">DOCUMENTO REQUERIDO</span><h2>{type.title}</h2><p>{type.description}</p></div>
+            <span className="verification-icon"><Upload size={19}/></span>
+          </div>
+          {latest ? <div className="verification-file">
+            <div className="verification-file-meta"><b>{latest.file_name}</b><small>{new Date(latest.created_at).toLocaleDateString('es-CO',{day:'numeric',month:'short',year:'numeric'})} · {(latest.file_size / 1024 / 1024).toFixed(1)} MB</small></div>
+            <span className={`verification-status verification-status-${latest.status}`}>{latest.status === 'approved' ? <CheckCircle2 size={14}/> : latest.status === 'rejected' ? <AlertTriangle size={14}/> : <Clock3 size={14}/>} {statusText(latest.status)}</span>
+            {latest.rejection_reason && <p className="verification-reason">{latest.rejection_reason}</p>}
+            <button className="verification-link" type="button" onClick={() => void openDocument(latest.storage_path)}>Ver archivo <ArrowRight size={14}/></button>
+          </div> : <div className="verification-empty">Todavía no has enviado este documento.</div>}
+          <label className={`verification-upload ${uploading === type.id ? 'is-uploading' : ''}`}>
+            <input type="file" accept={type.accept} disabled={Boolean(uploading)} onChange={event => { const file = event.currentTarget.files?.[0]; void uploadDocument(type.id, file); event.currentTarget.value = ''; }} />
+            {uploading === type.id ? <><Loader2 size={16} className="verification-spinner"/> Subiendo archivo…</> : <><Upload size={16}/> {latest ? 'Subir una nueva versión' : 'Seleccionar archivo'}</>}
+          </label>
+          <small className="verification-hint">PDF, JPG, PNG o WEBP · Máximo 15 MB</small>
+        </section>;
+      })}
+    </div>
+    {error && <div className="notice notice-error" role="alert">{error}</div>}
+    {notice && <div className="notice notice-success" role="status">{notice}</div>}
+    {loading && <p className="verification-loading">Actualizando el estado de tus documentos…</p>}
+  </>;
+}
+
 function MerchantPage({ path, data, business, update, modules = [] }: { path: string; data: DemoData; business: Business; update: (fn: (d: DemoData) => DemoData, action?: string, entity?: string) => void; modules?: string[] }) {
   const foodBusiness = isFoodBusiness(business.tipo);
   const [search, setSearch] = useState('');
@@ -687,6 +820,7 @@ function MerchantPage({ path, data, business, update, modules = [] }: { path: st
       <div className="analytics-grid analytics-bottom"><section className="panel"><div className="panel-head"><div><span className="eyebrow">TRÁFICO DE TU TIENDA</span><h2>Visitas y consultas</h2></div><Eye size={17} /></div><div className="traffic-summary"><div><b>{visits}</b><span>Visitas al catálogo</span></div><div><b>{consultations}</b><span>Consultas de producto</span></div></div><p className="fine-print">Datos registrados en Supabase durante los últimos 30 días.</p></section><section className="panel"><div className="panel-head"><div><span className="eyebrow">INTERÉS DE TUS CLIENTES</span><h2>Más consultados</h2></div></div>{mostConsulted.length ? mostConsulted.map(([id, count], i) => <div className="rank-row" key={id}><span>0{i + 1}</span><b>{products.find(p => p.id === id)?.nombre || 'Producto'}</b><small>{count} consultas</small></div>) : <p className="subtle">Aún no hay consultas de producto registradas.</p>}</section></div>
     </>;
   }
+  if (path === '/app/verification') return <MerchantVerification businessId={business.id}/>;
   if (path === '/app/help') return <HelpCenter businessId={business.id} businessName={business.nombre} businessType={business.tipo}/>;
   if (path === '/app/settings') return <><PageTitle eyebrow="DATOS DEL NEGOCIO" title="Ajustes" description="Mantén al día la información que tus clientes necesitan." /><BusinessCitySettings businessId={business.id}/><div className="settings-grid"><section className="panel setting-section"><span className="eyebrow">INFORMACIÓN PÚBLICA</span><h2>Que te encuentren</h2><div className="form-stack"><SettingInput label="Nombre del negocio" value={business.nombre} id="business-name" onSave={v => update(d => ({ ...d, businesses: d.businesses.map(b => b.id === business.id ? { ...b, nombre: v } : b) }), 'Datos guardados', 'Negocio')} /><SettingInput label="Teléfono" value={business.telefono} id="business-phone" onSave={v => update(d => ({ ...d, businesses: d.businesses.map(b => b.id === business.id ? { ...b, telefono: v } : b) }), 'Teléfono actualizado', 'Negocio')} /><SettingInput label="Correo de contacto" value={settings.contacto} id="contact-email" onSave={v => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, contacto: v } : s) }), 'Contacto actualizado', 'Negocio')} /><SettingInput label="Redes sociales" value={settings.redes} id="business-social" onSave={v => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, redes: v } : s) }), 'Redes actualizadas', 'Negocio')} /></div></section><section className="panel setting-section"><span className="eyebrow">CÓMO OPERAS</span><h2>Pagos y entregas</h2><div className="form-stack"><SettingInput label="Métodos de pago" value={settings.pagos} id="payment-methods" onSave={v => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, pagos: v } : s) }), 'Métodos de pago guardados', 'Negocio')} /><SettingInput label="Opciones de entrega" value={settings.entrega} id="delivery-methods" onSave={v => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, entrega: v } : s) }), 'Opciones de entrega guardadas', 'Negocio')} /><div className="settings-info"><CircleHelp size={17} /><p>CLICKOK organiza tus pedidos. El cobro y la coordinación de entrega siguen directamente contigo y tu cliente.</p></div></div></section></div><PushNotificationsSettings businessId={business.id}/></>;
   if (path === '/app/services') return modules.includes('services_tools') ? <BusinessServicesPage businessId={business.id}/> : <Empty title="Módulo de servicios no disponible" text="La gestión de servicios se habilita según el sector configurado para tu comercio."/>;
