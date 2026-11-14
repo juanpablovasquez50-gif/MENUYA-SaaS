@@ -25,6 +25,36 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      (function () {
+        function showBootError(message) {
+          var root = document.getElementById('root');
+          if (!root || root.childElementCount > 0) return;
+          var panel = document.getElementById('menuya-boot-error');
+          if (!panel) {
+            panel = document.createElement('div');
+            panel.id = 'menuya-boot-error';
+            panel.style.cssText = 'font:16px/1.5 system-ui,sans-serif;max-width:720px;margin:12vh auto;padding:28px;color:#182331;background:#fff;border:1px solid #d8deea;border-radius:16px;box-shadow:0 12px 40px #18233118';
+            document.body.appendChild(panel);
+          }
+          panel.innerHTML = '<h2 style="margin:0 0 10px">Menuya no pudo iniciar</h2><p style="margin:0 0 8px">Detectamos un error al cargar la aplicación. Este detalle nos ayudará a corregirlo:</p><pre style="white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f5f9;padding:12px;border-radius:8px"></pre><p style="margin:12px 0 0;font-size:13px;color:#596579">No cierres esta pantalla; envíanos una captura.</p>';
+          panel.querySelector('pre').textContent = String(message || 'Error de inicio sin detalle');
+        }
+        window.addEventListener('error', function (event) {
+          var target = event.target;
+          var detail = event.message || (target && (target.src || target.href)) || 'No se pudo cargar un recurso de la aplicación';
+          showBootError(detail);
+        }, true);
+        window.addEventListener('unhandledrejection', function (event) {
+          var reason = event.reason;
+          showBootError(reason && (reason.message || String(reason)) || 'Promesa rechazada al iniciar');
+        });
+        window.setTimeout(function () {
+          var root = document.getElementById('root');
+          if (root && root.childElementCount === 0) showBootError('La aplicación no montó ningún componente después de 15 segundos. Revisa si el archivo JavaScript principal pudo cargarse.');
+        }, 15000);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
