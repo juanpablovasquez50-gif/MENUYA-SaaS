@@ -475,7 +475,7 @@ const verificationTypes = [
   { id: 'facade', title: 'Foto de la fachada', description: 'Una foto reciente y clara del establecimiento o lugar de operación.', accept: '.jpg,.jpeg,.png,.webp' },
 ] as const;
 
-function MerchantVerification({ businessId }: { businessId: string }) {
+function MerchantVerification({ businessId, business, products, orders, settings }: { businessId: string; business: Business; products: Product[]; orders: Order[]; settings: StoreSettings }) {
   const [documents, setDocuments] = useState<VerificationDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState<string | null>(null);
@@ -548,6 +548,44 @@ function MerchantVerification({ businessId }: { businessId: string }) {
 
   const statusText = (status: VerificationDocument['status']) =>
     status === 'approved' ? 'Aprobado' : status === 'rejected' ? 'Requiere corrección' : 'En revisión';
+
+  // La verificación se gana con actividad real y una vitrina preparada.
+  const accountAgeDays = Math.max(0, Math.floor((Date.now() - new Date(business.created_at).getTime()) / 86400000));
+  const activeProducts = products.filter(product => product.activo && product.disponible).length;
+  const completedOrders = orders.filter(order => order.estado === 'entregado').length;
+  const profileComplete = Boolean(business.nombre?.trim() && business.telefono?.trim() && settings.contacto?.trim() && settings.direccion?.trim());
+  const milestones = [
+    { label: 'Publica tu vitrina', detail: 'Tu catálogo debe estar visible para tus clientes.', done: Boolean(settings.publicado) },
+    { label: 'Completa tu perfil comercial', detail: 'Agrega teléfono, correo y dirección del negocio.', done: profileComplete },
+    { label: 'Construye tu catálogo', detail: 'Ten al menos 5 productos activos y disponibles.', done: activeProducts >= 5 },
+    { label: 'Demuestra actividad', detail: 'Completa al menos 3 pedidos desde CLICKOK.', done: completedOrders >= 3 },
+    { label: 'Consolida tu negocio', detail: 'Cumple 30 días desde la creación de tu cuenta.', done: accountAgeDays >= 30 },
+  ];
+  const completedMilestones = milestones.filter(item => item.done).length;
+  const progress = Math.round((completedMilestones / milestones.length) * 100);
+  const verificationUnlocked = completedMilestones === milestones.length;
+  if (!verificationUnlocked) return <>
+    <PageTitle eyebrow="LOGRO EXCLUSIVO CLICKOK" title="Desbloquea tu verificación" description="La insignia de verificación no está disponible para todos desde el primer día. Gánatela construyendo una vitrina confiable y demostrando la actividad de tu negocio." />
+    <section className="verification-unlock-hero">
+      <div className="verification-unlock-emblem"><ShieldCheck size={34}/></div>
+      <span className="verification-exclusive-label"><Lock size={12}/> DISTINCIÓN EXCLUSIVA</span>
+      <h2>Tu negocio puede conseguir el sello CLICKOK verificado</h2>
+      <p>Completa los objetivos para desbloquear la solicitud. Nuestro equipo revisará tus documentos antes de conceder la insignia.</p>
+      <div className="verification-progress-head"><b>Tu progreso</b><strong>{progress}%</strong></div>
+      <div className="verification-progress-track" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}><span style={{width: progress + '%'}}/></div>
+      <small>{completedMilestones} de {milestones.length} objetivos completados</small>
+    </section>
+    <section className="panel verification-milestones">
+      <div className="panel-head"><div><span className="eyebrow">TU CAMINO AL SELLO</span><h2>Objetivos por cumplir</h2></div><ShieldCheck size={20}/></div>
+      {milestones.map((item,index)=><div className={`verification-milestone ${item.done?'is-complete':''}`} key={item.label}>
+        <span className="verification-milestone-icon">{item.done?<CheckCircle2 size={18}/>:<span>{index+1}</span>}</span>
+        <div><b>{item.label}</b><p>{item.detail}</p></div>
+        <span className="verification-milestone-status">{item.done?'Completado':'Pendiente'}</span>
+      </div>)}
+    </section>
+    <div className="verification-unlock-note"><ShieldCheck size={17}/><p><b>Un reconocimiento que se gana.</b> Al completar todos los objetivos se habilitará el envío de documentos. La insignia solo aparecerá en tu vitrina cuando CLICKOK apruebe la revisión.</p></div>
+  </>;
+
 
   return <>
     <PageTitle eyebrow="CUENTA DEL COMERCIO" title="Verificación del negocio" description="Comparte los documentos de tu establecimiento para validar su información. Este proceso es independiente de tu acceso al panel." />
@@ -820,7 +858,7 @@ function MerchantPage({ path, data, business, update, modules = [] }: { path: st
       <div className="analytics-grid analytics-bottom"><section className="panel"><div className="panel-head"><div><span className="eyebrow">TRÁFICO DE TU TIENDA</span><h2>Visitas y consultas</h2></div><Eye size={17} /></div><div className="traffic-summary"><div><b>{visits}</b><span>Visitas al catálogo</span></div><div><b>{consultations}</b><span>Consultas de producto</span></div></div><p className="fine-print">Datos registrados en Supabase durante los últimos 30 días.</p></section><section className="panel"><div className="panel-head"><div><span className="eyebrow">INTERÉS DE TUS CLIENTES</span><h2>Más consultados</h2></div></div>{mostConsulted.length ? mostConsulted.map(([id, count], i) => <div className="rank-row" key={id}><span>0{i + 1}</span><b>{products.find(p => p.id === id)?.nombre || 'Producto'}</b><small>{count} consultas</small></div>) : <p className="subtle">Aún no hay consultas de producto registradas.</p>}</section></div>
     </>;
   }
-  if (path === '/app/verification') return <MerchantVerification businessId={business.id}/>;
+  if (path === '/app/verification') return <MerchantVerification businessId={business.id} business={business} products={products} orders={orders} settings={settings}/>;
   if (path === '/app/help') return <HelpCenter businessId={business.id} businessName={business.nombre} businessType={business.tipo}/>;
   if (path === '/app/settings') return <><PageTitle eyebrow="DATOS DEL NEGOCIO" title="Ajustes" description="Mantén al día la información que tus clientes necesitan." /><BusinessCitySettings businessId={business.id}/><div className="settings-grid"><section className="panel setting-section"><span className="eyebrow">INFORMACIÓN PÚBLICA</span><h2>Que te encuentren</h2><div className="form-stack"><SettingInput label="Nombre del negocio" value={business.nombre} id="business-name" onSave={v => update(d => ({ ...d, businesses: d.businesses.map(b => b.id === business.id ? { ...b, nombre: v } : b) }), 'Datos guardados', 'Negocio')} /><SettingInput label="Teléfono" value={business.telefono} id="business-phone" onSave={v => update(d => ({ ...d, businesses: d.businesses.map(b => b.id === business.id ? { ...b, telefono: v } : b) }), 'Teléfono actualizado', 'Negocio')} /><SettingInput label="Correo de contacto" value={settings.contacto} id="contact-email" onSave={v => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, contacto: v } : s) }), 'Contacto actualizado', 'Negocio')} /><SettingInput label="Redes sociales" value={settings.redes} id="business-social" onSave={v => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, redes: v } : s) }), 'Redes actualizadas', 'Negocio')} /></div></section><section className="panel setting-section"><span className="eyebrow">CÓMO OPERAS</span><h2>Pagos y entregas</h2><div className="form-stack"><SettingInput label="Métodos de pago" value={settings.pagos} id="payment-methods" onSave={v => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, pagos: v } : s) }), 'Métodos de pago guardados', 'Negocio')} /><SettingInput label="Opciones de entrega" value={settings.entrega} id="delivery-methods" onSave={v => update(d => ({ ...d, settings: d.settings.map(s => s.business_id === business.id ? { ...s, entrega: v } : s) }), 'Opciones de entrega guardadas', 'Negocio')} /><div className="settings-info"><CircleHelp size={17} /><p>CLICKOK organiza tus pedidos. El cobro y la coordinación de entrega siguen directamente contigo y tu cliente.</p></div></div></section></div><PushNotificationsSettings businessId={business.id}/></>;
   if (path === '/app/services') return modules.includes('services_tools') ? <BusinessServicesPage businessId={business.id}/> : <Empty title="Módulo de servicios no disponible" text="La gestión de servicios se habilita según el sector configurado para tu comercio."/>;
