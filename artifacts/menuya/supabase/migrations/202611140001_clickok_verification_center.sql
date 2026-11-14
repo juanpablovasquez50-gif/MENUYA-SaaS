@@ -38,6 +38,7 @@ returns table (
   verification_note text,
   approved_at timestamptz,
   product_count integer,
+  sales_count integer,
   completed_orders integer,
   eligible_orders integer,
   completion_rate numeric,
@@ -71,6 +72,7 @@ begin
       v.note,
       v.approved_at,
       coalesce(p.product_count, 0)::integer,
+      coalesce(s.sales_count, 0)::integer,
       coalesce(o.completed_orders, 0)::integer,
       coalesce(o.eligible_orders, 0)::integer,
       case when coalesce(o.eligible_orders, 0) = 0 then 0::numeric
@@ -94,6 +96,11 @@ begin
       from public.products pr
       where pr.business_id = b.id and pr.is_active = true
     ) p on true
+    left join lateral (
+      select count(*)::integer as sales_count
+      from public.sales sa
+      where sa.business_id = b.id
+    ) s on true
     left join lateral (
       select
         count(*) filter (where o.status = 'delivered')::integer as completed_orders,
@@ -121,6 +128,7 @@ declare
   v_old_level text;
   v_old_status text;
   v_product_count integer;
+  v_sales_count integer;
   v_completed_orders integer;
   v_eligible_orders integer;
   v_days_active integer;
@@ -153,6 +161,10 @@ begin
   from public.products p
   where p.business_id = p_business_id and p.is_active = true;
 
+  select count(*)::integer into v_sales_count
+  from public.sales sa
+  where sa.business_id = p_business_id;
+
   select
     count(*) filter (where o.status = 'delivered')::integer,
     count(*) filter (where o.status <> 'cancelled')::integer
@@ -176,8 +188,8 @@ begin
 
   if p_status = 'approved' then
     if p_level = 'silver' then
-      if v_days_active < 30 or v_completed_orders < 30 or v_product_count < 10 or not v_profile_complete then
-        raise exception 'No cumple todos los requisitos de CLICKOK Plata (30 días, 30 ventas entregadas, 10 productos activos y perfil completo).' using errcode = '23514';
+      if v_days_active < 30 or v_sales_count < 30 or v_product_count < 10 or not v_profile_complete then
+        raise exception 'No cumple todos los requisitos de CLICKOK Plata (30 días, 30 ventas registradas, 10 productos activos y perfil completo).' using errcode = '23514';
       end if;
     else
       select exists (
@@ -190,10 +202,10 @@ begin
       if not v_silver_approved then
         raise exception 'Primero debe tener CLICKOK Plata aprobada.' using errcode = '23514';
       end if;
-      if v_days_active < 90 or v_completed_orders < 200 or v_product_count < 20
+      if v_days_active < 90 or v_sales_count < 200 or v_product_count < 20
          or v_eligible_orders = 0
          or (v_completed_orders::numeric / v_eligible_orders::numeric) < 0.95 then
-        raise exception 'No cumple todos los requisitos de CLICKOK Oro (90 días, 200 ventas entregadas, 20 productos activos y 95% de pedidos completados).' using errcode = '23514';
+        raise exception 'No cumple todos los requisitos de CLICKOK Oro (90 días, 200 ventas registradas, 20 productos activos y 95% de pedidos completados).' using errcode = '23514';
       end if;
     end if;
   end if;
