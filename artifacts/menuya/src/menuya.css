@@ -5530,3 +5530,14 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 /* Super Admin · revisión documental */
 .sa-verification-list{display:grid;gap:12px;padding:18px 24px 24px}.sa-verification-card{display:flex;align-items:center;justify-content:space-between;gap:18px;border:1px solid #e9eaf1;border-radius:13px;padding:16px;background:#fff}.sa-verification-main{display:flex;align-items:flex-start;gap:12px;min-width:0}.sa-verification-icon{width:40px;height:40px;flex:0 0 40px;display:grid;place-items:center;border-radius:12px;background:#f0ecff;color:#7659dc}.sa-verification-main>div{display:grid;gap:5px;min-width:0}.sa-verification-main b{font-size:14px;color:#292a40}.sa-verification-main small{font-size:11px;color:#85879a;overflow-wrap:anywhere}.sa-verification-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}.sa-verification-status{font-size:10px;font-weight:700;border-radius:20px;padding:6px 9px;white-space:nowrap}.sa-verification-status.pending{background:#fff5df;color:#a87516}.sa-verification-status.approved{background:#e7f8ef;color:#21885c}.sa-verification-status.rejected{background:#fff0f0;color:#c34d55}
 @media(max-width:760px){.sa-verification-card{align-items:stretch;flex-direction:column}.sa-verification-actions{justify-content:flex-start}.sa-verification-list{padding:14px}.sa-panel-heading{gap:12px;align-items:flex-start}}
+
+
+/* Insignia oficial de comercio verificado en la vitrina */
+.public-logo{position:relative;overflow:visible!important}
+.public-logo-verified{z-index:2}
+.public-logo-verified>img{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
+.public-verified-badge{position:absolute;right:-5px;bottom:-5px;z-index:5;display:grid;place-items:center;width:25px;height:25px;border:2.5px solid #fff;border-radius:50%;background:linear-gradient(135deg,#a78bfa 0%,#7652e8 48%,#5425c7 100%);color:#fff;box-shadow:0 3px 9px rgba(65,35,150,.32)}
+.verification-approved-banner{display:flex;align-items:center;gap:13px;margin:0 0 20px;padding:17px 19px;border:1px solid #ded4ff;border-radius:15px;background:linear-gradient(110deg,#fbfaff,#f1edff);color:#34245f}
+.verification-approved-icon{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#a78bfa,#7652e8 52%,#5425c7);color:#fff;box-shadow:0 4px 12px rgba(88,54,190,.22)}
+.verification-approved-banner b{display:block;font-size:15px;font-weight:850}
+.verification-approved-banner p{margin:4px 0 0;color:#665b83;font-size:12px;line-height:1.5}
