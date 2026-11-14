@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Award, BadgeCheck, Check, Clock3, Crown, FileCheck2, RefreshCw, Search, ShieldAlert, ShieldCheck, Sparkles, Store } from 'lucide-react';
+import { Award, Check, Clock3, Crown, RefreshCw, Search, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import './VerificationCenter.css';
 
@@ -133,7 +133,7 @@ export default function VerificationCenter() {
               </div>
               <div className="vc-tiers">
                 <TierCard level="purple" title="Morada" subtitle="Verificación documental actual" active={row.has_purple} ready={row.has_purple} items={[['Aprobación documental vigente',row.has_purple]]}/>
-                <TierCard level="silver" title="Plata" subtitle="Actividad y gestión constante" active={row.verification_level === 'silver' && row.verification_status === 'approved'} ready={silverReady} items={[
+                <TierCard level="silver" title="Plata" subtitle="Actividad y gestión constante" active={['silver','gold'].includes(row.verification_level) && row.verification_status === 'approved'} ready={silverReady} items={[
                   [`30 días de actividad (actual: ${row.days_active})`,row.days_active >= 30],
                   [`30 ventas entregadas (actual: ${row.completed_orders})`,row.completed_orders >= 30],
                   [`10 productos activos (actual: ${row.product_count})`,row.product_count >= 10],
@@ -169,7 +169,8 @@ function canSilver(row: VerificationRow) {
   return row.business_status === 'active' && row.has_purple && row.days_active >= 30 && row.completed_orders >= 30 && row.product_count >= 10 && row.profile_complete;
 }
 function canGold(row: VerificationRow) {
-  return row.business_status === 'active' && row.has_purple && row.verification_level === 'silver' && row.verification_status === 'approved' && row.days_active >= 90 && row.completed_orders >= 200 && row.product_count >= 20 && row.eligible_orders > 0 && row.completion_rate >= 95;
+  const hasSilverPath = (row.verification_level === 'silver' && row.verification_status === 'approved') || (row.verification_level === 'gold' && row.verification_status === 'suspended');
+  return row.business_status === 'active' && row.has_purple && hasSilverPath && row.days_active >= 90 && row.completed_orders >= 200 && row.product_count >= 20 && row.eligible_orders > 0 && row.completion_rate >= 95;
 }
 function TierCard({level,title,subtitle,active,ready,items}:{level:'purple'|'silver'|'gold';title:string;subtitle:string;active:boolean;ready:boolean;items:[string,boolean][]}) {
   return <section className={`vc-tier-card ${level} ${active?'active':''}`}>
