@@ -22,7 +22,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import { Link, Route, Switch, Router as WouterRouter, useLocation, useParams } from 'wouter';
-import { BookOpen, Utensils, Activity, AlertTriangle, ArrowDownRight, ArrowLeft, ArrowRight, BarChart3, Bell, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, ClipboardList, Clock3, CreditCard, ExternalLink, Eye, EyeOff, HelpCircle, Headset, ImagePlus, LayoutDashboard, Loader2, Lock, LogOut, MapPin, Menu, MoreHorizontal, Package, PawPrint, CalendarDays, Pencil, Plus, Search, Settings, ShieldCheck, ShoppingBag, ShoppingCart, Store, Tag, Trash2, TrendingUp, Truck, Upload, Users, X, Zap } from 'lucide-react';
+import { Award, Crown, RefreshCw, CircleHelp, BookOpen, Utensils, Activity, AlertTriangle, ArrowDownRight, ArrowLeft, ArrowRight, BarChart3, Bell, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, ClipboardList, Clock3, CreditCard, ExternalLink, Eye, EyeOff, HelpCircle, Headset, ImagePlus, LayoutDashboard, Loader2, Lock, LogOut, MapPin, Menu, MoreHorizontal, Package, PawPrint, CalendarDays, Pencil, Plus, Search, Settings, ShieldCheck, ShoppingBag, ShoppingCart, Store, Tag, Trash2, TrendingUp, Truck, Upload, Users, X, Zap } from 'lucide-react';
 import { type AuditLog, type Business, type CatalogEvent, type Category, type Customer, type DemoData, type Order, type OrderStatus, type Plan, type Product, type ProductChoice, type ProductVariantStock, type StoreSettings, repository } from '@/lib/menuya-data';
 import { type MenuyaAuthContext, ensureBusinessForCurrentUser, getAuthContext, isSupabaseConfigured, sendPasswordRecovery, preparePasswordRecovery, signInWithEmail, signOut, signUpWithEmail, updatePassword } from '@/lib/menuya-auth';
 import { supabase } from '@/lib/supabase';
@@ -63,7 +63,7 @@ const shortDate = (date: string) => new Intl.DateTimeFormat('es-CO', { day: 'num
 const statusLabel: Record<string, string> = { pendiente: 'Pendiente', confirmado: 'Confirmado', preparando: 'En preparación', listo: 'Listo', en_camino: 'En camino', entregado: 'Entregado', cancelado: 'Cancelado', activo: 'Activo', rechazado: 'Rechazado', suspendido: 'Suspendido', activa: 'Activa', vencida: 'Vencida' };
 const productLimitLabel = (limit: number) => limit >= 999999 ? 'ilimitados' : String(limit);
 const adminLinks = [['/admin', 'Resumen', LayoutDashboard], ['/admin/businesses', 'Comercios', Store], ['/admin/requests', 'Solicitudes', ClipboardList], ['/admin/verifications', 'Verificaciones', ShieldCheck], ['/admin/users', 'Usuarios', Users], ['/admin/plans', 'Planes', Tag], ['/admin/subscriptions', 'Suscripciones', CreditCard], ['/admin/partners', 'Partners', Users], ['/admin/settings', 'Ajustes', Settings], ['/admin/audit', 'Auditoría', Activity], ['/admin/support', 'Administrador de soporte', Headset]] as const;
-const shopLinks = [['/app', 'Inicio', LayoutDashboard], ['/app/catalog', 'Catálogo', ShoppingBag], ['/app/products', 'Productos', Package], ['/app/categories', 'Categorías', Tag], ['/app/orders', 'Pedidos', ClipboardList], ['/app/couriers', 'Domiciliarios', Truck], ['/app/customers', 'Clientes', Users], ['/app/editor', 'CLICKOK Studio', Pencil], ['/app/analytics', 'Analítica', BarChart3], ['/app/verification', 'Verificación', ShieldCheck], ['/app/help', 'Centro de ayuda', HelpCircle], ['/app/settings', 'Ajustes', Settings], ['/app/subscription', 'Mi plan', CreditCard]] as const;
+const shopLinks = [['/app', 'Inicio', LayoutDashboard], ['/app/catalog', 'Catálogo', ShoppingBag], ['/app/products', 'Productos', Package], ['/app/categories', 'Categorías', Tag], ['/app/orders', 'Pedidos', ClipboardList], ['/app/couriers', 'Domiciliarios', Truck], ['/app/customers', 'Clientes', Users], ['/app/editor', 'CLICKOK Studio', Pencil], ['/app/analytics', 'Analítica', BarChart3], ['/app/verification', 'Insignias', ShieldCheck], ['/app/help', 'Centro de ayuda', HelpCircle], ['/app/settings', 'Ajustes', Settings], ['/app/subscription', 'Mi plan', CreditCard]] as const;
 type Session = { userId: string; role: 'admin' | 'owner' } | null;
 type FormField = { name: string; label: string; type?: string; value?: string | number | boolean; options?: string[]; optionLabels?: Record<string, string>; required?: boolean };
 type CartLine = { key: string; productId: string; cantidad: number; variantes?: { choice: ProductChoice; cantidad: number }[]; complementos: ProductChoice[] };
@@ -475,6 +475,22 @@ const verificationTypes = [
   { id: 'facade', title: 'Foto de la fachada', description: 'Una foto reciente y clara del establecimiento o lugar de operación.', accept: '.jpg,.jpeg,.png,.webp' },
 ] as const;
 
+type MerchantBadgeProgress = {
+  business_id: string;
+  verification_level: 'purple' | 'silver' | 'gold';
+  verification_status: 'approved' | 'pending' | 'suspended';
+  verification_note: string | null;
+  approved_at: string | null;
+  product_count: number;
+  sales_count: number;
+  completed_orders: number;
+  eligible_orders: number;
+  completion_rate: number;
+  days_active: number;
+  profile_complete: boolean;
+  has_purple: boolean;
+};
+
 function MerchantVerification({ businessId, business, products, orders, settings }: { businessId: string; business: Business; products: Product[]; orders: Order[]; settings: StoreSettings }) {
   const [documents, setDocuments] = useState<VerificationDocument[]>([]);
   const [loading, setLoading] = useState(true);
@@ -482,18 +498,28 @@ function MerchantVerification({ businessId, business, products, orders, settings
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [isVerified, setIsVerified] = useState(false);
+  const [badgeProgress, setBadgeProgress] = useState<MerchantBadgeProgress | null>(null);
 
   const loadDocuments = async () => {
     setLoading(true);
-    const { data: businessStatus } = await supabase.from('businesses').select('is_verified').eq('id', businessId).maybeSingle();
-    setIsVerified(businessStatus?.is_verified === true);
-    const { data, error: queryError } = await supabase
-      .from('business_verification_documents')
-      .select('id,business_id,document_type,file_name,storage_path,mime_type,file_size,status,rejection_reason,created_at')
-      .eq('business_id', businessId)
-      .order('created_at', { ascending: false });
-    if (queryError) setError('No fue posible cargar los documentos. Inténtalo nuevamente.');
-    else setDocuments((data || []) as VerificationDocument[]);
+    setError('');
+    const [businessResult, documentsResult, progressResult] = await Promise.all([
+      supabase.from('businesses').select('is_verified').eq('id', businessId).maybeSingle(),
+      supabase.from('business_verification_documents')
+        .select('id,business_id,document_type,file_name,storage_path,mime_type,file_size,status,rejection_reason,created_at')
+        .eq('business_id', businessId).order('created_at', { ascending: false }),
+      supabase.rpc('merchant_verification_progress', { p_business_id: businessId }),
+    ]);
+    setIsVerified(businessResult.data?.is_verified === true);
+    if (documentsResult.error) setError('No fue posible cargar los documentos. Inténtalo nuevamente.');
+    else setDocuments((documentsResult.data || []) as VerificationDocument[]);
+    if (progressResult.error) {
+      setError(current => current || 'No fue posible consultar el avance de tus insignias. Inténtalo nuevamente.');
+      setBadgeProgress(null);
+    } else {
+      const rows = (progressResult.data || []) as MerchantBadgeProgress[];
+      setBadgeProgress(rows[0] || null);
+    }
     setLoading(false);
   };
 
@@ -503,38 +529,27 @@ function MerchantVerification({ businessId, business, products, orders, settings
     if (!file) return;
     setError(''); setNotice('');
     const allowed = ['application/pdf','image/jpeg','image/png','image/webp'];
-    if (!allowed.includes(file.type)) {
-      setError('Formato no permitido. Sube un PDF, JPG, PNG o WEBP.');
-      return;
-    }
-    if (file.size > 15 * 1024 * 1024) {
-      setError('El archivo supera el límite de 15 MB.');
-      return;
-    }
+    if (!allowed.includes(file.type)) { setError('Formato no permitido. Sube un PDF, JPG, PNG o WEBP.'); return; }
+    if (file.size > 15 * 1024 * 1024) { setError('El archivo supera el límite de 15 MB.'); return; }
     setUploading(documentType);
     const safeName = file.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9._-]/g, '-').slice(-90);
-    const storagePath = `${businessId}/${documentType}/${Date.now()}-${safeName}`;
+    const storagePath = businessId + '/' + documentType + '/' + Date.now() + '-' + safeName;
     const { error: storageError } = await supabase.storage.from('business-verification').upload(storagePath, file, {
       cacheControl: '3600', upsert: false, contentType: file.type,
     });
     if (storageError) {
       setError('No se pudo subir el archivo. Verifica tu conexión e inténtalo otra vez.');
-      setUploading(null);
-      return;
+      setUploading(null); return;
     }
     const { error: insertError } = await supabase.from('business_verification_documents').insert({
-      business_id: businessId,
-      document_type: documentType,
-      file_name: file.name,
-      storage_path: storagePath,
-      mime_type: file.type,
-      file_size: file.size,
+      business_id: businessId, document_type: documentType, file_name: file.name,
+      storage_path: storagePath, mime_type: file.type, file_size: file.size,
     });
     if (insertError) {
       await supabase.storage.from('business-verification').remove([storagePath]);
       setError('El archivo se subió, pero no se pudo registrar. Inténtalo nuevamente.');
     } else {
-      setNotice('Documento enviado. Puedes seguir usando CLICKOK mientras se revisa.');
+      setNotice('Documento enviado. El equipo de CLICKOK podrá revisarlo desde el Centro de verificaciones.');
       await loadDocuments();
     }
     setUploading(null);
@@ -542,89 +557,118 @@ function MerchantVerification({ businessId, business, products, orders, settings
 
   const openDocument = async (path: string) => {
     const { data, error: signedError } = await supabase.storage.from('business-verification').createSignedUrl(path, 60);
-    if (signedError || !data?.signedUrl) {
-      setError('No fue posible abrir el documento.');
-      return;
-    }
+    if (signedError || !data?.signedUrl) { setError('No fue posible abrir el documento.'); return; }
     window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
   };
-
   const statusText = (status: VerificationDocument['status']) =>
     status === 'approved' ? 'Aprobado' : status === 'rejected' ? 'Requiere corrección' : 'En revisión';
 
-  // La verificación se gana con actividad real y una vitrina preparada.
-  const activeProducts = products.filter(product => product.activo && product.disponible).length;
-  const completedOrders = orders.filter(order => order.estado === 'entregado').length;
-  const profileComplete = Boolean(business.nombre?.trim() && business.telefono?.trim() && settings.contacto?.trim() && settings.direccion?.trim());
-  const milestones = [
-    { label: 'Publica tu vitrina', detail: 'Tu catálogo debe estar visible para tus clientes.', done: Boolean(settings.publicado) },
-    { label: 'Completa tu perfil comercial', detail: 'Agrega teléfono, correo y dirección del negocio.', done: profileComplete },
-    { label: 'Construye tu catálogo', detail: 'Ten al menos 5 productos activos y disponibles.', done: activeProducts >= 5 },
-    { label: 'Demuestra actividad', detail: 'Completa al menos 3 pedidos desde CLICKOK.', done: completedOrders >= 3 },
-  ];
-  const completedMilestones = milestones.filter(item => item.done).length;
-  const progress = Math.round((completedMilestones / milestones.length) * 100);
-  const verificationUnlocked = completedMilestones === milestones.length;
-  if (!verificationUnlocked) return <>
-    <PageTitle eyebrow="LOGRO EXCLUSIVO CLICKOK" title="Desbloquea tu verificación" description="Gánate la insignia construyendo una vitrina confiable, completando tu perfil y demostrando la actividad de tu negocio." />
-    <section className="verification-unlock-hero">
-      <div className="verification-unlock-emblem"><ShieldCheck size={34}/></div>
-      <span className="verification-exclusive-label"><Lock size={12}/> DISTINCIÓN EXCLUSIVA</span>
-      <h2>Tu negocio puede conseguir el sello CLICKOK verificado</h2>
-      <p>Completa los objetivos para desbloquear la solicitud. Nuestro equipo revisará tus documentos antes de conceder la insignia.</p>
-      <div className="verification-progress-head"><b>Tu progreso</b><strong>{progress}%</strong></div>
-      <div className="verification-progress-track" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}><span style={{width: progress + '%'}}/></div>
-      <small>{completedMilestones} de {milestones.length} objetivos completados</small>
-    </section>
-    <section className="panel verification-milestones">
-      <div className="panel-head"><div><span className="eyebrow">TU CAMINO AL SELLO</span><h2>Objetivos por cumplir</h2></div><ShieldCheck size={20}/></div>
-      {milestones.map((item,index)=><div className={`verification-milestone ${item.done?'is-complete':''}`} key={item.label}>
-        <span className="verification-milestone-icon">{item.done?<CheckCircle2 size={18}/>:<span>{index+1}</span>}</span>
-        <div><b>{item.label}</b><p>{item.detail}</p></div>
-        <span className="verification-milestone-status">{item.done?'Completado':'Pendiente'}</span>
-      </div>)}
-    </section>
-    <div className="verification-unlock-note"><ShieldCheck size={17}/><p><b>Un reconocimiento que se gana.</b> Al completar todos los objetivos se habilitará el envío de documentos. La insignia solo aparecerá en tu vitrina cuando CLICKOK apruebe la revisión.</p></div>
-  </>;
-
+  const progress = badgeProgress;
+  const silverRequirements = progress ? [
+    { label: '30 días de actividad', current: progress.days_active + ' / 30 días', done: progress.days_active >= 30 },
+    { label: '30 ventas registradas', current: progress.sales_count + ' / 30 ventas', done: progress.sales_count >= 30 },
+    { label: '10 productos activos', current: progress.product_count + ' / 10 productos', done: progress.product_count >= 10 },
+    { label: 'Perfil comercial completo', current: progress.profile_complete ? 'Completo' : 'Pendiente', done: progress.profile_complete },
+  ] : [];
+  const hasSilver = Boolean(progress && (
+    (progress.verification_level === 'silver' && progress.verification_status === 'approved') ||
+    progress.verification_level === 'gold'
+  ));
+  const goldRequirements = progress ? [
+    { label: '90 días de actividad', current: progress.days_active + ' / 90 días', done: progress.days_active >= 90 },
+    { label: '200 ventas registradas', current: progress.sales_count + ' / 200 ventas', done: progress.sales_count >= 200 },
+    { label: '20 productos activos', current: progress.product_count + ' / 20 productos', done: progress.product_count >= 20 },
+    { label: '95% de pedidos completados', current: Number(progress.completion_rate).toFixed(1) + '%', done: progress.eligible_orders > 0 && progress.completion_rate >= 95 },
+    { label: 'Insignia Plata aprobada', current: hasSilver ? 'Aprobada' : 'Pendiente', done: hasSilver },
+  ] : [];
+  const silverReady = Boolean(progress && progress.has_purple && progress.days_active >= 30 && progress.sales_count >= 30 && progress.product_count >= 10 && progress.profile_complete);
+  const goldReady = Boolean(progress && progress.has_purple && hasSilver && progress.days_active >= 90 && progress.sales_count >= 200 && progress.product_count >= 20 && progress.eligible_orders > 0 && progress.completion_rate >= 95);
+  const silverActive = Boolean(progress && ((progress.verification_level === 'silver' && progress.verification_status === 'approved') || progress.verification_level === 'gold'));
+  const goldActive = Boolean(progress && progress.verification_level === 'gold' && progress.verification_status === 'approved');
+  const silverPercent = silverRequirements.length ? Math.round(silverRequirements.filter(item => item.done).length / silverRequirements.length * 100) : 0;
+  const goldPercent = goldRequirements.length ? Math.round(goldRequirements.filter(item => item.done).length / goldRequirements.length * 100) : 0;
+  const latestRejected = documents.some(doc => doc.status === 'rejected');
+  const latestPending = documents.some(doc => doc.status === 'pending');
+  const tierStatus = (active: boolean, ready: boolean, suspended: boolean) =>
+    active ? 'Aprobada' : suspended ? 'Suspendida' : ready ? 'Requisitos cumplidos · pendiente de revisión' : 'En progreso';
 
   return <>
-    <PageTitle eyebrow="CUENTA DEL COMERCIO" title="Verificación del negocio" description="Comparte los documentos de tu establecimiento para validar su información. Este proceso es independiente de tu acceso al panel." />
-    <section className="verification-intro">
-      <div className="verification-intro-icon"><ShieldCheck size={23}/></div>
-      <div><b>Obtén la verificación de tu negocio para tu vitrina</b><p>Envía los documentos requeridos y, una vez aprobados, podrás mostrar que tu negocio está verificado en tu vitrina de CLICKOK y transmitir mayor confianza a tus clientes.</p></div>
+    <PageTitle eyebrow="REPUTACIÓN DE TU NEGOCIO" title="Insignias" description="Consulta el estado de tu verificación documental y cuánto te falta para alcanzar las insignias Plata y Oro." />
+    <section className="badge-overview">
+      <div className="badge-overview-heading">
+        <div><span className="eyebrow">TU ESTADO ACTUAL</span><h2>El avance de tu comercio</h2><p>Los requisitos se actualizan con la actividad registrada en CLICKOK. Las insignias Plata y Oro requieren aprobación del equipo.</p></div>
+        <button type="button" className="verification-link" onClick={() => void loadDocuments()} disabled={loading}><RefreshCw size={14}/> {loading ? 'Actualizando…' : 'Actualizar estado'}</button>
+      </div>
+      <div className="badge-tier-grid">
+        <article className={'badge-tier-card purple' + (isVerified ? ' is-active' : '')}>
+          <div className="badge-tier-top"><span className="badge-tier-symbol"><ShieldCheck size={23}/></span><span className={'badge-tier-state ' + (isVerified ? 'approved' : 'pending')}>{isVerified ? 'Vigente' : 'Pendiente'}</span></div>
+          <span className="eyebrow">VERIFICACIÓN DOCUMENTAL</span><h3>Insignia morada</h3>
+          <p>{isVerified ? 'Tu comercio cuenta con la verificación documental de CLICKOK.' : latestRejected ? 'Hay documentos que necesitan corrección.' : latestPending ? 'Tus documentos están en revisión.' : 'Envía los documentos solicitados para que el equipo pueda validar tu comercio.'}</p>
+          <div className="badge-tier-foot">{isVerified ? <><CheckCircle2 size={15}/> Verificación aprobada</> : <><Clock3 size={15}/> {documents.length} documentos enviados</>}</div>
+        </article>
+        <article className={'badge-tier-card silver' + (silverActive ? ' is-active' : '')}>
+          <div className="badge-tier-top"><span className="badge-tier-symbol"><Award size={23}/></span><span className={'badge-tier-state ' + (silverActive ? 'approved' : silverReady ? 'ready' : 'pending')}>{tierStatus(silverActive, silverReady, progress?.verification_level === 'silver' && progress.verification_status === 'suspended')}</span></div>
+          <span className="eyebrow">ACTIVIDAD Y CONSTANCIA</span><h3>Insignia Plata</h3>
+          <p>Alcanza los objetivos de trayectoria, ventas, catálogo y perfil comercial. La verificación morada debe estar vigente.</p>
+          <div className="badge-progress-head"><b>Tu avance</b><strong>{silverPercent}%</strong></div>
+          <div className="badge-progress-track"><span style={{ width: silverPercent + '%' }}/></div>
+          <div className="badge-tier-foot">{silverActive ? <><CheckCircle2 size={15}/> Insignia obtenida</> : silverReady ? <><Clock3 size={15}/> Lista para revisión del Superadmin</> : silverRequirements.filter(x => x.done).length + ' de 4 requisitos cumplidos'}</div>
+        </article>
+        <article className={'badge-tier-card gold' + (goldActive ? ' is-active' : '')}>
+          <div className="badge-tier-top"><span className="badge-tier-symbol"><Crown size={23}/></span><span className={'badge-tier-state ' + (goldActive ? 'approved' : goldReady ? 'ready' : 'pending')}>{tierStatus(goldActive, goldReady, progress?.verification_level === 'gold' && progress.verification_status === 'suspended')}</span></div>
+          <span className="eyebrow">MÁXIMO RECONOCIMIENTO</span><h3>Insignia Oro</h3>
+          <p>Demuestra una operación consolidada, altos niveles de cumplimiento y tener Plata aprobada.</p>
+          <div className="badge-progress-head"><b>Tu avance</b><strong>{goldPercent}%</strong></div>
+          <div className="badge-progress-track"><span style={{ width: goldPercent + '%' }}/></div>
+          <div className="badge-tier-foot">{goldActive ? <><CheckCircle2 size={15}/> Insignia obtenida</> : goldReady ? <><Clock3 size={15}/> Lista para revisión del Superadmin</> : goldRequirements.filter(x => x.done).length + ' de 5 requisitos cumplidos'}</div>
+        </article>
+      </div>
     </section>
-    {isVerified && <section className="verification-approved-banner" role="status"><span className="verification-approved-icon"><Check size={20} strokeWidth={3}/></span><div><b>¡Ahora estás verificado!</b><p>Tu negocio ya cuenta con el sello oficial de CLICKOK. El chulito morado aparecerá automáticamente en la foto de perfil de tu vitrina.</p></div></section>}
-    <div className="verification-summary">
-      <div><span className="eyebrow">DOCUMENTOS</span><b>{documents.length} enviados</b></div>
-      <div><span className="eyebrow">APROBADOS</span><b>{documents.filter(doc => doc.status === 'approved').length}</b></div>
-      <div><span className="eyebrow">EN REVISIÓN</span><b>{documents.filter(doc => doc.status === 'pending').length}</b></div>
-    </div>
-    <div className="verification-grid">
-      {verificationTypes.map(type => {
-        const latest = documents.find(doc => doc.document_type === type.id);
-        return <section className="panel verification-card" key={type.id}>
-          <div className="verification-card-head">
-            <div><span className="eyebrow">DOCUMENTO REQUERIDO</span><h2>{type.title}</h2><p>{type.description}</p></div>
-            <span className="verification-icon"><Upload size={19}/></span>
-          </div>
-          {latest ? <div className="verification-file">
-            <div className="verification-file-meta"><b>{latest.file_name}</b><small>{new Date(latest.created_at).toLocaleDateString('es-CO',{day:'numeric',month:'short',year:'numeric'})} · {(latest.file_size / 1024 / 1024).toFixed(1)} MB</small></div>
-            <span className={`verification-status verification-status-${latest.status}`}>{latest.status === 'approved' ? <CheckCircle2 size={14}/> : latest.status === 'rejected' ? <AlertTriangle size={14}/> : <Clock3 size={14}/>} {statusText(latest.status)}</span>
-            {latest.rejection_reason && <p className="verification-reason">{latest.rejection_reason}</p>}
-            <button className="verification-link" type="button" onClick={() => void openDocument(latest.storage_path)}>Ver archivo <ArrowRight size={14}/></button>
-          </div> : <div className="verification-empty">Todavía no has enviado este documento.</div>}
-          <label className={`verification-upload ${uploading === type.id ? 'is-uploading' : ''}`}>
-            <input type="file" accept={type.accept} disabled={Boolean(uploading)} onChange={event => { const file = event.currentTarget.files?.[0]; void uploadDocument(type.id, file); event.currentTarget.value = ''; }} />
-            {uploading === type.id ? <><Loader2 size={16} className="verification-spinner"/> Subiendo archivo…</> : <><Upload size={16}/> {latest ? 'Subir una nueva versión' : 'Seleccionar archivo'}</>}
-          </label>
-          <small className="verification-hint">PDF, JPG, PNG o WEBP · Máximo 15 MB</small>
-        </section>;
-      })}
-    </div>
+
+    {progress && <section className="panel badge-requirements-panel">
+      <div className="panel-head"><div><span className="eyebrow">DETALLE DE REQUISITOS</span><h2>Qué te falta para avanzar</h2></div><ShieldCheck size={20}/></div>
+      <div className="badge-requirements-columns">
+        <div className="badge-requirements-group"><div className="badge-requirements-title"><Award size={17}/><b>Plata</b><span>{silverRequirements.filter(x => x.done).length}/4</span></div>
+          {silverRequirements.map(item => <div className={'badge-requirement' + (item.done ? ' done' : '')} key={item.label}><span>{item.done ? <CheckCircle2 size={16}/> : <Clock3 size={16}/>}</span><b>{item.label}</b><small>{item.current}</small></div>)}
+        </div>
+        <div className="badge-requirements-group"><div className="badge-requirements-title gold"><Crown size={17}/><b>Oro</b><span>{goldRequirements.filter(x => x.done).length}/5</span></div>
+          {goldRequirements.map(item => <div className={'badge-requirement' + (item.done ? ' done' : '')} key={item.label}><span>{item.done ? <CheckCircle2 size={16}/> : <Clock3 size={16}/>}</span><b>{item.label}</b><small>{item.current}</small></div>)}
+        </div>
+      </div>
+      {!progress.has_purple && <p className="badge-callout"><ShieldCheck size={16}/> Para avanzar hacia Plata y Oro, primero debes tener vigente la insignia morada mediante la revisión documental.</p>}
+      {progress.verification_note && <p className="badge-callout"><CircleHelp size={16}/> Nota del equipo de revisión: {progress.verification_note}</p>}
+    </section>}
+
+    <section className="panel badge-documents-panel">
+      <div className="panel-head"><div><span className="eyebrow">INSIGNIA MORADA</span><h2>Verificación documental</h2><p>Conservamos aquí el envío y seguimiento de los documentos de tu comercio.</p></div><ShieldCheck size={20}/></div>
+      <div className="verification-summary">
+        <div><span className="eyebrow">DOCUMENTOS</span><b>{documents.length} enviados</b></div>
+        <div><span className="eyebrow">APROBADOS</span><b>{documents.filter(doc => doc.status === 'approved').length}</b></div>
+        <div><span className="eyebrow">EN REVISIÓN</span><b>{documents.filter(doc => doc.status === 'pending').length}</b></div>
+      </div>
+      <div className="verification-grid">
+        {verificationTypes.map(type => {
+          const latest = documents.find(doc => doc.document_type === type.id);
+          return <section className="panel verification-card" key={type.id}>
+            <div className="verification-card-head"><div><span className="eyebrow">DOCUMENTO REQUERIDO</span><h2>{type.title}</h2><p>{type.description}</p></div><span className="verification-icon"><Upload size={19}/></span></div>
+            {latest ? <div className="verification-file">
+              <div className="verification-file-meta"><b>{latest.file_name}</b><small>{new Date(latest.created_at).toLocaleDateString('es-CO',{day:'numeric',month:'short',year:'numeric'})} · {(latest.file_size / 1024 / 1024).toFixed(1)} MB</small></div>
+              <span className={'verification-status verification-status-' + latest.status}>{latest.status === 'approved' ? <CheckCircle2 size={14}/> : latest.status === 'rejected' ? <AlertTriangle size={14}/> : <Clock3 size={14}/>} {statusText(latest.status)}</span>
+              {latest.rejection_reason && <p className="verification-reason">{latest.rejection_reason}</p>}
+              <button className="verification-link" type="button" onClick={() => void openDocument(latest.storage_path)}>Ver archivo <ArrowRight size={14}/></button>
+            </div> : <div className="verification-empty">Todavía no has enviado este documento.</div>}
+            <label className={'verification-upload' + (uploading === type.id ? ' is-uploading' : '')}>
+              <input type="file" accept={type.accept} disabled={Boolean(uploading)} onChange={event => { const file = event.currentTarget.files?.[0]; void uploadDocument(type.id, file); event.currentTarget.value = ''; }} />
+              {uploading === type.id ? <><Loader2 size={16} className="verification-spinner"/> Subiendo archivo…</> : <><Upload size={16}/> {latest ? 'Subir una nueva versión' : 'Seleccionar archivo'}</>}
+            </label>
+            <small className="verification-hint">PDF, JPG, PNG o WEBP · Máximo 15 MB</small>
+          </section>;
+        })}
+      </div>
+    </section>
     {error && <div className="notice notice-error" role="alert">{error}</div>}
     {notice && <div className="notice notice-success" role="status">{notice}</div>}
-    {loading && <p className="verification-loading">Actualizando el estado de tus documentos…</p>}
+    {loading && <p className="verification-loading">Actualizando el estado de tus insignias y documentos…</p>}
   </>;
 }
 
