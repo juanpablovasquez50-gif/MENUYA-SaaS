@@ -550,7 +550,6 @@ function MerchantVerification({ businessId, business, products, orders, settings
     status === 'approved' ? 'Aprobado' : status === 'rejected' ? 'Requiere corrección' : 'En revisión';
 
   // La verificación se gana con actividad real y una vitrina preparada.
-  const accountAgeDays = Math.max(0, Math.floor((Date.now() - new Date(business.created_at).getTime()) / 86400000));
   const activeProducts = products.filter(product => product.activo && product.disponible).length;
   const completedOrders = orders.filter(order => order.estado === 'entregado').length;
   const profileComplete = Boolean(business.nombre?.trim() && business.telefono?.trim() && settings.contacto?.trim() && settings.direccion?.trim());
@@ -559,13 +558,12 @@ function MerchantVerification({ businessId, business, products, orders, settings
     { label: 'Completa tu perfil comercial', detail: 'Agrega teléfono, correo y dirección del negocio.', done: profileComplete },
     { label: 'Construye tu catálogo', detail: 'Ten al menos 5 productos activos y disponibles.', done: activeProducts >= 5 },
     { label: 'Demuestra actividad', detail: 'Completa al menos 3 pedidos desde CLICKOK.', done: completedOrders >= 3 },
-    { label: 'Consolida tu negocio', detail: 'Cumple 30 días desde la creación de tu cuenta.', done: accountAgeDays >= 30 },
   ];
   const completedMilestones = milestones.filter(item => item.done).length;
   const progress = Math.round((completedMilestones / milestones.length) * 100);
   const verificationUnlocked = completedMilestones === milestones.length;
   if (!verificationUnlocked) return <>
-    <PageTitle eyebrow="LOGRO EXCLUSIVO CLICKOK" title="Desbloquea tu verificación" description="La insignia de verificación no está disponible para todos desde el primer día. Gánatela construyendo una vitrina confiable y demostrando la actividad de tu negocio." />
+    <PageTitle eyebrow="LOGRO EXCLUSIVO CLICKOK" title="Desbloquea tu verificación" description="Gánate la insignia construyendo una vitrina confiable, completando tu perfil y demostrando la actividad de tu negocio." />
     <section className="verification-unlock-hero">
       <div className="verification-unlock-emblem"><ShieldCheck size={34}/></div>
       <span className="verification-exclusive-label"><Lock size={12}/> DISTINCIÓN EXCLUSIVA</span>
