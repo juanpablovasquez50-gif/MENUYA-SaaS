@@ -183,8 +183,8 @@ begin
       select exists (
         select 1 from public.business_verifications bv
         where bv.business_id = p_business_id
-          and bv.level = 'silver'
-          and bv.status = 'approved'
+          and ((bv.level = 'silver' and bv.status = 'approved')
+               or (bv.level = 'gold' and bv.status = 'suspended'))
       ) into v_silver_approved;
 
       if not v_silver_approved then
