@@ -5404,3 +5404,26 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .product-sticker-choice-label{font-size:11px;font-weight:650;color:var(--text,#333);text-align:center;line-height:1.25}
 .product-sticker-check{position:absolute;right:6px;top:6px;color:var(--primary,#222)}
 @media(max-width:520px){.product-sticker-options{grid-template-columns:repeat(2,minmax(0,1fr))}.product-sticker-choice{min-height:76px}}
+
+
+/* Vitrina pública: stickers promocionales con jerarquía visual tipo delivery */
+.public-store .public-product-art .product-sticker{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  width:auto!important;max-width:calc(100% - 16px)!important;min-width:0!important;
+  min-height:25px!important;max-height:none!important;overflow:visible!important;
+  padding:6px 10px!important;border:1.5px solid rgba(255,255,255,.95)!important;
+  border-radius:999px!important;color:#fff!important;font-size:10px!important;
+  line-height:1!important;font-weight:950!important;letter-spacing:.02em!important;
+  white-space:nowrap!important;text-overflow:clip!important;
+  box-shadow:0 3px 10px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.2)!important;
+  transform:none!important;backdrop-filter:blur(5px);
+}
+.public-store .public-product-art .product-sticker-discount{background:linear-gradient(135deg,#ff624d,#e51d35)!important}
+.public-store .public-product-art .product-sticker-bogo{background:linear-gradient(135deg,#ffb21c,#f07800)!important;color:#231500!important;border-color:#fff2c8!important}
+.public-store .public-product-art .product-sticker-new{background:linear-gradient(135deg,#24c879,#07864d)!important}
+.public-store .public-product-art .product-sticker-popular{background:linear-gradient(135deg,#7657e8,#4930b8)!important}
+.public-store .public-product-art .product-sticker-limited{background:linear-gradient(135deg,#f04f91,#c51e64)!important}
+.public-store .public-product-art .product-sticker-deal{background:linear-gradient(135deg,#242424,#080808)!important}
+@media(max-width:700px){
+ .public-store .public-product-art .product-sticker{top:7px!important;right:7px!important;left:auto!important;padding:5px 8px!important;min-height:22px!important;font-size:9px!important}
+}
