@@ -68,7 +68,7 @@ begin
       b.status,
       b.created_at,
       coalesce(v.level, 'purple'::text),
-      coalesce(v.status, case when b.status = 'active' then 'approved' else 'pending' end),
+      coalesce(v.status, case when b.is_verified then 'approved' else 'pending' end),
       v.note,
       v.approved_at,
       coalesce(p.product_count, 0)::integer,
