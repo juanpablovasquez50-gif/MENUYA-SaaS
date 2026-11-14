@@ -21,7 +21,7 @@ insert into public.business_verifications (business_id, level, status, approved_
 select b.id, 'purple', 'approved', now(),
        'Verificación documental vigente antes de habilitar el Centro de verificaciones.'
 from public.businesses b
-where b.status = 'active'
+where b.is_verified = true
 on conflict (business_id) do nothing;
 
 create or replace function public.platform_list_verifications()
@@ -87,7 +87,7 @@ begin
         and nullif(btrim(coalesce(ss.tagline, '')), '') is not null
         and nullif(btrim(coalesce(ss.logo_url, '')), '') is not null
       ),
-      (b.status = 'active')
+      (b.is_verified = true)
     from public.businesses b
     left join public.business_verifications v on v.business_id = b.id
     left join public.store_settings ss on ss.business_id = b.id
@@ -150,8 +150,8 @@ begin
   if not found then
     raise exception 'No se encontró el comercio.' using errcode = 'P0002';
   end if;
-  if v_business.status <> 'active' then
-    raise exception 'El comercio debe tener vigente su aprobación documental morada.' using errcode = '23514';
+  if v_business.status <> 'active' or v_business.is_verified is not true then
+    raise exception 'El comercio debe tener vigente su verificación documental morada.' using errcode = '23514';
   end if;
 
   select v.level, v.status into v_old_level, v_old_status
