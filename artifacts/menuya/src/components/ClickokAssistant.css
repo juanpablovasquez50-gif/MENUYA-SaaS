@@ -116,3 +116,11 @@
 .clickok-ai-launcher:not(.is-open) .clickok-ai-secretary-image{display:block;width:100%;height:100%;object-fit:cover;object-position:center;border-radius:inherit}
 .clickok-ai-launcher:not(.is-open):hover{transform:translateY(-3px) scale(1.02)}
 @media(max-width:560px){.clickok-ai-root{right:16px;bottom:18px}.clickok-ai-launcher:not(.is-open){width:68px;height:68px;min-width:68px;border-radius:19px}}
+
+
+/* Forma cuadrada con marco degradado para el avatar; botón morado al abrir */
+.clickok-ai-launcher:not(.is-open){width:76px;height:76px;min-width:76px;padding:3px;border:0;border-radius:20px;background:linear-gradient(135deg,#9b7bff 0%,#6948ee 48%,#4c2ccf 100%);box-shadow:0 12px 34px rgba(91,62,220,.38)}
+.clickok-ai-launcher:not(.is-open) .clickok-ai-secretary-image{border:2px solid #fff;border-radius:16px;object-fit:cover}
+.clickok-ai-launcher.is-open{width:54px;height:54px;min-width:54px;padding:0;border:2px solid rgba(255,255,255,.8);border-radius:17px;background:linear-gradient(135deg,#9b7bff 0%,#6948ee 48%,#4c2ccf 100%);color:#fff;box-shadow:0 10px 28px rgba(91,62,220,.35)}
+.clickok-ai-launcher.is-open:hover{background:linear-gradient(135deg,#a88cff 0%,#7658f2 48%,#5636dc 100%)}
+@media(max-width:560px){.clickok-ai-launcher:not(.is-open){width:68px;height:68px;min-width:68px;border-radius:18px}.clickok-ai-launcher:not(.is-open) .clickok-ai-secretary-image{border-radius:14px}}
