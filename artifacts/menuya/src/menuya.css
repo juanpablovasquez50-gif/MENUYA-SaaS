@@ -5465,3 +5465,32 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 @keyframes verification-spin{to{transform:rotate(360deg)}}
 @media(max-width:760px){.verification-grid{grid-template-columns:1fr}.verification-summary{gap:8px}.verification-summary>div{padding:12px}.verification-summary b{font-size:19px}.verification-card{padding:16px}}
 @media(max-width:420px){.verification-intro{padding:14px}.verification-summary .eyebrow{font-size:9px}.verification-summary b{font-size:17px}}
+
+
+/* Merchant verification — align upload controls with CLICKOK action buttons */
+.verification-upload{
+  min-height:42px;
+  padding:0 17px;
+  border:1px solid #7656ed;
+  border-radius:10px;
+  background:#7656ed;
+  color:#fff;
+  font-family:inherit;
+  font-size:13px;
+  font-weight:650;
+  line-height:1;
+  letter-spacing:-.01em;
+  box-shadow:0 2px 5px rgba(76,51,174,.16);
+  transition:background-color .18s ease,border-color .18s ease,color .18s ease,box-shadow .18s ease,transform .18s ease;
+}
+.verification-upload:hover:not(.is-uploading){
+  border-color:#6544dc;
+  background:#6544dc;
+  color:#fff;
+  box-shadow:0 4px 10px rgba(76,51,174,.22);
+  transform:translateY(-1px);
+}
+.verification-upload:active:not(.is-uploading){transform:translateY(0);box-shadow:0 1px 2px rgba(76,51,174,.16)}
+.verification-upload:focus-within{outline:3px solid rgba(118,86,237,.28);outline-offset:2px}
+.verification-upload.is-uploading{background:#8b79d8;border-color:#8b79d8;color:#fff;opacity:.8}
+.verification-icon{background:#f0ecff;color:#7656ed}
