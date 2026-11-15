@@ -329,4 +329,48 @@ const courierStyles=`
   .cp-driving-mode .cp-no-incoming { padding: 3px 0 !important; font-size: 8px !important; }
 }
 
+/* Visual polish — premium mobile courier navigation */
+@media screen and (max-width:700px){
+ .cp-driving-mode{background:#eef1f7!important;color:#172238}
+ .cp-driving-mode .cp-topbar{background:rgba(255,255,255,.97)!important;border-bottom:1px solid #e8ebf2!important;backdrop-filter:blur(16px)}
+ .cp-driving-mode .cp-logout{border:1px solid #e7eaf1!important;border-radius:10px!important;background:#f8f9fc!important;color:#364258!important;font-weight:800!important;box-shadow:0 2px 8px #1a24400a}
+ .cp-driving-mode .cp-delivery-head{background:rgba(255,255,255,.98)!important;border-bottom:1px solid #e9edf4!important;padding-left:14px!important;padding-right:14px!important}
+ .cp-driving-mode .cp-delivery-head>div{display:flex;flex-direction:column;gap:1px}
+ .cp-driving-mode .cp-order-label{color:#8993a5!important;letter-spacing:.14em!important}
+ .cp-driving-mode .cp-delivery-head h3{color:#19243a!important;font-weight:900!important;letter-spacing:-.04em!important}
+ .cp-driving-mode .cp-progress-label{color:#6547d5!important;font-weight:850!important}
+ .cp-driving-mode .cp-status.on-route{border:1px solid #c8ebd9!important;background:#e9f8f0!important;color:#128253!important;padding:7px 10px!important}
+ .cp-driving-mode .cp-map-experience{background:#e9eef5!important}
+ .cp-driving-mode .cp-map-live-pill{background:rgba(255,255,255,.96)!important;border:1px solid #e9edf4!important;border-radius:999px!important;color:#354158!important;box-shadow:0 5px 18px #19243a1c!important;backdrop-filter:blur(12px)}
+ .cp-driving-mode .cp-map-live-pill .cp-route-dot{width:8px!important;height:8px!important;background:#18a66b!important;box-shadow:0 0 0 4px #18a66b20!important}
+ .cp-driving-mode .cp-map-locate{border:1px solid #e8ebf2!important;border-radius:13px!important;background:rgba(255,255,255,.97)!important;color:#4e3bb2!important;box-shadow:0 5px 18px #19243a20!important}
+ .cp-driving-mode .cp-map-turn-card{background:linear-gradient(115deg,#21194d 0%,#35236f 65%,#4c36a0 100%)!important;border:1px solid #ffffff24!important;box-shadow:0 8px 24px #21194d38!important}
+ .cp-driving-mode .cp-map-turn-card .cp-nav-arrow{background:#ffffff1c!important;border:1px solid #ffffff26!important;border-radius:10px!important;color:#fff!important}
+ .cp-driving-mode .cp-map-turn-card .cp-nav-copy small{color:#c9c0f0!important;letter-spacing:.08em!important;font-weight:800!important}
+ .cp-driving-mode .cp-map-turn-card .cp-nav-copy b{color:#fff!important;font-weight:850!important;letter-spacing:-.015em!important}
+ .cp-driving-mode .cp-map-bottom-sheet{background:rgba(255,255,255,.97)!important;border:1px solid #ffffff!important;box-shadow:0 8px 28px #17223826!important;backdrop-filter:blur(18px)!important}
+ .cp-driving-mode .cp-map-sheet-head small{color:#8a94a6!important;font-weight:900!important}
+ .cp-driving-mode .cp-map-sheet-head b{color:#1d2940!important;font-weight:850!important;letter-spacing:-.02em!important}
+ .cp-driving-mode .cp-map-gps-ok{background:#e7f7ee!important;color:#128253!important;border:1px solid #d2efdf!important}
+ .cp-driving-mode .cp-map-gps-wait{background:#fff4df!important;color:#9a681e!important;border:1px solid #f5e4c2!important}
+ .cp-driving-mode .cp-map-kpis{border-top:1px solid #edf0f5!important}
+ .cp-driving-mode .cp-map-kpis>div{padding-left:2px}
+ .cp-driving-mode .cp-map-kpis b{color:#1e2a40!important;font-weight:900!important;letter-spacing:-.045em!important}
+ .cp-driving-mode .cp-map-kpis small{color:#8994a6!important;font-weight:650!important}
+ .cp-driving-mode .cp-map-experience .mapboxgl-ctrl-group{border:1px solid #e8ebf1!important;border-radius:12px!important;overflow:hidden!important;box-shadow:0 4px 14px #1b254022!important}
+ .cp-driving-mode .cp-map-experience .mapboxgl-ctrl-group button{background-color:rgba(255,255,255,.97)!important}
+ .cp-driving-mode .cp-map-experience .mapboxgl-ctrl-group button+button{border-top:1px solid #edf0f5!important}
+ .cp-driving-mode .cp-map-experience .mapboxgl-ctrl-bottom-left .mapboxgl-ctrl,
+ .cp-driving-mode .cp-map-experience .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl{margin:0 7px 5px!important}
+ .cp-driving-mode .cp-delivery footer{background:rgba(255,255,255,.98)!important;border-top:1px solid #e9edf4!important}
+ .cp-driving-mode .cp-delivery footer button{border-radius:12px!important;font-weight:850!important;letter-spacing:.005em!important;box-shadow:0 5px 13px #12845325!important}
+ .cp-driving-mode .cp-incoming-tray{background:rgba(255,255,255,.98)!important;border-top:1px solid #e7ebf2!important;box-shadow:0 -5px 20px #1722380d!important}
+ .cp-driving-mode .cp-incoming-head .cp-eyebrow{color:#8975db!important;letter-spacing:.15em!important}
+ .cp-driving-mode .cp-incoming-head b{color:#202b40!important;font-weight:850!important}
+ .cp-driving-mode .cp-incoming-count{background:#eeeaff!important;color:#6244ce!important}
+ .cp-driving-mode .cp-no-incoming{color:#8994a6!important}
+ .cp-driving-mode .cp-incoming-order{background:#f9faff!important;border:1px solid #e8eaf3!important;border-radius:11px!important}
+ .cp-driving-mode .cp-incoming-order button{background:linear-gradient(110deg,#6243d0,#8061e9)!important;border-radius:9px!important;box-shadow:0 3px 9px #6848df25!important}
+}
+
 `;
