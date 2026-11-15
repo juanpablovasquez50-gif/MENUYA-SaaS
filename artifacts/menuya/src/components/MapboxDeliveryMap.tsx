@@ -5,6 +5,8 @@ declare global { interface Window { mapboxgl?: any } }
 type Point={latitude:number;longitude:number};
 type Props={order:any;currentLocation:{latitude:number;longitude:number;heading:number|null}|null;onSaveAddress:(address:string,coords?:Point)=>Promise<void>};
 
+const distanceBetween=(lat1:number,lng1:number,lat2:number,lng2:number)=>{const r=6371000,toRad=(v:number)=>v*Math.PI/180,dLat=toRad(lat2-lat1),dLng=toRad(lng2-lng1),a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;return 2*r*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));};
+
 let mapboxLoader:Promise<any>|null=null;
 const loadMapbox=async()=>{
  if(window.mapboxgl)return window.mapboxgl;
