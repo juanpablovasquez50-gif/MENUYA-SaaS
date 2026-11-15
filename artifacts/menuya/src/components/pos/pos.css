@@ -28,3 +28,28 @@
 @media(max-width:700px){.pos-cash-history-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pos-tabs{flex-wrap:wrap}}
 
 .pos-option-group input:disabled+span{opacity:.45}.pos-option-group label:has(input:disabled){opacity:.55;cursor:not-allowed}
+
+
+/* POS primary controls share the exact CLICKOK gradient used by "Nuevo producto". */
+.pos-root .pos-tabs button.active,
+.pos-root .pos-checkout,
+.pos-root .pos-add-base {
+  color: #fff !important;
+  border: 1px solid #6848df !important;
+  background: linear-gradient(105deg,#6040d4 0%,#7959e8 55%,#9278f2 100%) !important;
+  box-shadow: 0 5px 13px #6848df26 !important;
+}
+.pos-root .pos-tabs button.active svg {
+  color: #fff !important;
+}
+.pos-root .pos-tabs button.active:hover,
+.pos-root .pos-checkout:hover:not(:disabled),
+.pos-root .pos-add-base:hover {
+  color: #fff !important;
+  background: linear-gradient(105deg,#5333c4 0%,#6b4bd9 55%,#8469e8 100%) !important;
+  box-shadow: 0 7px 17px #6848df35 !important;
+}
+.pos-root .pos-checkout:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
