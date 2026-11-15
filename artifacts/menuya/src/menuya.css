@@ -5556,9 +5556,9 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .badge-tier-card.gold{background:linear-gradient(145deg,rgba(211,164,64,.13),rgba(255,255,255,.96))}
 .badge-tier-card.is-active{border-color:rgba(108,82,190,.48);box-shadow:0 0 0 1px rgba(108,82,190,.08)}
 .badge-tier-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.badge-tier-symbol{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:rgba(116,88,190,.12);color:#7655c7}
-.badge-tier-card.silver .badge-tier-symbol{background:rgba(112,126,143,.16);color:#64748b}
-.badge-tier-card.gold .badge-tier-symbol{background:rgba(197,148,40,.17);color:#b88620}
+.badge-tier-symbol{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,#7655c7 0%,#a58bea 100%);color:#fff;box-shadow:0 4px 10px rgba(118,85,199,.22)}
+.badge-tier-card.silver .badge-tier-symbol{background:linear-gradient(135deg,#7d8b9c 0%,#c5ced9 100%);color:#fff;box-shadow:0 4px 10px rgba(112,126,143,.22)}
+.badge-tier-card.gold .badge-tier-symbol{background:linear-gradient(135deg,#b88620 0%,#e9c66e 100%);color:#fff;box-shadow:0 4px 10px rgba(184,134,32,.24)}
 .badge-tier-state{max-width:72%;font-size:11px;font-weight:700;text-align:right;color:#727987}
 .badge-tier-state.approved{color:#16845b}
 .badge-tier-state.ready{color:#a16b12}
