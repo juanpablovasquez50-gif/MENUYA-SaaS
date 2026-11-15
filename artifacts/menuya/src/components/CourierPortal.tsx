@@ -107,5 +107,61 @@ const courierStyles=`
  .cp-delivery footer{margin:12px 10px 12px}
  .cp-notes{margin:10px 10px 0}
 }
+/* Premium Rappi-inspired courier navigation */
+.cp-app{background:#f4f6fb}
+.cp-map-experience{position:relative;margin:0 15px 0;border:0;border-radius:18px;overflow:hidden;background:#e9edf4;box-shadow:0 8px 24px #18274714}
+.cp-map-experience .cp-live-map{height:min(62vh,590px);min-height:390px;width:100%;background:#e9edf4}
+.cp-map-floating-top{position:absolute;z-index:3;top:13px;left:13px;right:13px;display:flex;justify-content:space-between;align-items:center;pointer-events:none}
+.cp-map-live-pill,.cp-map-locate{pointer-events:auto;box-shadow:0 3px 14px #1b25401f}
+.cp-map-live-pill{display:flex;align-items:center;gap:7px;background:#fff;border:1px solid #e9edf4;border-radius:30px;padding:9px 12px;color:#354158;font-size:9px;font-weight:900;letter-spacing:.09em}
+.cp-map-live-pill .cp-route-dot{background:#16a36a;box-shadow:0 0 0 4px #16a36a20}
+.cp-map-locate{width:40px;height:40px;display:grid;place-items:center;border:0;border-radius:13px;background:#fff;color:#6848df}
+.cp-map-turn-card{position:absolute;z-index:3;top:62px;left:13px;right:13px;display:flex;align-items:center;gap:11px;padding:13px 14px;border-radius:15px;background:linear-gradient(110deg,#21194d,#392879);color:#fff;box-shadow:0 7px 22px #1b164b30}
+.cp-map-turn-card .cp-nav-arrow{width:39px;height:39px;flex:none;background:#ffffff20}
+.cp-map-turn-card .cp-nav-copy{display:flex;flex-direction:column;gap:4px;min-width:0}
+.cp-map-turn-card .cp-nav-copy small{font-size:9px;color:#d5cff2}
+.cp-map-turn-card .cp-nav-copy b{font-size:13px;line-height:1.3;color:#fff}
+.cp-map-bottom-sheet{position:absolute;z-index:4;left:9px;right:9px;bottom:9px;padding:10px 13px 9px;border-radius:18px;background:#fff;box-shadow:0 8px 28px #1b25402b;border:1px solid #ffffffd9}
+.cp-map-sheet-handle{width:36px;height:4px;border-radius:9px;background:#d9deea;margin:0 auto 10px}
+.cp-map-sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cp-map-sheet-head>div{display:flex;flex-direction:column;gap:4px;min-width:0}
+.cp-map-sheet-head small{font-size:8px;letter-spacing:.13em;font-weight:900;color:#8994a7}
+.cp-map-sheet-head b{font-size:13px;line-height:1.3;color:#1d2940;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:65vw}
+.cp-map-gps-ok,.cp-map-gps-wait{white-space:nowrap;border-radius:30px;padding:7px 9px;font-size:9px;font-weight:850;color:#128453;background:#e8f8ef}
+.cp-map-gps-wait{color:#a16b1d;background:#fff4df}
+.cp-map-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px;padding:10px 0;border-top:1px solid #edf0f5;border-bottom:1px solid #edf0f5}
+.cp-map-kpis>div{display:flex;flex-direction:column;gap:3px}
+.cp-map-kpis b{font-size:19px;letter-spacing:-.04em;color:#1d2940;font-weight:900}
+.cp-map-kpis small{font-size:9px;color:#8390a3}
+.cp-map-route-state{font-size:9px;color:#6f7b8e;padding:7px 0 3px}
+.cp-map-edit{border-top:1px solid #edf0f5;margin-top:4px;padding-top:8px}
+.cp-map-edit summary{display:flex;align-items:center;gap:7px;list-style:none;cursor:pointer;color:#6848df;font-size:10px;font-weight:850}
+.cp-map-edit summary::-webkit-details-marker{display:none}
+.cp-map-edit-body{display:flex;flex-direction:column;gap:8px;padding-top:10px}
+.cp-map-edit-body label{display:flex;flex-direction:column;gap:5px;font-size:10px;font-weight:800;color:#59667a}
+.cp-map-edit-body input{height:39px;border:1px solid #dfe5ef;border-radius:9px;padding:0 10px;font-size:12px}
+.cp-map-edit-actions{display:flex;gap:8px}
+.cp-map-edit-actions button{min-height:36px;padding:0 12px;border:0;border-radius:9px;background:#6848df;color:#fff;font-size:10px;font-weight:850}
+.cp-map-edit-actions button:disabled{opacity:.55}
+.cp-map-edit-body>small{font-size:9px;color:#8a95a7}
+.cp-map-experience .mapboxgl-ctrl-group{border-radius:11px!important;overflow:hidden;box-shadow:0 2px 10px #1b25401c!important}
+.cp-map-experience .mapboxgl-ctrl-top-right{top:60px;right:12px}
+.cp-map-experience .mapboxgl-ctrl-bottom-left{bottom:205px}
+.cp-map-experience .mapboxgl-ctrl-bottom-right{bottom:205px}
+.cp-delivery-head{padding:16px 20px 13px}
+.cp-order-info{margin-top:12px}
+@media(max-width:560px){
+ .cp-map-experience{margin:0 9px;border-radius:15px}
+ .cp-map-experience .cp-live-map{height:65vh;min-height:430px}
+ .cp-map-turn-card{top:60px;left:9px;right:9px;padding:11px}
+ .cp-map-turn-card .cp-nav-copy b{font-size:12px}
+ .cp-map-bottom-sheet{left:7px;right:7px;bottom:7px;padding:9px 11px;border-radius:16px}
+ .cp-map-sheet-head b{font-size:12px}
+ .cp-map-kpis{margin-top:9px;padding:8px 0}
+ .cp-map-kpis b{font-size:17px}
+ .cp-map-experience .mapboxgl-ctrl-top-right{top:110px;right:9px}
+ .cp-map-experience .mapboxgl-ctrl-bottom-left,.cp-map-experience .mapboxgl-ctrl-bottom-right{bottom:225px}
+}
+
 
 `;
