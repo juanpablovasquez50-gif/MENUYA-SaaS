@@ -5687,3 +5687,18 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
   .orders-toolbar{flex-wrap:wrap}
 }
 @media (min-width:761px) and (max-width:900px){.orders-card-grid{gap:12px}.orders-tablet-card{padding:15px}}
+
+
+/* CLICKOK · Domiciliarios: navegación y dimensiones alineadas con Mesas y meseros */
+.courier-tabs{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 2px}
+.courier-tabs button{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:46px;padding:0 18px;border:1px solid var(--line);border-radius:13px;background:#fff;color:var(--primary,#674bd5);font:700 14px inherit;cursor:pointer;transition:background .18s,border-color .18s,box-shadow .18s}
+.courier-tabs button span{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:99px;background:#eeeaff;color:#674bd5;font-size:11px}
+.courier-tabs button.active{border-color:#7656ed;background:linear-gradient(110deg,#6540dc,#8967ef);color:#fff;box-shadow:0 5px 14px #7656ed25}
+.courier-tabs button.active span{background:#ffffff35;color:#fff}
+.courier-page>.courier-columns>.panel,.courier-page>#courier-tracking{min-width:0;border:1px solid var(--line);border-radius:17px;padding:22px;box-shadow:0 5px 18px #202b4510}
+.courier-page #courier-team,.courier-page #courier-dispatch,.courier-page #courier-tracking{scroll-margin-top:22px}
+.courier-page .courier-columns{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:18px}
+.courier-page .courier-columns>.panel{height:100%}
+.courier-page .courier-form input,.courier-page .courier-form select{min-height:48px;border-radius:11px;padding:11px 14px}
+.courier-page .courier-form>.btn{min-height:48px;border-radius:11px}
+@media(max-width:760px){.courier-page .courier-columns{grid-template-columns:minmax(0,1fr)}.courier-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.courier-tabs button{min-width:0;padding:0 7px;font-size:12px;gap:5px}.courier-page>.courier-columns>.panel,.courier-page>#courier-tracking{padding:17px;border-radius:15px}}
