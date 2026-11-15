@@ -251,4 +251,35 @@ const courierStyles=`
  .cp-driving-mode .cp-delivery footer button{min-height:44px}
 }
 
+/* Compact floating HUD: prioritize the live map on mobile */
+@media(max-width:560px){
+ .cp-driving-mode .cp-map-experience{isolation:isolate}
+ .cp-driving-mode .cp-map-floating-top{z-index:5;top:12px;left:12px;right:12px}
+ .cp-driving-mode .cp-map-live-pill{padding:8px 11px;font-size:9px}
+ .cp-driving-mode .cp-map-locate{width:42px;height:42px}
+ .cp-driving-mode .cp-map-turn-card{z-index:5;top:66px;left:12px;right:12px;width:auto;min-height:58px;padding:8px 10px;border-radius:13px;box-shadow:0 5px 18px #21194d35}
+ .cp-driving-mode .cp-map-turn-card .cp-nav-arrow{width:34px;height:34px}
+ .cp-driving-mode .cp-map-turn-card .cp-nav-copy small{font-size:7px}
+ .cp-driving-mode .cp-map-turn-card .cp-nav-copy b{font-size:11px}
+ .cp-driving-mode .cp-map-bottom-sheet{z-index:5;left:12px!important;right:12px!important;bottom:12px!important;height:126px!important;min-height:126px!important;max-height:126px!important;overflow:hidden!important;padding:9px 12px!important;border-radius:15px!important;box-shadow:0 5px 22px #17223835!important}
+ .cp-driving-mode .cp-map-sheet-handle{width:30px;height:3px;margin:0 auto 7px}
+ .cp-driving-mode .cp-map-sheet-head{gap:7px}
+ .cp-driving-mode .cp-map-sheet-head small{font-size:7px;letter-spacing:.09em}
+ .cp-driving-mode .cp-map-sheet-head b{font-size:11px;max-width:62vw}
+ .cp-driving-mode .cp-map-gps-ok,.cp-driving-mode .cp-map-gps-wait{font-size:8px;padding:5px 7px}
+ .cp-driving-mode .cp-map-kpis{margin-top:7px!important;padding:7px 0!important;gap:5px}
+ .cp-driving-mode .cp-map-kpis b{font-size:16px!important}
+ .cp-driving-mode .cp-map-kpis small{font-size:8px!important}
+ .cp-driving-mode .cp-map-route-state,.cp-driving-mode .cp-map-edit{display:none!important}
+ .cp-driving-mode .cp-map-experience .mapboxgl-ctrl-top-right{top:116px!important;right:10px!important}
+ .cp-driving-mode .cp-map-experience .mapboxgl-ctrl-bottom-left,.cp-driving-mode .cp-map-experience .mapboxgl-ctrl-bottom-right{bottom:158px!important}
+ .cp-driving-mode .cp-delivery footer{padding:7px 12px calc(7px + env(safe-area-inset-bottom))!important}
+ .cp-driving-mode .cp-delivery footer button{min-height:44px!important;border-radius:12px}
+ .cp-driving-mode .cp-incoming-tray{max-height:132px;padding:7px 9px calc(7px + env(safe-area-inset-bottom))}
+ .cp-driving-mode .cp-incoming-head{margin-bottom:5px}
+ .cp-driving-mode .cp-incoming-head b{font-size:11px}
+ .cp-driving-mode .cp-no-incoming{font-size:9px;padding:5px 0}
+}
+
+
 `;
