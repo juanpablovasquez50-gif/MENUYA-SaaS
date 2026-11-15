@@ -5668,3 +5668,22 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .notification-empty{padding:18px 6px;color:#7d8493;font-size:13px;line-height:1.5}
 .notification-all{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:12px;padding:11px;border:1px solid #e4def8;border-radius:11px;background:linear-gradient(105deg,#6040d4 0%,#7959e8 55%,#9278f2 100%);color:#fff;font-size:12px;font-weight:700;cursor:pointer}
 @media(max-width:600px){.notification-popover{position:fixed;top:76px;left:14px;right:14px;width:auto;max-height:calc(100dvh - 96px)}}
+
+/* Vista de pedidos en tablet: tarjetas táctiles sin alterar escritorio ni móvil. */
+.orders-card-grid{display:none}
+@media (min-width:761px) and (max-width:1180px){
+  .orders-table-view{display:none!important}
+  .orders-card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:18px}
+  .orders-tablet-card{appearance:none;text-align:left;width:100%;min-width:0;display:flex;flex-direction:column;gap:11px;padding:18px;border:1px solid var(--line,#e7e5e4);border-radius:18px;background:var(--surface,#fff);color:var(--text,#25232a);box-shadow:0 3px 12px rgba(25,20,35,.045);cursor:pointer;transition:transform .18s ease,box-shadow .18s ease}
+  .orders-tablet-card:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(25,20,35,.09)}
+  .orders-card-top,.orders-card-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .orders-card-top> b{font-size:14px;font-weight:800}
+  .orders-card-customer{font-size:17px;font-weight:750;line-height:1.25}
+  .orders-card-meta{font-size:12px;color:var(--muted,#77717d)}
+  .orders-card-items{font-size:13px;line-height:1.5;color:var(--muted,#625d68);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:38px}
+  .orders-card-bottom{border-top:1px solid var(--line,#eee);padding-top:12px;margin-top:2px}
+  .orders-card-bottom>b{font-size:18px;font-weight:850}
+  .orders-card-bottom>span{display:inline-flex;align-items:center;gap:4px;color:var(--primary,#6d35c5);font-size:12px;font-weight:750}
+  .orders-toolbar{flex-wrap:wrap}
+}
+@media (min-width:761px) and (max-width:900px){.orders-card-grid{gap:12px}.orders-tablet-card{padding:15px}}
