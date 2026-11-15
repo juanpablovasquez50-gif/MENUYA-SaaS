@@ -1955,7 +1955,7 @@ function TrackingRoute() {
 }
 function TrackingPage({ initialToken = '' }: { initialToken?: string }) {
   const [token, setToken] = useState(initialToken);
-  const [order, setOrder] = useState<{ order_number: number; status: string; business_name: string; updated_at: string; created_at: string } | null>(null);
+  const [order, setOrder] = useState<{ order_number: number; status: string; business_name: string; updated_at: string; created_at: string; delivery_tracking?: { active: boolean; status: string | null; latitude: number | null; longitude: number | null; recorded_at: string | null; destination_latitude: number | null; destination_longitude: number | null; fulfillment_type: string | null } } | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [trackingActive, setTrackingActive] = useState(false);
@@ -2014,6 +2014,13 @@ function TrackingPage({ initialToken = '' }: { initialToken?: string }) {
         </li>)}</ol>
       </div>
       <div className="tracking-current-state"><span className="tracking-live-dot" /><div><small>ESTADO ACTUAL</small><strong>{isCancelled ? 'Pedido cancelado' : (steps[current]?.label || 'Pedido recibido')}</strong></div></div>
+       {order.delivery_tracking?.fulfillment_type === 'delivery' && <section className="tracking-map-panel">
+         <div className="tracking-map-heading"><div><span className="eyebrow">SEGUIMIENTO EN VIVO</span><h3>Ubicación del repartidor</h3></div><span className={order.delivery_tracking.active ? 'tracking-map-live' : 'tracking-map-waiting'}>{order.delivery_tracking.active ? 'En camino' : 'Esperando GPS'}</span></div>
+         {order.delivery_tracking.active && order.delivery_tracking.latitude !== null && order.delivery_tracking.longitude !== null
+           ? <iframe title="Mapa de seguimiento del repartidor" className="tracking-live-map" loading="lazy" referrerPolicy="no-referrer-when-downgrade" src={`https://www.google.com/maps?output=embed&saddr=${order.delivery_tracking.latitude},${order.delivery_tracking.longitude}${order.delivery_tracking.destination_latitude !== null && order.delivery_tracking.destination_longitude !== null ? `&daddr=${order.delivery_tracking.destination_latitude},${order.delivery_tracking.destination_longitude}` : ''}`} />
+           : <div className="tracking-map-empty"><MapPin size={22}/><b>Tu pedido aún no está en ruta</b><span>Cuando el comercio asigne un repartidor y este inicie la entrega, podrás ver su ubicación aquí.</span></div>}
+         {order.delivery_tracking.active && order.delivery_tracking.recorded_at && <small className="tracking-updated">Última ubicación recibida: {new Date(order.delivery_tracking.recorded_at).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}. El mapa se actualiza automáticamente.</small>}
+       </section>}
       <small className="tracking-updated">Última actualización: {new Date(order.updated_at || order.created_at).toLocaleString('es-CO',{dateStyle:'medium',timeStyle:'short'})}</small>
     </section>}
     <Link href="/" className="tracking-back">Volver a la tienda</Link>
