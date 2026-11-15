@@ -5702,3 +5702,20 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .courier-page .courier-form input,.courier-page .courier-form select{min-height:48px;border-radius:11px;padding:11px 14px}
 .courier-page .courier-form>.btn{min-height:48px;border-radius:11px}
 @media(max-width:760px){.courier-page .courier-columns{grid-template-columns:minmax(0,1fr)}.courier-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.courier-tabs button{min-width:0;padding:0 7px;font-size:12px;gap:5px}.courier-page>.courier-columns>.panel,.courier-page>#courier-tracking{padding:17px;border-radius:15px}}
+
+
+/* Landing · CLICKOK RutaSync */
+.stripe-inspired .stripe-bento-routes{grid-column:span 3;min-height:320px;background:linear-gradient(145deg,#f2efff 0%,#fff 72%)}
+.stripe-route-mock{margin:18px 0 12px;border:1px solid #e7e2fb;border-radius:12px;background:#fff;padding:10px;box-shadow:0 8px 24px #5742a510}
+.stripe-route-map{height:118px;position:relative;overflow:hidden;border-radius:8px;background-color:#f2f4f8;background-image:linear-gradient(30deg,transparent 47%,#fff 48%,#fff 53%,transparent 54%),linear-gradient(120deg,transparent 46%,#fff 47%,#fff 53%,transparent 54%);background-size:58px 48px,74px 62px}
+.stripe-route-map>svg{position:absolute;inset:0;width:100%;height:100%}
+.route-street{position:absolute;height:7px;border-radius:8px;background:#fff;transform:rotate(-24deg)}
+.route-street-one{width:130%;top:28px;left:-15%}.route-street-two{width:120%;top:83px;left:-10%;transform:rotate(18deg)}.route-street-three{width:100%;top:58px;left:10%;transform:rotate(75deg)}
+.route-pin,.route-courier{position:absolute;display:grid;place-items:center;width:25px;height:25px;border-radius:50%;background:#fff;color:#7656ed;box-shadow:0 3px 9px #29204a22}
+.route-pin-start{left:10%;bottom:13%}.route-pin-end{right:9%;top:8%;color:#19a36d}.route-courier{left:52%;top:38%;width:28px;height:28px;background:#7656ed;color:#fff}
+.stripe-route-live{display:flex;align-items:center;gap:7px;padding:8px 2px 0;color:#69758a;font-size:9px;font-weight:800;letter-spacing:.6px}
+.stripe-route-live i{width:7px;height:7px;border-radius:50%;background:#18a66a;box-shadow:0 0 0 4px #18a66a20}
+.stripe-route-live b{margin-left:auto;padding:5px 8px;border-radius:99px;background:#edfbf4;color:#188354;font-size:8px}
+.stripe-inspired .stripe-bento-routes h3{margin-top:12px}
+@media(max-width:900px){.stripe-inspired .stripe-bento-routes{grid-column:span 3}}
+@media(max-width:620px){.stripe-inspired .stripe-bento-routes{grid-column:span 6;min-height:280px}}
