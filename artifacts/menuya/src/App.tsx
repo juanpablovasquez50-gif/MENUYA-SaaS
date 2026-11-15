@@ -639,7 +639,7 @@ function MerchantVerification({ businessId, business, products, orders, settings
       {progress.verification_note && <p className="badge-callout"><CircleHelp size={16}/> Nota del equipo de revisión: {progress.verification_note}</p>}
     </section>}
 
-    <section className="panel badge-documents-panel">
+    {!isVerified && <section className="panel badge-documents-panel">
       <div className="panel-head"><div><span className="eyebrow">INSIGNIA MORADA</span><h2>Verificación documental</h2><p>Conservamos aquí el envío y seguimiento de los documentos de tu comercio.</p></div><ShieldCheck size={20}/></div>
       <div className="verification-summary">
         <div><span className="eyebrow">DOCUMENTOS</span><b>{documents.length} enviados</b></div>
@@ -665,7 +665,7 @@ function MerchantVerification({ businessId, business, products, orders, settings
           </section>;
         })}
       </div>
-    </section>
+    </section>}
     {error && <div className="notice notice-error" role="alert">{error}</div>}
     {notice && <div className="notice notice-success" role="status">{notice}</div>}
     {loading && <p className="verification-loading">Actualizando el estado de tus insignias y documentos…</p>}
