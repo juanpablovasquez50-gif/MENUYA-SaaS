@@ -700,7 +700,6 @@ function MerchantPage({ path, data, business, update, modules = [] }: { path: st
       const { data: rows, error } = await supabase.from('sales')
         .select('id,total,created_at')
         .eq('business_id', business.id)
-        .is('order_id', null)
         .gte('created_at', new Date(Date.now() - 60 * 86400000).toISOString())
         .order('created_at', { ascending: false });
       if (!active) return;
@@ -804,8 +803,8 @@ function MerchantPage({ path, data, business, update, modules = [] }: { path: st
     });
     // La tarjeta de ventas usa exclusivamente cobros confirmados y registrados por el POS.
     // Los pedidos se cuentan desde orders; aquí se suman solo ventas POS independientes para evitar duplicados.
-    const currentSales = currentOrders.reduce((sum, order) => sum + order.total, 0) + currentPosSales.reduce((sum, sale) => sum + sale.total, 0);
-    const previousSales = previousOrders.reduce((sum, order) => sum + order.total, 0) + previousPosSales.reduce((sum, sale) => sum + sale.total, 0);
+    const currentSales = currentPosSales.reduce((sum, sale) => sum + sale.total, 0);
+    const previousSales = previousPosSales.reduce((sum, sale) => sum + sale.total, 0);
     const currentCustomers = new Set(currentOrders.map(order => order.customer_id).filter(Boolean)).size;
     const previousCustomers = new Set(previousOrders.map(order => order.customer_id).filter(Boolean)).size;
     const variation = (current: number, previous: number) => previous > 0
@@ -889,10 +888,10 @@ function MerchantPage({ path, data, business, update, modules = [] }: { path: st
       return time >= previousStart && time < currentStart;
     });
     // Los pedidos vinculados se cuentan desde orders; se suman aquí los cobros POS independientes.
-    const currentSales = currentCompleted.reduce((a, order) => a + order.total, 0) + currentPosSales.reduce((a, sale) => a + sale.total, 0);
-    const previousSales = previousCompleted.reduce((a, order) => a + order.total, 0) + previousPosSales.reduce((a, sale) => a + sale.total, 0);
-    const currentSaleCount = currentCompleted.length + currentPosSales.length;
-    const previousSaleCount = previousCompleted.length + previousPosSales.length;
+    const currentSales = currentPosSales.reduce((a, sale) => a + sale.total, 0);
+    const previousSales = previousPosSales.reduce((a, sale) => a + sale.total, 0);
+    const currentSaleCount = currentPosSales.length;
+    const previousSaleCount = previousPosSales.length;
     const average = currentSaleCount ? Math.round(currentSales / currentSaleCount) : 0;
     const previousAverage = previousSaleCount ? Math.round(previousSales / previousSaleCount) : 0;
     const variation = (current: number, previous: number) => {
