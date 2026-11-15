@@ -221,4 +221,34 @@ const courierStyles=`
 }
 
 
+/* Mobile map layout correction: keep navigation overlays compact and preserve map visibility */
+@media(max-width:560px){
+ .cp-driving-mode .cp-delivery-head{height:52px;min-height:52px;padding:5px 14px}
+ .cp-driving-mode .cp-delivery-head h3{font-size:19px}
+ .cp-driving-mode .cp-map-experience{margin:0;min-height:0;border-radius:0;overflow:hidden}
+ .cp-driving-mode .cp-map-experience .cp-live-map{height:100%!important;min-height:0!important;position:absolute!important;inset:0!important}
+ .cp-driving-mode .cp-map-floating-top{top:10px;left:12px;right:12px}
+ .cp-driving-mode .cp-map-turn-card{top:60px;left:12px;right:auto;width:min( calc(100% - 24px), 360px);min-height:68px;padding:9px 11px;border-radius:13px;gap:9px}
+ .cp-driving-mode .cp-map-turn-card .cp-nav-arrow{width:36px;height:36px;border-radius:10px}
+ .cp-driving-mode .cp-map-turn-card .cp-nav-arrow svg{width:19px;height:19px}
+ .cp-driving-mode .cp-map-turn-card .cp-nav-copy{gap:2px}
+ .cp-driving-mode .cp-map-turn-card .cp-nav-copy small{font-size:8px;line-height:1.2}
+ .cp-driving-mode .cp-map-turn-card .cp-nav-copy b{font-size:12px;line-height:1.2}
+ .cp-driving-mode .cp-map-bottom-sheet{left:9px;right:9px;bottom:9px;padding:8px 11px 7px;border-radius:15px;max-height:180px;overflow-y:auto}
+ .cp-driving-mode .cp-map-sheet-handle{margin-bottom:7px}
+ .cp-driving-mode .cp-map-sheet-head small{font-size:7px}
+ .cp-driving-mode .cp-map-sheet-head b{font-size:11px}
+ .cp-driving-mode .cp-map-gps-ok,.cp-driving-mode .cp-map-gps-wait{padding:5px 7px;font-size:8px}
+ .cp-driving-mode .cp-map-kpis{margin-top:7px;padding:7px 0;gap:5px}
+ .cp-driving-mode .cp-map-kpis b{font-size:16px}
+ .cp-driving-mode .cp-map-kpis small{font-size:8px}
+ .cp-driving-mode .cp-map-route-state{font-size:8px;padding:5px 0 1px}
+ .cp-driving-mode .cp-map-edit{margin-top:2px;padding-top:5px}
+ .cp-driving-mode .cp-map-edit summary{font-size:9px}
+ .cp-driving-mode .cp-map-experience .mapboxgl-ctrl-top-right{top:108px;right:10px}
+ .cp-driving-mode .cp-map-experience .mapboxgl-ctrl-bottom-left,.cp-driving-mode .cp-map-experience .mapboxgl-ctrl-bottom-right{bottom:196px}
+ .cp-driving-mode .cp-delivery footer{padding:7px 10px calc(7px + env(safe-area-inset-bottom))}
+ .cp-driving-mode .cp-delivery footer button{min-height:44px}
+}
+
 `;
