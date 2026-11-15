@@ -7,7 +7,7 @@ type DeliveryOrder={id:string;order_number:number;status:string;delivery_address
 type Assignment={id:string;order_id:string;courier_id:string;status:string;orders:DeliveryOrder|null;delivery_couriers:Courier|null};
 declare global { interface Window { google?: any } }
 const loadGoogleMaps=async()=>{
- if(window.google?.maps){await window.google.maps.importLibrary('geocoding');return;}
+ if(window.google?.maps){await Promise.all([window.google.maps.importLibrary('maps'),window.google.maps.importLibrary('geocoding')]);return;}
  const key=import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
  if(!key)throw new Error('Falta configurar VITE_GOOGLE_MAPS_API_KEY en Render.');
  await new Promise<void>((resolve,reject)=>{
@@ -17,7 +17,7 @@ const loadGoogleMaps=async()=>{
   script.onload=()=>resolve();script.onerror=()=>reject(new Error('No se pudo cargar Google Maps.'));
   document.head.appendChild(script);
  });
- await window.google.maps.importLibrary('geocoding');
+ await Promise.all([window.google.maps.importLibrary('maps'),window.google.maps.importLibrary('geocoding')]);
 };
 export default function CourierManagement({businessId}:{businessId:string}){
  const [enabled,setEnabled]=useState(false),[loading,setLoading]=useState(true),[saving,setSaving]=useState(false),[error,setError]=useState(''),[couriers,setCouriers]=useState<Courier[]>([]),[orders,setOrders]=useState<DeliveryOrder[]>([]),[assignments,setAssignments]=useState<Assignment[]>([]);
@@ -48,8 +48,8 @@ export default function CourierManagement({businessId}:{businessId:string}){
   if(!enabled||!mapRef.current||selected?.orders?.delivery_latitude==null||selected?.orders?.delivery_longitude==null)return;
   let cancelled=false;
   void loadGoogleMaps().then(async()=>{
-   if(cancelled||!mapRef.current)return;const g=window.google.maps;
-   if(!mapInstance.current)mapInstance.current=new g.Map(mapRef.current,{center:{lat:selected.orders!.delivery_latitude!,lng:selected.orders!.delivery_longitude!},zoom:14,mapTypeControl:false,streetViewControl:false,fullscreenControl:true,gestureHandling:'greedy'});
+   if(cancelled||!mapRef.current)return;const g=window.google.maps;const {Map}=await g.importLibrary('maps');
+   if(!mapInstance.current)mapInstance.current=new Map(mapRef.current,{center:{lat:selected.orders!.delivery_latitude!,lng:selected.orders!.delivery_longitude!},zoom:14,mapTypeControl:false,streetViewControl:false,fullscreenControl:true,gestureHandling:'greedy'});
    const map=mapInstance.current;markers.current.forEach(m=>m.setMap(null));markers.current=[];
    if(routeLayer.current){routeLayer.current.setMap(null);routeLayer.current=null;}
    const dest={lat:selected.orders!.delivery_latitude!,lng:selected.orders!.delivery_longitude!};
