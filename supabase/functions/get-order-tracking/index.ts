@@ -26,7 +26,7 @@ Deno.serve(async (req: Request) => {
     const db = createClient(url, key, { auth: { persistSession: false } });
     const { data: order, error } = await db
       .from("orders")
-      .select("id, business_id, order_number, status, created_at, updated_at")
+      .select("id, business_id, order_number, status, created_at, updated_at, delivery_latitude, delivery_longitude, fulfillment_type")
       .eq("tracking_token", cleanToken)
       .maybeSingle();
     if (error) throw error;
@@ -58,9 +58,7 @@ Deno.serve(async (req: Request) => {
         business_name: business?.name || "Comercio",
         created_at: order.created_at,
         updated_at: order.updated_at || order.created_at,
-        delivery_tracking: assignment?.status === "picked_up" && locationIsFresh && location
-          ? { latitude: location.latitude, longitude: location.longitude, recorded_at: location.recorded_at, active: true }
-          : { active: false },
+        delivery_tracking: { active: assignment?.status === "picked_up" && locationIsFresh && !!location, status: assignment?.status || null, latitude: location?.latitude ?? null, longitude: location?.longitude ?? null, recorded_at: location?.recorded_at ?? null, destination_latitude: order.delivery_latitude ?? null, destination_longitude: order.delivery_longitude ?? null, fulfillment_type: order.fulfillment_type },
       },
     });
   } catch (error) {
