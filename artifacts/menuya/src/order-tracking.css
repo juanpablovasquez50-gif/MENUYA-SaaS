@@ -69,3 +69,17 @@
 .tracking-code-panel strong{font-size:17px;letter-spacing:.1em}
 @keyframes tracking-label-pulse{0%,100%{opacity:.65}50%{opacity:1}}
 @media(max-width:420px){.tracking-3d-track{padding:24px 5px 16px;margin:28px 0 20px}.tracking-3d-stage small{font-size:8px}.tracking-3d-stage strong{font-size:9px}.tracking-3d-node{width:32px;height:32px}.tracking-3d-stage.is-current .tracking-3d-node{width:40px;height:40px}.tracking-3d-stage.is-current{transform:translateY(-2px) scale(1.04)}}
+
+
+/* Live courier map in customer tracking */
+.tracking-map-panel{margin:18px 0;padding:15px;border:1px solid #e8e3f4;border-radius:16px;background:#fff;display:flex;flex-direction:column;gap:12px}
+.tracking-map-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tracking-map-heading h3{margin:4px 0 0;font-size:17px;color:#292536}
+.tracking-map-live,.tracking-map-waiting{font-size:10px;font-weight:800;border-radius:999px;padding:7px 10px;white-space:nowrap}
+.tracking-map-live{background:#e8f8ef;color:#138354}
+.tracking-map-waiting{background:#f2effa;color:#6d4aff}
+.tracking-live-map{display:block;width:100%;height:300px;border:0;border-radius:12px;background:#f3f4f8}
+.tracking-map-empty{min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:22px;text-align:center;border-radius:12px;background:#f7f5fc;color:#6d4aff}
+.tracking-map-empty b{color:#292536;font-size:14px}
+.tracking-map-empty span{max-width:330px;color:#85818f;font-size:12px;line-height:1.5}
+@media(max-width:600px){.tracking-map-panel{padding:12px}.tracking-live-map{height:260px}}
