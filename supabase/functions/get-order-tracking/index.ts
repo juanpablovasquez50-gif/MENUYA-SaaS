@@ -41,13 +41,24 @@ Deno.serve(async (req: Request) => {
 
     const { data: assignment, error: assignmentError } = await db
       .from("delivery_assignments")
-      .select("status,courier_id,delivery_courier_locations(latitude,longitude,recorded_at)")
+      .select("status,courier_id")
       .eq("business_id", order.business_id)
       .eq("order_id", order.id)
       .maybeSingle();
     if (assignmentError) throw assignmentError;
-    const rawLocation = assignment?.delivery_courier_locations;
-    const location = Array.isArray(rawLocation) ? rawLocation[0] : rawLocation;
+
+    // Locations are linked to couriers, not directly to assignments.
+    let location: { latitude: number; longitude: number; recorded_at: string } | null = null;
+    if (assignment?.courier_id) {
+      const { data: courierLocation, error: locationError } = await db
+        .from("delivery_courier_locations")
+        .select("latitude,longitude,recorded_at")
+        .eq("business_id", order.business_id)
+        .eq("courier_id", assignment.courier_id)
+        .maybeSingle();
+      if (locationError) throw locationError;
+      location = courierLocation;
+    }
     const locationTime = location?.recorded_at ? new Date(location.recorded_at).getTime() : 0;
     const locationIsFresh = locationTime > 0 && Date.now() - locationTime <= 120000;
 
