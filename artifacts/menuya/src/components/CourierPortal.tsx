@@ -282,4 +282,51 @@ const courierStyles=`
 }
 
 
+/* HARD MOBILE OVERRIDE — map-first courier layout */
+@media screen and (max-width: 700px) {
+  .cp-driving-mode { height: 100dvh !important; min-height: 100dvh !important; overflow: hidden !important; }
+  .cp-driving-mode .cp-topbar { height: 44px !important; min-height: 44px !important; padding: 0 10px !important; }
+  .cp-driving-mode .cp-brand img { width: 100px !important; }
+  .cp-driving-mode .cp-logout { padding: 6px 9px !important; font-size: 11px !important; }
+  .cp-driving-mode .cp-deliveries,
+  .cp-driving-mode .cp-active-deliveries,
+  .cp-driving-mode .cp-active-deliveries .cp-delivery { min-height: 0 !important; }
+  .cp-driving-mode .cp-deliveries { flex: 1 1 auto !important; }
+  .cp-driving-mode .cp-delivery { display: flex !important; flex-direction: column !important; }
+  .cp-driving-mode .cp-delivery-head { height: 44px !important; min-height: 44px !important; padding: 3px 10px !important; }
+  .cp-driving-mode .cp-delivery-head h3 { font-size: 16px !important; }
+  .cp-driving-mode .cp-progress-label { font-size: 8px !important; margin-top: 0 !important; }
+  .cp-driving-mode .cp-map-experience { position: relative !important; flex: 1 1 auto !important; min-height: 0 !important; width: 100% !important; margin: 0 !important; overflow: hidden !important; }
+  .cp-driving-mode .cp-map-experience .cp-live-map { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; min-height: 0 !important; }
+  .cp-driving-mode .cp-map-floating-top { top: 8px !important; left: 9px !important; right: 9px !important; }
+  .cp-driving-mode .cp-map-live-pill { padding: 6px 9px !important; font-size: 8px !important; }
+  .cp-driving-mode .cp-map-locate { width: 36px !important; height: 36px !important; }
+  .cp-driving-mode .cp-map-turn-card { top: 54px !important; left: 9px !important; right: auto !important; width: min(250px, calc(100% - 18px)) !important; min-height: 48px !important; padding: 7px 8px !important; gap: 7px !important; border-radius: 11px !important; }
+  .cp-driving-mode .cp-map-turn-card .cp-nav-arrow { width: 30px !important; height: 30px !important; }
+  .cp-driving-mode .cp-map-turn-card .cp-nav-copy { gap: 1px !important; }
+  .cp-driving-mode .cp-map-turn-card .cp-nav-copy small { font-size: 7px !important; }
+  .cp-driving-mode .cp-map-turn-card .cp-nav-copy b { font-size: 10px !important; }
+  .cp-driving-mode .cp-map-bottom-sheet { left: 9px !important; right: 9px !important; bottom: 9px !important; height: 92px !important; min-height: 92px !important; max-height: 92px !important; overflow: hidden !important; padding: 7px 9px !important; border-radius: 12px !important; }
+  .cp-driving-mode .cp-map-sheet-handle { display: none !important; }
+  .cp-driving-mode .cp-map-sheet-head { gap: 5px !important; }
+  .cp-driving-mode .cp-map-sheet-head small { font-size: 6px !important; }
+  .cp-driving-mode .cp-map-sheet-head b { font-size: 10px !important; max-width: 62vw !important; }
+  .cp-driving-mode .cp-map-gps-ok, .cp-driving-mode .cp-map-gps-wait { padding: 4px 6px !important; font-size: 7px !important; }
+  .cp-driving-mode .cp-map-kpis { margin-top: 5px !important; padding: 5px 0 0 !important; border-bottom: 0 !important; }
+  .cp-driving-mode .cp-map-kpis b { font-size: 13px !important; }
+  .cp-driving-mode .cp-map-kpis small { font-size: 7px !important; }
+  .cp-driving-mode .cp-map-route-state, .cp-driving-mode .cp-map-edit { display: none !important; }
+  .cp-driving-mode .cp-map-experience .mapboxgl-ctrl-top-right { top: 103px !important; right: 8px !important; }
+  .cp-driving-mode .cp-map-experience .mapboxgl-ctrl-bottom-left,
+  .cp-driving-mode .cp-map-experience .mapboxgl-ctrl-bottom-right { bottom: 112px !important; }
+  .cp-driving-mode .cp-delivery footer { flex: none !important; margin: 0 !important; padding: 5px 9px calc(5px + env(safe-area-inset-bottom)) !important; }
+  .cp-driving-mode .cp-delivery footer button { min-height: 38px !important; font-size: 11px !important; }
+  .cp-driving-mode .cp-incoming-tray { max-height: 94px !important; padding: 5px 8px calc(5px + env(safe-area-inset-bottom)) !important; }
+  .cp-driving-mode .cp-incoming-head { margin-bottom: 2px !important; }
+  .cp-driving-mode .cp-incoming-head .cp-eyebrow { font-size: 6px !important; }
+  .cp-driving-mode .cp-incoming-head b { font-size: 9px !important; }
+  .cp-driving-mode .cp-incoming-count { min-width: 18px !important; height: 18px !important; font-size: 8px !important; }
+  .cp-driving-mode .cp-no-incoming { padding: 3px 0 !important; font-size: 8px !important; }
+}
+
 `;
