@@ -35,5 +35,33 @@ export default function MapboxDeliveryMap({order,currentLocation,onSaveAddress}:
  const search=async()=>{if(!address.trim())return;setBusy(true);setMessage('Buscando dirección…');try{const token=import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;const url='https://api.mapbox.com/geocoding/v5/mapbox.places/'+encodeURIComponent(address+', Montería, Córdoba, Colombia')+'.json?country=co&language=es&limit=1&access_token='+encodeURIComponent(token);const res=await fetch(url);const data=await res.json();const hit=data.features?.[0];if(!hit)throw new Error('Mapbox no encontró esa dirección. Agrega barrio o una referencia.');const [longitude,latitude]=hit.center;setDestination({latitude,longitude});setManual(true);mapRef.current?.flyTo({center:[longitude,latitude],zoom:17});setMessage('Dirección encontrada. Verifica el pin y guarda.');}catch(e){setMessage(e instanceof Error?e.message:'No se pudo buscar la dirección.');}finally{setBusy(false);}};
  const save=async()=>{if(!destination)return;setBusy(true);try{await saveRef.current(address,{latitude:destination.latitude,longitude:destination.longitude});setManual(false);setMessage('Destino guardado correctamente.');}catch(e){setMessage(e instanceof Error?e.message:'No se pudo guardar el destino.');}finally{setBusy(false);}};
  const activeStep=routeInfo?.steps?.[stepIndex];const instruction=activeStep?.maneuver?.type==='arrive'?'Has llegado al destino':activeStep?.name?activeStep.name:activeStep?.maneuver?.type==='depart'?'Inicia el recorrido':'Continúa por la vía';
- return <div className="cp-map-wrap"><div className="cp-map-heading"><span><MapPinned size={17}/> Mapa de entrega · Mapbox</span><span className="cp-route-status">{message}</span></div><div ref={mapEl} className="cp-live-map" role="application" aria-label="Mapa Mapbox de entrega"/>{routeInfo&&<><div className="cp-nav-guidance"><span className="cp-nav-arrow"><Navigation size={23}/></span><div className="cp-nav-copy"><small>INDICACIÓN DE RUTA</small><b>{instruction}</b><small>{activeStep?.distance?Math.round(activeStep.distance)+' m':''}</small></div><strong>{(routeInfo.distance/1000).toFixed(1).replace('.',',')} km</strong></div><div className="cp-nav-summary"><div><b>{Math.max(1,Math.round(routeInfo.duration/60))} min</b><small>Tiempo estimado</small></div><div><b>{routeInfo.steps.length}</b><small>Indicaciones</small></div><div><b>{stepIndex+1}/{routeInfo.steps.length}</b><small>Tramo</small></div></div><div className="cp-nav-controls"><button type="button" onClick={()=>mapRef.current?.flyTo({center:[currentLocation?.longitude||destination?.longitude,currentLocation?.latitude||destination?.latitude],zoom:16})}>Centrar en mi ubicación</button></div></>}<div className="cp-nav-controls"><button type="button" onClick={()=>void search()} disabled={busy||!address.trim()}>Buscar dirección</button></div><div className="cp-city-editor cp-address-search"><b>Destino de entrega</b><label>Dirección<input value={address} onChange={e=>setAddress(e.target.value)} placeholder="Dirección del cliente"/></label><small>También puedes tocar el mapa o arrastrar el pin para ajustar el destino.</small></div><div className="cp-map-address"><MapPin size={15}/><span>{address||'Dirección no registrada'}</span></div>{(!stored||manual)&&<div className="cp-city-editor"><b>Confirmar punto de entrega</b><button type="button" disabled={!destination||busy} onClick={()=>void save()}>{busy?'Guardando…':'Guardar punto de entrega'}</button></div>}</div>;
+ return <div className="cp-map-wrap cp-map-experience">
+  <div ref={mapEl} className="cp-live-map" role="application" aria-label="Mapa Mapbox de entrega"/>
+  <div className="cp-map-floating-top">
+   <div className="cp-map-live-pill"><span className="cp-route-dot"/>{currentLocation?'GPS EN VIVO':'ESPERANDO GPS'}</div>
+   <button type="button" className="cp-map-locate" aria-label="Centrar mapa" onClick={()=>currentLocation&&mapRef.current?.flyTo({center:[currentLocation.longitude,currentLocation.latitude],zoom:16})}><Navigation size={18}/></button>
+  </div>
+  {routeInfo&&<div className="cp-map-turn-card">
+   <span className="cp-nav-arrow"><Navigation size={22}/></span>
+   <div className="cp-nav-copy"><small>PRÓXIMA INDICACIÓN</small><b>{instruction}</b><small>{activeStep?.distance?Math.round(activeStep.distance)+' m hasta el siguiente giro':'Sigue la ruta marcada'}</small></div>
+  </div>}
+  <div className="cp-map-bottom-sheet">
+   <div className="cp-map-sheet-handle"/>
+   <div className="cp-map-sheet-head"><div><small>ENTREGA · PEDIDO #{order?.order_number||'—'}</small><b>{address||'Destino por confirmar'}</b></div><span className={currentLocation?'cp-map-gps-ok':'cp-map-gps-wait'}>{currentLocation?'En ruta':'Sin GPS'}</span></div>
+   <div className="cp-map-kpis">
+    <div><b>{routeInfo?(routeInfo.distance/1000).toFixed(1).replace('.',',')+' km':'—'}</b><small>Distancia</small></div>
+    <div><b>{routeInfo?Math.max(1,Math.round(routeInfo.duration/60))+' min':'—'}</b><small>Tiempo estimado</small></div>
+    <div><b>{routeInfo?Math.max(1,routeInfo.steps.length):'—'}</b><small>Indicaciones</small></div>
+   </div>
+   <div className="cp-map-route-state">{message}</div>
+   <details className="cp-map-edit">
+    <summary><MapPin size={15}/> Dirección y ajustes de entrega</summary>
+    <div className="cp-map-edit-body">
+     <label>Dirección del cliente<input value={address} onChange={e=>setAddress(e.target.value)} placeholder="Dirección del cliente"/></label>
+     <div className="cp-map-edit-actions"><button type="button" onClick={()=>void search()} disabled={busy||!address.trim()}>{busy?'Buscando…':'Buscar dirección'}</button>{(!stored||manual)&&<button type="button" disabled={!destination||busy} onClick={()=>void save()}>{busy?'Guardando…':'Guardar destino'}</button>}</div>
+     <small>Toca el mapa o arrastra el marcador para ajustar el punto de entrega.</small>
+    </div>
+   </details>
+  </div>
+ </div>;
 }
