@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button as AstryxButton } from '@astryxdesign/core/Button';
 import type { FormEvent, ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
-import { Activity, ArrowRight, Check, CheckCircle2, ChevronDown, ChevronRight, Clock3, CreditCard, Headset, LayoutDashboard, LogOut, Plus, RefreshCw, Search, ShieldCheck, Store, Tag, Users } from 'lucide-react';
+import { Activity, ArrowRight, Check, CheckCircle2, ChevronDown, ChevronRight, Clock3, CreditCard, FileCheck2, Headset, LayoutDashboard, LogOut, Plus, RefreshCw, Search, ShieldCheck, Store, Tag, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { MenuyaAuthContext } from '@/lib/menuya-auth';
 import PartnersManager from '@/components/PartnersManager';
