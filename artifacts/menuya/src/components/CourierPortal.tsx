@@ -373,4 +373,30 @@ const courierStyles=`
  .cp-driving-mode .cp-incoming-order button{background:linear-gradient(110deg,#6243d0,#8061e9)!important;border-radius:9px!important;box-shadow:0 3px 9px #6848df25!important}
 }
 
+/* CLICKOK brand consistency — shared logo sizing and commerce button treatment */
+.cp-app .cp-brand img,.cp-login .cp-brand img{
+ display:block!important;width:136px!important;height:34px!important;max-width:100%!important;
+ object-fit:contain!important;object-position:left center!important;
+}
+.cp-app .cp-primary,.cp-app .cp-complete,.cp-app .cp-incoming-order button,
+.cp-login .cp-primary{
+ background:linear-gradient(105deg,#6848df 0%,#7855e8 52%,#9272f2 100%)!important;
+ color:#fff!important;border:0!important;
+ font-weight:850!important;
+ box-shadow:0 6px 16px rgba(104,72,223,.24)!important;
+}
+.cp-app .cp-primary svg,.cp-app .cp-complete svg,
+.cp-app .cp-incoming-order button svg,.cp-login .cp-primary svg{color:#fff!important}
+.cp-app .cp-primary:disabled,.cp-app .cp-complete:disabled,
+.cp-app .cp-incoming-order button:disabled,.cp-login .cp-primary:disabled{opacity:.58!important}
+@media(min-width:561px) and (max-width:1024px){
+ .cp-app .cp-brand img,.cp-login .cp-brand img{width:136px!important;height:34px!important}
+ .cp-app .cp-primary,.cp-app .cp-complete,.cp-login .cp-primary{min-height:46px}
+}
+@media(max-width:560px){
+ .cp-app .cp-brand img,.cp-login .cp-brand img{width:118px!important;height:30px!important}
+ .cp-driving-mode .cp-brand img{width:118px!important;height:30px!important}
+ .cp-driving-mode .cp-primary,.cp-driving-mode .cp-complete{color:#fff!important}
+}
+
 `;
