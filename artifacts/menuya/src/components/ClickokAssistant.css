@@ -124,3 +124,12 @@
 .clickok-ai-launcher.is-open{width:54px;height:54px;min-width:54px;padding:0;border:2px solid rgba(255,255,255,.8);border-radius:17px;background:linear-gradient(135deg,#9b7bff 0%,#6948ee 48%,#4c2ccf 100%);color:#fff;box-shadow:0 10px 28px rgba(91,62,220,.35)}
 .clickok-ai-launcher.is-open:hover{background:linear-gradient(135deg,#a88cff 0%,#7658f2 48%,#5636dc 100%)}
 @media(max-width:560px){.clickok-ai-launcher:not(.is-open){width:68px;height:68px;min-width:68px;border-radius:18px}.clickok-ai-launcher:not(.is-open) .clickok-ai-secretary-image{border-radius:14px}}
+
+
+/* Match the assistant header to CLICKOK's standard light-purple button gradient. */
+.clickok-ai-header{
+  background:linear-gradient(105deg,#6040d4 0%,#7959e8 55%,#9278f2 100%) !important;
+}
+.clickok-ai-avatar>span{
+  border-color:#7959e8;
+}
