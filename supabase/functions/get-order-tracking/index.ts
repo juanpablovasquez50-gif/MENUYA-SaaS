@@ -26,7 +26,7 @@ Deno.serve(async (req: Request) => {
     const db = createClient(url, key, { auth: { persistSession: false } });
     const { data: order, error } = await db
       .from("orders")
-      .select("business_id, order_number, status, created_at, updated_at")
+      .select("id, business_id, order_number, status, created_at, updated_at")
       .eq("tracking_token", cleanToken)
       .maybeSingle();
     if (error) throw error;
@@ -39,6 +39,18 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
     if (businessError) throw businessError;
 
+    const { data: assignment, error: assignmentError } = await db
+      .from("delivery_assignments")
+      .select("status,courier_id,delivery_courier_locations(latitude,longitude,recorded_at)")
+      .eq("business_id", order.business_id)
+      .eq("order_id", order.id)
+      .maybeSingle();
+    if (assignmentError) throw assignmentError;
+    const rawLocation = assignment?.delivery_courier_locations;
+    const location = Array.isArray(rawLocation) ? rawLocation[0] : rawLocation;
+    const locationTime = location?.recorded_at ? new Date(location.recorded_at).getTime() : 0;
+    const locationIsFresh = locationTime > 0 && Date.now() - locationTime <= 120000;
+
     return reply({
       order: {
         order_number: order.order_number,
@@ -46,6 +58,9 @@ Deno.serve(async (req: Request) => {
         business_name: business?.name || "Comercio",
         created_at: order.created_at,
         updated_at: order.updated_at || order.created_at,
+        delivery_tracking: assignment?.status === "picked_up" && locationIsFresh && location
+          ? { latitude: location.latitude, longitude: location.longitude, recorded_at: location.recorded_at, active: true }
+          : { active: false },
       },
     });
   } catch (error) {
