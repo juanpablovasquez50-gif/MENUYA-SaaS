@@ -83,3 +83,10 @@
 .tracking-map-empty b{color:#292536;font-size:14px}
 .tracking-map-empty span{max-width:330px;color:#85818f;font-size:12px;line-height:1.5}
 @media(max-width:600px){.tracking-map-panel{padding:12px}.tracking-live-map{height:260px}}
+
+
+/* Keep the animated white progress shine inside the tracking timeline */
+.tracking-3d-track{width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+.tracking-track-orbit{overflow:hidden;max-width:82%;box-sizing:border-box}
+.tracking-track-orbit:after{left:-30%;width:24%;max-width:24%;pointer-events:none}
+@keyframes tracking-orbit-shine{0%{left:-30%}100%{left:100%}}
