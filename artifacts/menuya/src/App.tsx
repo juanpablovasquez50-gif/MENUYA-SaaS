@@ -848,7 +848,16 @@ function MerchantPage({ path, data, business, update, modules = [] }: { path: st
       <label className="date-filter orders-date-filter"><span>Hasta</span><input type="date" value={orderTo} onChange={e => setOrderTo(e.target.value)} data-testid="input-orders-to" /></label>
       <span className="toolbar-count">{filteredOrders.length} pedidos</span>
     </div>
-    {filteredOrders.length ? <DataTable className="orders-table" headers={['Pedido', 'Cliente', 'Fecha', 'Entrega', 'Total', 'Estado', '']}>{filteredOrders.map(o => <tr key={o.id}><td><b>#{String(o.numero).padStart(3, '0')}</b></td><td><div className="simple-cell"><b>{data.customers.find(c => c.id === o.customer_id)?.nombre || 'Cliente'}</b><small>{o.items.length} producto(s)</small></div></td><td>{shortDate(o.created_at)}</td><td>{o.entrega === 'domicilio' ? 'Domicilio' : 'Recoger'}</td><td><b>{money(o.total)}</b></td><td><Status value={o.estado} /></td><td><button className="table-detail" onClick={() => setSelectedOrder(o)} data-testid={`button-order-detail-${o.id}`}>Ver <ChevronRight size={14} /></button></td></tr>)}</DataTable> : <Empty title="Todavía no hay pedidos" text="Prueba otro rango de fechas o comparte el enlace de tu tienda." action={<Link href={`/${business.slug}`} className="btn btn-outline">Ver tienda <ArrowRight size={15} /></Link>} />}
+    {filteredOrders.length ? <>
+      <div className="orders-table-view"><DataTable className="orders-table" headers={['Pedido', 'Cliente', 'Fecha', 'Entrega', 'Total', 'Estado', '']}>{filteredOrders.map(o => <tr key={o.id}><td><b>#{String(o.numero).padStart(3, '0')}</b></td><td><div className="simple-cell"><b>{data.customers.find(c => c.id === o.customer_id)?.nombre || 'Cliente'}</b><small>{o.items.length} producto(s)</small></div></td><td>{shortDate(o.created_at)}</td><td>{o.entrega === 'domicilio' ? 'Domicilio' : 'Recoger'}</td><td><b>{money(o.total)}</b></td><td><Status value={o.estado} /></td><td><button className="table-detail" onClick={() => setSelectedOrder(o)} data-testid={`button-order-detail-${o.id}`}>Ver <ChevronRight size={14} /></button></td></tr>)}</DataTable></div>
+      <div className="orders-card-grid">{filteredOrders.map(o => <button type="button" className="orders-tablet-card" key={o.id} onClick={() => setSelectedOrder(o)} data-testid={`card-order-${o.id}`}>
+        <span className="orders-card-top"><b>Pedido #{String(o.numero).padStart(3, '0')}</b><Status value={o.estado} /></span>
+        <span className="orders-card-customer">{data.customers.find(c => c.id === o.customer_id)?.nombre || 'Cliente'}</span>
+        <span className="orders-card-meta">{shortDate(o.created_at)} · {o.entrega === 'domicilio' ? 'Domicilio' : 'Recoger'}</span>
+        <span className="orders-card-items">{o.items.map(i => `${i.cantidad} × ${i.nombre}`).join(' · ')}</span>
+        <span className="orders-card-bottom"><b>{money(o.total)}</b><span>Ver pedido <ChevronRight size={15}/></span></span>
+      </button>)}</div>
+    </> : <Empty title="Todavía no hay pedidos" text="Prueba otro rango de fechas o comparte el enlace de tu tienda." action={<Link href={`/${business.slug}`} className="btn btn-outline">Ver tienda <ArrowRight size={15} /></Link>} />}
     {selectedOrder && <OrderModal order={selectedOrder} data={data} close={() => setSelectedOrder(null)} update={update} />}
   </>;
   if (path === '/app/customers') return <>
