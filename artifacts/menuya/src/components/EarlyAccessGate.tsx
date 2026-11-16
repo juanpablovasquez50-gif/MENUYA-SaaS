@@ -9,7 +9,6 @@ type Props = { children: ReactNode };
 export default function EarlyAccessGate({ children }: Props) {
   const [authorized, setAuthorized] = useState(false);
   const [checkingDevice, setCheckingDevice] = useState(true);
-  const [rememberDevice, setRememberDevice] = useState(true);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -50,11 +49,10 @@ export default function EarlyAccessGate({ children }: Props) {
       const response = await fetch(`${API_URL}/access/verify`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password, rememberDevice }),
+        body: JSON.stringify({ password }),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result.token) throw new Error(result.error || "No fue posible validar el código.");
-      if (rememberDevice && result.deviceToken) localStorage.setItem(DEVICE_KEY, result.deviceToken);
       setAuthorized(true);
       setPassword("");
     } catch (err) {
@@ -101,7 +99,6 @@ export default function EarlyAccessGate({ children }: Props) {
                 {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
               </button>
             </div>
-            <label className="early-access-remember"><input type="checkbox" checked={rememberDevice} onChange={event => setRememberDevice(event.target.checked)} /> Recordar este iPad durante 180 días</label>
             {error && <p className="early-access-error" role="alert">{error}</p>}
             <button className="early-access-submit" type="submit" disabled={submitting || !password.trim()}>
               <span>{submitting ? "Verificando…" : "Desbloquear acceso"}</span>
