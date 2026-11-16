@@ -72,7 +72,7 @@ export default function EarlyAccessGate({ children }: Props) {
       <div className="early-access-orb early-access-orb-two" aria-hidden="true" />
       <section className="early-access-content">
         <a className="early-access-brand" href="/" aria-label="CLICKOK">
-          <img src="/brand-clickok-light.svg" alt="CLICKOK" />
+          <img src="/brand-clickok-white.svg" alt="CLICKOK" />
         </a>
         <div className="early-access-card">
           <div className="early-access-symbol"><span /><LockKeyhole size={23} strokeWidth={1.7} /></div>
