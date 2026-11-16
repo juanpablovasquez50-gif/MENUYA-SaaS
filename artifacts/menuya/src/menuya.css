@@ -5805,3 +5805,44 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
   text-transform:none;
   font-weight:800;
 }
+
+
+/* CLICKOK landing · espaciado más compacto */
+.landing-nav{height:66px}
+.landing-nav nav,.landing-actions{gap:24px}
+.hero{min-height:540px;padding-top:54px;padding-bottom:58px;gap:5vw}
+.hero-copy{padding-bottom:8px}
+.hero h1{margin:16px 0 13px;line-height:1.04}
+.hero-copy>p{font-size:14px;line-height:1.65}
+.hero-ctas{margin-top:21px}
+.hero-proof{margin-top:29px}
+.how-section,.sector-section{padding-top:58px;padding-bottom:64px}
+.how-grid{gap:8vw;padding-top:34px}
+.steps article{padding-bottom:17px;margin-bottom:17px}
+.sector-head{padding:27px 0 27px}
+.sector-row{padding-top:14px;padding-bottom:14px}
+.closing-cta{min-height:320px;padding:48px 24px}
+.landing-footer{padding-top:16px;padding-bottom:16px}
+.stripe-inspired .stripe-rutasync-section{padding-top:clamp(52px,6vw,78px);padding-bottom:clamp(52px,6vw,78px)}
+.stripe-inspired .stripe-rutasync-inner{gap:clamp(28px,4vw,58px)}
+.stripe-inspired .stripe-rutasync-copy h2{margin:16px 0 12px}
+.stripe-inspired .stripe-rutasync-copy ul{gap:12px;margin-top:20px}
+.stripe-inspired .stripe-rutasync-visual{padding:12px}
+.stripe-inspired .stripe-rutasync-map{height:clamp(205px,23vw,280px)}
+@media(max-width:900px){
+  .hero{min-height:0;padding-top:48px;padding-bottom:52px}
+  .how-section,.sector-section{padding-top:48px;padding-bottom:52px}
+}
+@media(max-width:620px){
+  .landing-nav{height:60px;padding-left:20px;padding-right:20px}
+  .hero{padding:38px 20px 42px;gap:28px}
+  .hero h1{margin:12px 0;font-size:clamp(39px,10vw,49px);letter-spacing:-2.5px}
+  .hero-copy>p{font-size:13px;line-height:1.6}
+  .hero-proof{margin-top:22px}
+  .how-section,.sector-section{padding:42px 20px 46px}
+  .how-grid{padding-top:26px;gap:28px}
+  .sector-head{padding:22px 0}
+  .sector-row{gap:10px;padding:12px 2px}
+  .closing-cta{min-height:280px;padding:40px 20px}
+  .landing-footer{gap:14px;flex-wrap:wrap}
+}
