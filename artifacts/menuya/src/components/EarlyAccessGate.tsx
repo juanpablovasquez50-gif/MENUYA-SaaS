@@ -110,7 +110,7 @@ export default function EarlyAccessGate({ children }: Props) {
           )}
           <div className="early-access-card-foot"><span className="early-access-status-dot" /> Plataforma en fase de pruebas</div>
         </div>
-        <p className="early-access-footer">Una experiencia privada de <strong>Atom Labs</strong></p>
+        <p className="early-access-footer">Una experiencia privada de <strong>AtomLabs</strong></p>
       </section>
     </main>
   );
