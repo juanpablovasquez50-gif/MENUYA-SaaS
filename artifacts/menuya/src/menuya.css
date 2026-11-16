@@ -5778,3 +5778,12 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 /* Fix contraste del título principal de la sección de sectores */
 .stripe-inspired .ck-ecosystem .sector-head h2,
 .stripe-inspired .ck-ecosystem .sector-head h2 em{color:#0a2540!important;-webkit-text-fill-color:#0a2540!important;background:none!important}
+
+/* Wompi promo: texto oscuro de alto contraste sobre fondo verde claro */
+.landing .wompi-promo p,
+.landing .wompi-promo p strong{
+  color:#173b2d!important;
+  -webkit-text-fill-color:#173b2d!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
