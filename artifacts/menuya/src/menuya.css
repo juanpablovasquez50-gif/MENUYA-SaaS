@@ -5797,10 +5797,11 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
   text-shadow:none!important;
 }
 
-/* Landing CLICKOK: títulos principales y títulos de tarjetas en mayúsculas */
+/* Landing CLICKOK: títulos en escritura natural y con mayor jerarquía visual */
 .landing h1,
 .landing h2,
 .landing h3,
 .landing h4{
-  text-transform:uppercase;
+  text-transform:none;
+  font-weight:800;
 }
