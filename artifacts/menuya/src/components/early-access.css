@@ -34,3 +34,5 @@
 @keyframes early-access-spin{to{transform:rotate(360deg)}}
 @media(max-width:520px){.early-access-screen{padding:25px 17px}.early-access-content{gap:23px}.early-access-card{padding:31px 23px 22px;border-radius:23px}.early-access-card h1{font-size:36px}.early-access-description{font-size:13px;margin-bottom:25px}.early-access-brand img{width:135px}}
 @media(prefers-reduced-motion:reduce){.early-access-spinner,.early-access-button-spinner{animation:none}.early-access-submit{transition:none}}
+
+.early-access-remember{display:flex;align-items:center;gap:9px;margin:3px 0 2px;color:rgba(255,255,255,.72)!important;font-size:12px!important;font-weight:500!important;cursor:pointer}.early-access-remember input{width:15px;height:15px;accent-color:#9271ff;cursor:pointer}
