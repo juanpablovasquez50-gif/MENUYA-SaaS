@@ -27,7 +27,7 @@
 .early-access-card-foot{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:24px;padding-top:18px;border-top:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.45);font-size:11px}
 .early-access-status-dot{width:7px;height:7px;border-radius:50%;background:#a88bff;box-shadow:0 0 12px rgba(168,139,255,.8)}
 .early-access-footer{margin:0;color:rgba(255,255,255,.36);font-size:11px;letter-spacing:.3px}
-.early-access-footer strong{color:rgba(255,255,255,.7);font-weight:700}
+.early-access-footer strong{color:rgba(255,255,255,.82);font-family:'Archivo Black',sans-serif;font-weight:400;letter-spacing:-.035em}
 .early-access-checking{display:flex;align-items:center;justify-content:center;gap:10px;padding:18px 0;color:rgba(255,255,255,.68);font-size:13px}
 .early-access-spinner,.early-access-button-spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.24);border-top-color:#c2b2ff;border-radius:50%;animation:early-access-spin .8s linear infinite}
 .early-access-button-spinner{width:14px;height:14px}
