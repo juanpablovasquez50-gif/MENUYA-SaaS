@@ -1,4 +1,5 @@
 import './menuya.css';
+import EarlyAccessGate from '@/components/EarlyAccessGate';
 import './order-tracking.css';
 import './team-portal-refresh.css';
 import './responsive-system.css';
@@ -2118,6 +2119,6 @@ function PublicRoute({ data, update }: { data: DemoData; update: (fn: (d: DemoDa
   return <PublicStore data={storeData} slug={slug} update={update} />;
 }
 function App() {
-  return <QueryClientProvider client={queryClient}><TooltipProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter><Toaster /></TooltipProvider></QueryClientProvider>;
+  return <EarlyAccessGate><QueryClientProvider client={queryClient}><TooltipProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter><Toaster /></TooltipProvider></QueryClientProvider></EarlyAccessGate>;
 }
 export default App;
