@@ -5719,3 +5719,28 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .stripe-inspired .stripe-bento-routes h3{margin-top:12px}
 @media(max-width:900px){.stripe-inspired .stripe-bento-routes{grid-column:span 3}}
 @media(max-width:620px){.stripe-inspired .stripe-bento-routes{grid-column:span 6;min-height:280px}}
+
+/* CLICKOK landing · más impacto visual y contraste legible */
+.stripe-inspired .stripe-bento-card p{color:#52647a!important;-webkit-text-fill-color:#52647a}
+.stripe-inspired .stripe-bento-card h3{color:#10243b!important;-webkit-text-fill-color:#10243b}
+.stripe-inspired .stripe-bento-card>span{color:#5b45d6!important;-webkit-text-fill-color:#5b45d6}
+.stripe-inspired .stripe-bento-routes{grid-column:span 3;min-height:350px;padding:27px;border:1px solid rgba(118,91,239,.3);background:radial-gradient(ellipse at 88% 12%,rgba(255,255,255,.32),transparent 34%),linear-gradient(140deg,#302078 0%,#5840c7 48%,#7658e8 100%);box-shadow:0 18px 44px rgba(73,52,166,.2),inset 0 1px 0 rgba(255,255,255,.25);transition:transform .22s ease,box-shadow .22s ease}
+.stripe-inspired .stripe-bento-routes:hover{transform:translateY(-5px);box-shadow:0 25px 54px rgba(73,52,166,.28),inset 0 1px 0 rgba(255,255,255,.3)}
+.stripe-inspired .stripe-bento-routes>span{display:inline-flex;padding:7px 11px;border:1px solid rgba(255,255,255,.28);border-radius:99px;background:rgba(255,255,255,.12);color:#fff!important;-webkit-text-fill-color:#fff;font-size:9px;letter-spacing:1.15px}
+.stripe-inspired .stripe-bento-routes h3{color:#fff!important;-webkit-text-fill-color:#fff;font-size:24px;margin:16px 0 8px}
+.stripe-inspired .stripe-bento-routes p{color:#f0edff!important;-webkit-text-fill-color:#f0edff;font-size:13px;line-height:1.65;max-width:390px}
+.stripe-inspired .stripe-route-mock{margin:18px 0 12px;padding:10px;border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.94);box-shadow:0 12px 30px rgba(20,12,70,.2)}
+.stripe-inspired .stripe-route-map{height:128px}
+.stripe-inspired .stripe-route-live{color:#43536a}
+.stripe-inspired .stripe-route-live b{background:#e7fbf1;color:#087b4d}
+.stripe-inspired .stripe-bento-routes .route-courier{background:#6046d7;color:#fff}
+.stripe-inspired .stripe-bento-routes .route-pin-end{color:#078653}
+.stripe-inspired .stripe-how .steps article h3{color:#14243a!important;-webkit-text-fill-color:#14243a}
+.stripe-inspired .stripe-how .steps article p{color:#52647a!important;-webkit-text-fill-color:#52647a}
+.stripe-inspired .stripe-how .section-label,.stripe-inspired .ck-ecosystem .section-label{color:#5b45d6!important;-webkit-text-fill-color:#5b45d6}
+.stripe-inspired .ck-ecosystem .sector-row,.stripe-inspired .ck-ecosystem .sector-row span,.stripe-inspired .ck-ecosystem .sector-row p{color:#34465d!important;-webkit-text-fill-color:#34465d}
+.stripe-inspired .ck-ecosystem .sector-row h3{color:#14243a!important;-webkit-text-fill-color:#14243a}
+.stripe-inspired .ck-ecosystem p{color:#52647a!important;-webkit-text-fill-color:#52647a}
+.stripe-inspired .ck-footer,.stripe-inspired .ck-footer a,.stripe-inspired .ck-footer p{color:#425466!important;-webkit-text-fill-color:#425466}
+@media(max-width:900px){.stripe-inspired .stripe-bento-routes{grid-column:span 3}}
+@media(max-width:620px){.stripe-inspired .stripe-bento-routes{grid-column:span 6;min-height:0;padding:21px}.stripe-inspired .stripe-bento-routes h3{font-size:22px}.stripe-inspired .stripe-bento-routes p{font-size:13px}.stripe-inspired .stripe-route-map{height:112px}}
