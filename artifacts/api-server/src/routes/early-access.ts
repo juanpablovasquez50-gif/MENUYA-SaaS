@@ -6,6 +6,7 @@ const attempts = new Map<string, { count: number; resetAt: number }>();
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
 const SESSION_MS = 12 * 60 * 60 * 1000;
+const DEVICE_MS = 180 * 24 * 60 * 60 * 1000;
 
 function safeEqual(left: string, right: string) {
   const a = Buffer.from(left);
@@ -13,12 +14,24 @@ function safeEqual(left: string, right: string) {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
-function sign(expiry: string, secret: string) {
-  return createHmac("sha256", secret).update(expiry).digest("hex");
+function sign(value: string, secret: string) {
+  return createHmac("sha256", secret).update(value).digest("hex");
 }
 
 function clientKey(req: Request) {
   return req.ip || req.socket.remoteAddress || "unknown";
+}
+
+function makeToken(expiry: string, secret: string, purpose: "session" | "device") {
+  const payload = `${purpose}:${expiry}`;
+  return `${expiry}.${sign(payload, secret)}`;
+}
+
+function validToken(token: unknown, secret: string, purpose: "session" | "device") {
+  if (typeof token !== "string") return false;
+  const [expiry, signature, extra] = token.split(".");
+  if (!expiry || !signature || extra || !/^\d+$/.test(expiry) || Number(expiry) <= Date.now()) return false;
+  return safeEqual(signature, sign(`${purpose}:${expiry}`, secret));
 }
 
 router.post("/access/verify", (req, res) => {
@@ -48,29 +61,42 @@ router.post("/access/verify", (req, res) => {
   }
 
   attempts.delete(key);
-  const expiry = String(now + SESSION_MS);
-  const token = `${expiry}.${sign(expiry, secret)}`;
-  res.json({ token, expiresAt: Number(expiry) });
+  const sessionExpiry = String(now + SESSION_MS);
+  const response: { token: string; expiresAt: number; deviceToken?: string; deviceExpiresAt?: number } = {
+    token: makeToken(sessionExpiry, secret, "session"),
+    expiresAt: Number(sessionExpiry),
+  };
+  if (req.body?.rememberDevice === true) {
+    const deviceExpiry = String(now + DEVICE_MS);
+    response.deviceToken = makeToken(deviceExpiry, secret, "device");
+    response.deviceExpiresAt = Number(deviceExpiry);
+  }
+  res.json(response);
 });
 
-router.post("/access/session", (req, res) => {
+router.post("/access/device", (req, res) => {
   const secret = process.env.EARLY_ACCESS_SECRET;
   if (!secret) {
     res.status(503).json({ valid: false });
     return;
   }
-  const token = typeof req.body?.token === "string" ? req.body.token : "";
-  const [expiry, signature, extra] = token.split(".");
-  if (!expiry || !signature || extra || !/^\d+$/.test(expiry) || Number(expiry) <= Date.now()) {
+  const token = req.body?.token;
+  if (!validToken(token, secret, "device")) {
     res.status(401).json({ valid: false });
     return;
   }
-  const expected = sign(expiry, secret);
-  if (!safeEqual(signature, expected)) {
+  const expiry = Number(String(token).split(".")[0]);
+  res.json({ valid: true, expiresAt: expiry });
+});
+
+router.post("/access/session", (req, res) => {
+  const secret = process.env.EARLY_ACCESS_SECRET;
+  if (!secret || !validToken(req.body?.token, secret, "session")) {
     res.status(401).json({ valid: false });
     return;
   }
-  res.json({ valid: true, expiresAt: Number(expiry) });
+  const expiry = Number(String(req.body.token).split(".")[0]);
+  res.json({ valid: true, expiresAt: expiry });
 });
 
 export default router;
