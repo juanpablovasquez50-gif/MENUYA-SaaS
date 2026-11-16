@@ -5774,3 +5774,7 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .stripe-inspired .stripe-rutasync-foot b{color:#fff}
 @media(max-width:800px){.stripe-inspired .stripe-rutasync-inner{grid-template-columns:1fr;gap:30px}.stripe-inspired .stripe-rutasync-copy{max-width:650px}.stripe-inspired .stripe-rutasync-copy h2{max-width:600px}}
 @media(max-width:620px){.stripe-inspired .stripe-rutasync-section{padding:66px 20px}.stripe-inspired .stripe-rutasync-copy h2{font-size:39px;letter-spacing:-1.8px}.stripe-inspired .stripe-rutasync-copy>p{font-size:14px}.stripe-inspired .stripe-rutasync-visual{padding:10px;border-radius:17px}.stripe-inspired .stripe-rutasync-map{height:225px}.stripe-inspired .stripe-rutasync-map-label{right:9px;bottom:9px;padding:9px 10px}.stripe-inspired .stripe-rutasync-top{font-size:8px}.stripe-inspired .stripe-rutasync-foot{font-size:8px}}
+
+/* Fix contraste del título principal de la sección de sectores */
+.stripe-inspired .ck-ecosystem .sector-head h2,
+.stripe-inspired .ck-ecosystem .sector-head h2 em{color:#0a2540!important;-webkit-text-fill-color:#0a2540!important;background:none!important}
