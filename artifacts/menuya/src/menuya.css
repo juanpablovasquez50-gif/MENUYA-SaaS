@@ -5744,3 +5744,33 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
 .stripe-inspired .ck-footer,.stripe-inspired .ck-footer a,.stripe-inspired .ck-footer p{color:#425466!important;-webkit-text-fill-color:#425466}
 @media(max-width:900px){.stripe-inspired .stripe-bento-routes{grid-column:span 3}}
 @media(max-width:620px){.stripe-inspired .stripe-bento-routes{grid-column:span 6;min-height:0;padding:21px}.stripe-inspired .stripe-bento-routes h3{font-size:22px}.stripe-inspired .stripe-bento-routes p{font-size:13px}.stripe-inspired .stripe-route-map{height:112px}}
+
+/* CLICKOK RutaSync · sección principal de producto */
+.stripe-inspired .stripe-rutasync-section{position:relative;overflow:hidden;padding:clamp(64px,8vw,112px) max(7vw,28px);background:radial-gradient(ellipse at 8% 12%,rgba(157,129,255,.24),transparent 38%),linear-gradient(125deg,#17133f 0%,#302078 46%,#5140b5 100%);color:#fff}
+.stripe-inspired .stripe-rutasync-section:before{content:"";position:absolute;width:520px;height:520px;border:1px solid rgba(255,255,255,.1);border-radius:50%;right:-170px;top:-250px;box-shadow:0 0 0 48px rgba(255,255,255,.035),0 0 0 100px rgba(255,255,255,.025);pointer-events:none}
+.stripe-inspired .stripe-rutasync-inner{position:relative;z-index:1;max-width:1160px;margin:auto;display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:center;gap:clamp(38px,6vw,82px)}
+.stripe-inspired .stripe-rutasync-copy{max-width:490px}
+.stripe-inspired .stripe-rutasync-kicker{display:inline-flex;padding:9px 13px;border:1px solid rgba(255,255,255,.25);border-radius:99px;background:rgba(255,255,255,.1);color:#e2dcff;font-size:10px;font-weight:800;letter-spacing:1.15px}
+.stripe-inspired .stripe-rutasync-copy h2{margin:22px 0 16px;color:#fff;font-size:clamp(36px,4.4vw,57px);line-height:1.06;letter-spacing:-2.5px}
+.stripe-inspired .stripe-rutasync-copy h2 em{font-style:normal;color:#b9aaff}
+.stripe-inspired .stripe-rutasync-copy>p{color:#e1dcf8;font-size:15px;line-height:1.75;max-width:460px}
+.stripe-inspired .stripe-rutasync-copy ul{display:grid;gap:17px;margin:27px 0 0;padding:0;list-style:none}
+.stripe-inspired .stripe-rutasync-copy li{display:grid;gap:4px;padding-left:17px;border-left:2px solid #a99aff}
+.stripe-inspired .stripe-rutasync-copy li b{color:#fff;font-size:13px}
+.stripe-inspired .stripe-rutasync-copy li span{color:#d0c9f1;font-size:12px;line-height:1.5}
+.stripe-inspired .stripe-rutasync-visual{min-width:0;padding:15px;border:1px solid rgba(255,255,255,.35);border-radius:22px;background:rgba(255,255,255,.12);box-shadow:0 30px 80px rgba(8,5,36,.35),inset 0 1px 0 rgba(255,255,255,.25);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.stripe-inspired .stripe-rutasync-top,.stripe-inspired .stripe-rutasync-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 5px 13px;color:#fff;font-size:9px;font-weight:800;letter-spacing:.7px}
+.stripe-inspired .stripe-rutasync-top span,.stripe-inspired .stripe-rutasync-foot span{display:flex;align-items:center;gap:8px}
+.stripe-inspired .stripe-rutasync-top i,.stripe-inspired .stripe-rutasync-foot i{width:8px;height:8px;border-radius:50%;background:#50e3a4;box-shadow:0 0 12px #50e3a4}
+.stripe-inspired .stripe-rutasync-top>b{padding:7px 10px;border-radius:99px;background:rgba(64,230,163,.16);color:#91ffd0}
+.stripe-inspired .stripe-rutasync-map{height:clamp(230px,27vw,330px);position:relative;overflow:hidden;border-radius:13px;background-color:#e9edf5;background-image:linear-gradient(30deg,transparent 47%,#fff 48%,#fff 53%,transparent 54%),linear-gradient(120deg,transparent 46%,#fff 47%,#fff 53%,transparent 54%);background-size:100px 82px,125px 102px}
+.stripe-inspired .stripe-rutasync-map>svg{position:absolute;inset:0;width:100%;height:100%}
+.stripe-inspired .stripe-rutasync-map .route-street{height:12px}
+.stripe-inspired .stripe-rutasync-map .route-pin{width:37px;height:37px}
+.stripe-inspired .stripe-rutasync-map .route-courier{width:43px;height:43px}
+.stripe-inspired .stripe-rutasync-map-label{position:absolute;right:15px;bottom:14px;display:grid;gap:4px;padding:11px 14px;border:1px solid #e6e8f1;border-radius:11px;background:#fff;color:#69758a;font-size:8px;font-weight:800;letter-spacing:.5px;box-shadow:0 8px 22px #20234a20}
+.stripe-inspired .stripe-rutasync-map-label strong{color:#17243a;font-size:13px;letter-spacing:0}
+.stripe-inspired .stripe-rutasync-foot{padding:13px 5px 2px;color:#e8e4ff}
+.stripe-inspired .stripe-rutasync-foot b{color:#fff}
+@media(max-width:800px){.stripe-inspired .stripe-rutasync-inner{grid-template-columns:1fr;gap:30px}.stripe-inspired .stripe-rutasync-copy{max-width:650px}.stripe-inspired .stripe-rutasync-copy h2{max-width:600px}}
+@media(max-width:620px){.stripe-inspired .stripe-rutasync-section{padding:66px 20px}.stripe-inspired .stripe-rutasync-copy h2{font-size:39px;letter-spacing:-1.8px}.stripe-inspired .stripe-rutasync-copy>p{font-size:14px}.stripe-inspired .stripe-rutasync-visual{padding:10px;border-radius:17px}.stripe-inspired .stripe-rutasync-map{height:225px}.stripe-inspired .stripe-rutasync-map-label{right:9px;bottom:9px;padding:9px 10px}.stripe-inspired .stripe-rutasync-top{font-size:8px}.stripe-inspired .stripe-rutasync-foot{font-size:8px}}
