@@ -1,16 +1,45 @@
-import { type FormEvent, type ReactNode, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 import { ArrowRight, Eye, EyeOff, LockKeyhole, Sparkles } from "lucide-react";
 import "./early-access.css";
 
 const API_URL = "https://clickok-early-access-gate.onrender.com/api";
+const DEVICE_KEY = "clickok_trusted_device";
 type Props = { children: ReactNode };
 
 export default function EarlyAccessGate({ children }: Props) {
   const [authorized, setAuthorized] = useState(false);
+  const [checkingDevice, setCheckingDevice] = useState(true);
+  const [rememberDevice, setRememberDevice] = useState(true);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    const deviceToken = localStorage.getItem(DEVICE_KEY);
+    if (!deviceToken) {
+      setCheckingDevice(false);
+      return () => { active = false; };
+    }
+    fetch(`${API_URL}/access/device`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: deviceToken }),
+    })
+      .then(response => response.ok ? response.json() : Promise.reject())
+      .then(result => {
+        if (active && result.valid) setAuthorized(true);
+        else if (active) localStorage.removeItem(DEVICE_KEY);
+      })
+      .catch(() => {
+        if (active) localStorage.removeItem(DEVICE_KEY);
+      })
+      .finally(() => {
+        if (active) setCheckingDevice(false);
+      });
+    return () => { active = false; };
+  }, []);
 
   const unlock = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -21,10 +50,11 @@ export default function EarlyAccessGate({ children }: Props) {
       const response = await fetch(`${API_URL}/access/verify`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ password, rememberDevice }),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result.token) throw new Error(result.error || "No fue posible validar el código.");
+      if (rememberDevice && result.deviceToken) localStorage.setItem(DEVICE_KEY, result.deviceToken);
       setAuthorized(true);
       setPassword("");
     } catch (err) {
@@ -34,6 +64,9 @@ export default function EarlyAccessGate({ children }: Props) {
     }
   };
 
+  if (checkingDevice) {
+    return <main className="early-access-screen"><section className="early-access-content"><div className="early-access-card"><p className="early-access-description">Verificando este dispositivo…</p></div></section></main>;
+  }
   if (authorized) return <>{children}</>;
 
   return (
@@ -68,13 +101,14 @@ export default function EarlyAccessGate({ children }: Props) {
                 {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
               </button>
             </div>
+            <label className="early-access-remember"><input type="checkbox" checked={rememberDevice} onChange={event => setRememberDevice(event.target.checked)} /> Recordar este iPad durante 180 días</label>
             {error && <p className="early-access-error" role="alert">{error}</p>}
             <button className="early-access-submit" type="submit" disabled={submitting || !password.trim()}>
               <span>{submitting ? "Verificando…" : "Desbloquear acceso"}</span>
               {!submitting && <ArrowRight size={18} />}
               {submitting && <span className="early-access-button-spinner" />}
             </button>
-          </form>}
+          </form>
           <div className="early-access-card-foot"><span className="early-access-status-dot" /> Plataforma en fase de pruebas</div>
         </div>
         <p className="early-access-footer">Una experiencia privada de <strong>ATOMLABS</strong></p>
