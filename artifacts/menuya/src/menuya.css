@@ -5796,3 +5796,11 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
   opacity:1!important;
   text-shadow:none!important;
 }
+
+/* Landing CLICKOK: títulos principales y títulos de tarjetas en mayúsculas */
+.landing h1,
+.landing h2,
+.landing h3,
+.landing h4{
+  text-transform:uppercase;
+}
