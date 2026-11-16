@@ -5787,3 +5787,12 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
   opacity:1!important;
   text-shadow:none!important;
 }
+
+/* Wompi banner: black text to match the Wompi logo */
+.landing .wompi-promo p,
+.landing .wompi-promo p strong{
+  color:#171717!important;
+  -webkit-text-fill-color:#171717!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
