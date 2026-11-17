@@ -68,6 +68,8 @@
   --ring: 256 69% 59%;
   --sidebar-primary: 256 69% 59%;
   --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 256 45% 25%;
+  --sidebar-accent-foreground: 0 0% 100%;
   --sidebar-ring: 256 69% 59%;
   --radius: 0.75rem;
 }
