@@ -1,4 +1,5 @@
 import './index.css';
+import './landing-compact.css';
 
 import { createRoot } from 'react-dom/client';
 import { defineTheme, Theme } from '@astryxdesign/core/theme';
