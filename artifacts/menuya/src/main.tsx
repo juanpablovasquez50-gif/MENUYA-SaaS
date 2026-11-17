@@ -11,17 +11,17 @@ const clickokTheme = defineTheme({
   name: 'clickok',
   extends: neutralTheme,
   tokens: {
-    '--color-accent': ['#7656ed', '#927bff'],
+    '--color-accent': ['#7049df', '#805cf0'],
     '--color-on-accent': ['#ffffff', '#17112b'],
   },
   components: {
     button: {
       'variant:secondary': {
-        backgroundColor: '#f1edff',
-        color: '#4f35bd',
+        backgroundColor: '#f7f5ff',
+        color: '#5b35c5',
         borderWidth: '1px',
         borderStyle: 'solid',
-        borderColor: '#ddd5ff',
+        borderColor: '#e6ddff',
       },
     },
   },
