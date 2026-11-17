@@ -1749,3 +1749,33 @@ button,input,select,textarea{max-width:100%;touch-action:manipulation}
 .workspace-top .top-actions .notification-all{display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;width:100%!important;margin-top:12px!important;padding:11px!important;border:1px solid #e4def8!important;border-radius:11px!important;background:linear-gradient(105deg,#6040d4 0%,#7959e8 55%,#9278f2 100%)!important;color:#fff!important;font-size:12px!important;font-weight:700!important}
 .workspace-top .top-actions .notification-dismiss{position:fixed!important;inset:0!important;z-index:999!important;border:0!important;background:transparent!important}
 @media(max-width:600px){.workspace-top .top-actions .notification-popover{position:fixed!important;top:76px!important;left:14px!important;right:14px!important;width:auto!important;max-height:calc(100dvh - 96px)!important}}
+
+
+/* Landing desktop: jerarquía y proporción de acciones del encabezado */
+@media (min-width: 1101px) {
+  .stripe-inspired .landing-nav {
+    min-height: 76px;
+    padding-inline: clamp(28px, 5vw, 72px);
+    gap: clamp(22px, 2.4vw, 36px);
+  }
+  .stripe-inspired .landing-actions {
+    gap: clamp(14px, 1.5vw, 20px);
+  }
+  .stripe-inspired .landing-actions .nav-login {
+    font-size: 12px;
+    line-height: 1;
+    font-weight: 600;
+  }
+  .stripe-inspired .landing-actions .btn {
+    min-height: 42px;
+    padding-inline: 19px;
+    gap: 8px;
+    font-size: 12px;
+    line-height: 1;
+    border-radius: 14px !important;
+  }
+  .stripe-inspired .landing-actions .btn svg {
+    width: 15px;
+    height: 15px;
+  }
+}
