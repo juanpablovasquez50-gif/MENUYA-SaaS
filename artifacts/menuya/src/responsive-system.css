@@ -1831,3 +1831,42 @@ button,input,select,textarea{max-width:100%;touch-action:manipulation}
   .stripe-inspired .landing-actions .nav-login { font-size: 9px; }
   .stripe-inspired .landing-actions .btn { min-height: 34px; padding-inline: 9px; font-size: 9px; }
 }
+
+
+/* Refinamiento móvil: recuperar legibilidad y proporción con la marca */
+@media (max-width: 620px) {
+  .stripe-inspired .landing-nav {
+    padding-inline: 15px;
+    gap: 10px;
+  }
+  .stripe-inspired .landing-actions {
+    gap: 12px;
+  }
+  .stripe-inspired .landing-actions .nav-login {
+    padding: 9px 2px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .stripe-inspired .landing-actions .btn {
+    min-height: 42px;
+    padding-inline: 16px;
+    gap: 7px;
+    font-size: 12px;
+    border-radius: 13px !important;
+  }
+  .stripe-inspired .landing-actions .btn svg {
+    width: 15px;
+    height: 15px;
+    flex-basis: 15px;
+  }
+}
+@media (max-width: 380px) {
+  .stripe-inspired .landing-nav { padding-inline: 11px; gap: 7px; }
+  .stripe-inspired .landing-actions { gap: 9px; }
+  .stripe-inspired .landing-actions .nav-login { font-size: 11px; }
+  .stripe-inspired .landing-actions .btn {
+    min-height: 40px;
+    padding-inline: 12px;
+    font-size: 11px;
+  }
+}
