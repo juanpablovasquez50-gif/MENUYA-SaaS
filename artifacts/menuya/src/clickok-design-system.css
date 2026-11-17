@@ -278,3 +278,258 @@ a, button, [role="button"] { transition-duration: var(--ck-motion-fast); }
   .btn { min-height: 40px; padding-inline: 12px; font-size: 12px; }
   .panel { padding: 14px; }
 }
+
+
+/* --------------------------------------------------------------------------
+   Module alignment layer
+   These scoped bridges normalize standalone module palettes without changing
+   their markup, workflows, role logic or business-specific status colors.
+   -------------------------------------------------------------------------- */
+
+/* Support workspace */
+.cks-page {
+  background: var(--ck-canvas) !important;
+  color: var(--ck-ink) !important;
+  font-family: 'DM Sans', sans-serif !important;
+}
+.cks-topbar,
+.cks-sidebar,
+.cks-inbox,
+.cks-stats article,
+.cks-ticket,
+.cks-modal {
+  background: var(--ck-surface) !important;
+  border-color: var(--ck-line) !important;
+}
+.cks-mark,
+.cks-nav-item.active,
+.cks-avatar,
+.cks-ticket-avatar.violet,
+.cks-empty-icon,
+.cks-empty-note {
+  background: var(--ck-brand-50) !important;
+  color: var(--ck-brand-700) !important;
+}
+.cks-nav-item.active,
+.cks-ticket.selected {
+  background: var(--ck-brand-50) !important;
+  color: var(--ck-brand-700) !important;
+}
+.cks-nav-item b,
+.cks-compose button {
+  background: linear-gradient(105deg, var(--ck-brand-700), var(--ck-brand-500)) !important;
+  color: #fff !important;
+}
+.cks-preview,
+.cks-ticket-status,
+.cks-message.mine {
+  background: var(--ck-brand-50) !important;
+  color: var(--ck-brand-700) !important;
+}
+.cks-heading h1,
+.cks-conversation h2,
+.cks-stats article>b,
+.cks-thread-head b {
+  color: var(--ck-ink) !important;
+}
+.cks-outline,
+.cks-thread-actions select,
+.cks-compose textarea,
+.cks-modal input,
+.cks-modal select {
+  border-color: var(--ck-line-strong) !important;
+  border-radius: var(--ck-radius-sm) !important;
+}
+.cks-outline:focus-visible,
+.cks-compose textarea:focus,
+.cks-modal input:focus,
+.cks-modal select:focus {
+  outline: none;
+  box-shadow: var(--ck-focus-ring) !important;
+  border-color: var(--ck-brand-600) !important;
+}
+
+/* Partners and referral management */
+.partners-manager {
+  color: var(--ck-ink);
+  font-family: 'DM Sans', sans-serif;
+}
+.partners-tabs {
+  border-color: var(--ck-line) !important;
+}
+.partners-tabs button.active {
+  color: var(--ck-brand-700) !important;
+  border-bottom-color: var(--ck-brand-600) !important;
+}
+.partners-copy {
+  border-color: #e6ddff !important;
+  background: var(--ck-brand-50) !important;
+  color: var(--ck-brand-700) !important;
+}
+.partners-money {
+  border-color: var(--ck-line-strong) !important;
+  border-radius: var(--ck-radius-sm) !important;
+}
+.partners-money:focus-within {
+  border-color: var(--ck-brand-600) !important;
+  box-shadow: var(--ck-focus-ring);
+}
+.partners-modal {
+  border-radius: var(--ck-radius-xl) !important;
+}
+
+/* Verification: keep purple/silver/gold tier identity, unify neutral surfaces. */
+.vc-root {
+  color: var(--ck-ink);
+  font-family: 'DM Sans', sans-serif;
+}
+.vc-stat,
+.vc-tier-card {
+  border-color: var(--ck-line) !important;
+  border-radius: var(--ck-radius-lg) !important;
+  box-shadow: var(--ck-shadow-sm) !important;
+}
+.vc-business-head {
+  color: var(--ck-ink);
+}
+.vc-business-head:hover,
+.vc-detail {
+  background: #fbfaff !important;
+}
+.vc-business,
+.vc-toolbar,
+.vc-footer,
+.vc-detail-top {
+  border-color: var(--ck-line) !important;
+}
+.vc-expand,
+.vc-tier-label.ready,
+.vc-empty-icon {
+  color: var(--ck-brand-700) !important;
+}
+.vc-tier-label.ready,
+.vc-empty-icon {
+  background: var(--ck-brand-50) !important;
+}
+.vc-action:not(.silver):not(.gold):not(.suspend) {
+  background: linear-gradient(105deg, var(--ck-brand-700), var(--ck-brand-500)) !important;
+}
+
+/* Support agents administration */
+.sa-support-agents {
+  color: var(--ck-ink);
+  font-family: 'DM Sans', sans-serif;
+}
+.sa-support-agents .sa-panel {
+  border-color: var(--ck-line) !important;
+  border-radius: var(--ck-radius-lg) !important;
+  box-shadow: var(--ck-shadow-sm) !important;
+}
+.sa-support-agents .sa-kicker {
+  color: var(--ck-brand-700) !important;
+}
+.sa-support-agents .sa-panel-heading h2,
+.sa-agent-info b {
+  color: var(--ck-ink) !important;
+}
+.sa-agent-enable {
+  border-color: #d9efe5 !important;
+}
+.sa-agent-disable,
+.sa-agent-enable {
+  border-radius: var(--ck-radius-sm) !important;
+}
+
+/* Help center: one violet accent, while preserving the dark help hero. */
+.help-center {
+  color: var(--ck-ink) !important;
+  font-family: 'DM Sans', sans-serif !important;
+}
+.help-welcome,
+.help-dashboard-banner {
+  border-color: #e6ddff !important;
+  background: linear-gradient(125deg, var(--ck-brand-50), #fff) !important;
+}
+.help-welcome-icon,
+.help-card-icon,
+.help-tutorial-icon,
+.help-dashboard-icon {
+  background: var(--ck-brand-100) !important;
+  color: var(--ck-brand-700) !important;
+}
+.help-contact-strip a,
+.help-dashboard-banner>a {
+  color: var(--ck-brand-700) !important;
+}
+.help-search-row input:focus,
+.help-filter:focus-visible {
+  outline: none;
+  box-shadow: var(--ck-focus-ring);
+}
+
+/* POS and restaurant operations use the same control geometry and accent. */
+.pos-root,
+.restaurant-ops {
+  color: var(--ck-ink);
+  font-family: 'DM Sans', sans-serif !important;
+}
+.pos-root .pos-tabs button.active,
+.pos-root .pos-checkout,
+.pos-root .pos-add-base,
+.dashboard-shell .restaurant-ops .restaurant-ops-tabs button.btn.btn-solid {
+  border-color: var(--ck-brand-700) !important;
+  background: linear-gradient(105deg, var(--ck-brand-700), var(--ck-brand-500)) !important;
+  color: #fff !important;
+  box-shadow: 0 5px 13px rgb(91 53 197 / 15%) !important;
+}
+.pos-root .pos-tabs button.active:hover,
+.pos-root .pos-checkout:hover:not(:disabled),
+.pos-root .pos-add-base:hover,
+.dashboard-shell .restaurant-ops .restaurant-ops-tabs button.btn.btn-solid:hover {
+  background: linear-gradient(105deg, var(--ck-brand-800), var(--ck-brand-600)) !important;
+}
+.dashboard-shell .restaurant-ops .restaurant-ops-tabs button.btn.btn-outline {
+  border-color: #e2dcf7 !important;
+  color: var(--ck-brand-700) !important;
+  background: #fff !important;
+}
+
+/* Floating assistant: keep its intentional dark conversation panel. */
+.clickok-ai-launcher {
+  background: linear-gradient(135deg, var(--ck-brand-600), var(--ck-brand-800)) !important;
+  box-shadow: 0 14px 38px rgb(82 65 210 / 25%) !important;
+}
+.clickok-ai-launcher:hover {
+  box-shadow: 0 18px 42px rgb(82 65 210 / 32%) !important;
+}
+
+/* Consistent touch targets and safe viewport behavior on phones/tablets. */
+@media (max-width: 760px) {
+  .cks-topbar { min-height: 60px; height: auto; }
+  .cks-main { padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right)); }
+  .cks-compose button,
+  .partners-add,
+  .vc-action,
+  .sa-support-agents button {
+    min-height: 40px;
+  }
+  .pos-root button,
+  .restaurant-ops button {
+    touch-action: manipulation;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cks-page *,
+  .partners-manager *,
+  .vc-root *,
+  .sa-support-agents *,
+  .help-center *,
+  .pos-root *,
+  .restaurant-ops *,
+  .clickok-ai-root * {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
