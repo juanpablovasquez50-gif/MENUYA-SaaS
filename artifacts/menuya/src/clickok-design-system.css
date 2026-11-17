@@ -1,0 +1,278 @@
+/* CLICKOK Design System
+ * Shared visual foundations for merchant, POS, studio and platform surfaces.
+ * Keep business logic and module-specific layouts in their owning components.
+ */
+:root {
+  color-scheme: light;
+  --ck-brand-950: #28145f;
+  --ck-brand-900: #351879;
+  --ck-brand-800: #4825a5;
+  --ck-brand-700: #5b35c5;
+  --ck-brand-600: #7049df;
+  --ck-brand-500: #805cf0;
+  --ck-brand-100: #eee9ff;
+  --ck-brand-50: #f7f5ff;
+  --ck-ink: #202236;
+  --ck-ink-soft: #51566b;
+  --ck-muted: #777d91;
+  --ck-canvas: #f7f8fc;
+  --ck-surface: #ffffff;
+  --ck-line: #e7e8f0;
+  --ck-line-strong: #d7d9e5;
+  --ck-success: #16845b;
+  --ck-warning: #a76512;
+  --ck-danger: #c43c4b;
+  --ck-radius-xs: 6px;
+  --ck-radius-sm: 9px;
+  --ck-radius-md: 12px;
+  --ck-radius-lg: 16px;
+  --ck-radius-xl: 20px;
+  --ck-shadow-sm: 0 1px 2px rgb(25 23 55 / 5%);
+  --ck-shadow-md: 0 8px 24px rgb(31 24 69 / 7%);
+  --ck-shadow-popover: 0 16px 44px rgb(31 24 69 / 14%);
+  --ck-control-height: 40px;
+  --ck-control-height-sm: 36px;
+  --ck-motion-fast: 140ms ease;
+  --ck-motion-base: 190ms ease;
+  --ck-focus-ring: 0 0 0 3px rgb(112 73 223 / 19%);
+
+  /* Compatibility bridge for legacy module styles. */
+  --ink: var(--ck-ink);
+  --ink-soft: var(--ck-ink-soft);
+  --muted: var(--ck-muted);
+  --paper: var(--ck-canvas);
+  --paper-deep: #eff0f7;
+  --coral: var(--ck-brand-600);
+  --coral-dark: var(--ck-brand-800);
+  --mint: var(--ck-brand-100);
+  --line: var(--ck-line);
+  --white: var(--ck-surface);
+  --brand-cyan: var(--ck-brand-600);
+  --brand-violet: var(--ck-brand-600);
+  --brand-ink: var(--ck-ink);
+  --background: 228 33% 98%;
+  --foreground: 237 22% 17%;
+  --border: 230 20% 91%;
+  --card: 0 0% 100%;
+  --card-foreground: 237 22% 17%;
+  --card-border: 230 20% 91%;
+  --primary: 256 69% 59%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 255 100% 96%;
+  --secondary-foreground: 256 55% 35%;
+  --muted: 230 22% 95%;
+  --muted-foreground: 230 10% 45%;
+  --accent: 255 100% 96%;
+  --accent-foreground: 256 55% 35%;
+  --input: 230 18% 86%;
+  --ring: 256 69% 59%;
+  --sidebar-primary: 256 69% 59%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-ring: 256 69% 59%;
+  --radius: 0.75rem;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  color: var(--ck-ink);
+  background: var(--ck-canvas);
+  font-family: 'DM Sans', sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select, textarea { font-family: inherit; }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+:where(button, a, input, select, textarea, [role="button"], [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: var(--ck-focus-ring);
+}
+::selection { color: var(--ck-brand-950); background: #e6ddff; }
+
+/* Shared action hierarchy */
+.btn {
+  min-height: var(--ck-control-height);
+  padding-inline: 15px;
+  gap: 8px;
+  border-radius: var(--ck-radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0;
+  transition: color var(--ck-motion-fast), background var(--ck-motion-fast),
+    border-color var(--ck-motion-fast), box-shadow var(--ck-motion-fast), transform var(--ck-motion-fast);
+}
+.btn-solid {
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(112deg, var(--ck-brand-700), var(--ck-brand-500));
+  box-shadow: 0 3px 8px rgb(91 53 197 / 18%);
+}
+.btn-solid:hover {
+  color: #fff;
+  background: linear-gradient(112deg, var(--ck-brand-800), var(--ck-brand-600));
+  box-shadow: 0 5px 13px rgb(91 53 197 / 23%);
+}
+.btn-outline {
+  color: var(--ck-ink-soft);
+  border-color: var(--ck-line-strong);
+  background: var(--ck-surface);
+}
+.btn-outline:hover { color: var(--ck-brand-800); border-color: #b9a9ef; background: var(--ck-brand-50); }
+.btn-soft { color: var(--ck-brand-800); border-color: #e6ddff; background: var(--ck-brand-100); }
+.btn-soft:hover { color: var(--ck-brand-900); background: #e5ddff; }
+.btn-ghost { color: var(--ck-ink-soft); background: transparent; }
+.btn-ghost:hover { color: var(--ck-brand-800); background: var(--ck-brand-50); }
+.btn-light { color: var(--ck-ink); border-color: var(--ck-line); background: #fff; }
+.btn-light:hover { background: #f6f5fb; }
+.btn:active { transform: translateY(0); }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: .52; box-shadow: none; }
+
+/* Shared admin surfaces */
+.dashboard-shell { color: var(--ck-ink); background: var(--ck-canvas); }
+.workspace { background: var(--ck-canvas); }
+.workspace-top {
+  border-bottom: 1px solid var(--ck-line);
+  background: rgb(255 255 255 / 94%);
+  backdrop-filter: blur(14px);
+}
+.page-content { color: var(--ck-ink); }
+.page-title { gap: 14px; }
+.page-title h1 {
+  color: var(--ck-ink);
+  font-family: 'DM Sans', sans-serif;
+  font-size: clamp(24px, 2.4vw, 31px);
+  font-weight: 750;
+  line-height: 1.18;
+  letter-spacing: -.8px;
+}
+.page-title p { color: var(--ck-muted); line-height: 1.55; }
+.panel, .metric, .setting-section {
+  border: 1px solid var(--ck-line);
+  border-radius: var(--ck-radius-lg);
+  background: var(--ck-surface);
+  box-shadow: var(--ck-shadow-sm);
+}
+.panel { padding: 18px; }
+.panel h2, .panel h3, .section-heading h2 {
+  color: var(--ck-ink);
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: -.25px;
+}
+.panel p, .panel small { color: var(--ck-muted); }
+.metric { padding: 16px; }
+.metric-top { color: var(--ck-muted); }
+.metric > b { color: var(--ck-ink); font-variant-numeric: tabular-nums; }
+.metric-foot { color: var(--ck-muted); }
+
+/* Shared form controls; scoped to app surfaces to avoid changing customer storefront themes. */
+.dashboard-shell :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea),
+.pos-root :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea),
+.modal :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea) {
+  min-height: var(--ck-control-height);
+  border: 1px solid var(--ck-line-strong);
+  border-radius: var(--ck-radius-sm);
+  background-color: #fff;
+  color: var(--ck-ink);
+  font: 500 13px/1.4 'DM Sans', sans-serif;
+  box-shadow: none;
+  transition: border-color var(--ck-motion-fast), box-shadow var(--ck-motion-fast), background var(--ck-motion-fast);
+}
+.dashboard-shell :where(input, select, textarea)::placeholder,
+.pos-root :where(input, select, textarea)::placeholder,
+.modal :where(input, select, textarea)::placeholder { color: #9a9eae; opacity: 1; }
+.dashboard-shell :where(input, select, textarea):hover,
+.pos-root :where(input, select, textarea):hover,
+.modal :where(input, select, textarea):hover { border-color: #b8b4ca; }
+.dashboard-shell :where(input, select, textarea):focus,
+.pos-root :where(input, select, textarea):focus,
+.modal :where(input, select, textarea):focus {
+  border-color: var(--ck-brand-500);
+  outline: 0;
+  box-shadow: var(--ck-focus-ring);
+}
+.dashboard-shell :where(input[type="checkbox"], input[type="radio"]),
+.pos-root :where(input[type="checkbox"], input[type="radio"]) { accent-color: var(--ck-brand-600); }
+.field { gap: 7px; }
+.field > span, .field > label { color: var(--ck-ink-soft); font-size: 12px; font-weight: 650; }
+.field input, .field select, .field textarea { padding: 9px 11px; }
+.field textarea { min-height: 96px; resize: vertical; }
+
+/* Tables and data-dense views */
+.table-wrap {
+  border: 1px solid var(--ck-line);
+  border-radius: var(--ck-radius-md);
+  background: #fff;
+}
+.table-wrap table { border-collapse: separate; border-spacing: 0; }
+.table-wrap thead th {
+  color: #666b80;
+  background: #f8f8fc;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .015em;
+}
+.table-wrap tbody td {
+  color: var(--ck-ink-soft);
+  border-top: 1px solid #eff0f5;
+  font-size: 12px;
+}
+.table-wrap tbody tr:hover td { background: #fbfaff; }
+
+/* Modal, dropdown and overlay consistency */
+.modal {
+  border: 1px solid var(--ck-line);
+  border-radius: var(--ck-radius-xl);
+  background: #fff;
+  box-shadow: var(--ck-shadow-popover);
+}
+.modal-head { border-bottom: 1px solid var(--ck-line); }
+.modal-backdrop { background: rgb(23 20 42 / 48%); backdrop-filter: blur(3px); }
+.mobile-shade { background: rgb(23 20 42 / 48%); }
+
+/* POS shares the same component language while keeping its high-speed layout. */
+.pos-root { color: var(--ck-ink); }
+.pos-root .panel { border-color: var(--ck-line); border-radius: var(--ck-radius-lg); box-shadow: var(--ck-shadow-sm); }
+.pos-root .pos-tabs { border-color: var(--ck-line); }
+.pos-root .pos-tabs button { border-radius: var(--ck-radius-sm); transition: background var(--ck-motion-fast), color var(--ck-motion-fast); }
+.pos-root .pos-tabs button.active {
+  color: #fff !important;
+  border: 1px solid var(--ck-brand-700) !important;
+  background: linear-gradient(112deg, var(--ck-brand-700), var(--ck-brand-500)) !important;
+  box-shadow: 0 3px 8px rgb(91 53 197 / 17%) !important;
+}
+.pos-root .pos-product { border-color: var(--ck-line); border-radius: var(--ck-radius-md); }
+.pos-root .pos-product:hover { border-color: #b8a8ee; box-shadow: var(--ck-shadow-sm); }
+.pos-root .pos-checkout, .pos-root .pos-add-base {
+  min-height: 44px;
+  border: 1px solid var(--ck-brand-700) !important;
+  border-radius: var(--ck-radius-sm);
+  background: linear-gradient(112deg, var(--ck-brand-700), var(--ck-brand-500)) !important;
+  box-shadow: 0 3px 8px rgb(91 53 197 / 17%);
+}
+.pos-root .pos-checkout:hover:not(:disabled), .pos-root .pos-add-base:hover {
+  background: linear-gradient(112deg, var(--ck-brand-800), var(--ck-brand-600)) !important;
+}
+
+/* Consistent interaction states and motion preferences */
+a, button, [role="button"] { transition-duration: var(--ck-motion-fast); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* Responsive refinements: reflow controls, never merely shrink them. */
+@media (max-width: 700px) {
+  .panel { border-radius: var(--ck-radius-md); }
+  .page-title h1 { letter-spacing: -.55px; }
+  .dashboard-shell .toolbar :where(button, .btn),
+  .dashboard-shell .filters :where(button, .btn) { min-height: 38px; }
+  .dashboard-shell .modal { border-radius: 18px 18px 0 0; }
+}
+@media (max-width: 420px) {
+  .btn { min-height: 40px; padding-inline: 12px; font-size: 12px; }
+  .panel { padding: 14px; }
+}
