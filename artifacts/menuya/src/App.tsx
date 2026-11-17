@@ -2,6 +2,7 @@ import './menuya.css';
 import './order-tracking.css';
 import './team-portal-refresh.css';
 import './responsive-system.css';
+import './clickok-design-system.css';
 import PlatformAdminCenter from '@/components/PlatformAdminCenter';
 import PointOfSale from '@/components/pos/PointOfSale';
 import PushNotificationsSettings from '@/components/PushNotificationsSettings';
