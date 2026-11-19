@@ -5846,3 +5846,27 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
   .closing-cta{min-height:280px;padding:40px 20px}
   .landing-footer{gap:14px;flex-wrap:wrap}
 }
+
+
+/* CLICKOK · contraste accesible para los títulos del selector de sector */
+.sector-onboarding .sector-onboarding-card h1,
+.sector-onboarding .sector-onboarding-card > p,
+.sector-onboarding .sector-choice,
+.sector-onboarding .sector-choice .sector-choice-copy,
+.sector-onboarding .sector-choice .sector-choice-copy b,
+.sector-onboarding .sector-choice .sector-choice-copy small {
+  color: #202338 !important;
+  -webkit-text-fill-color: #202338 !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+.sector-onboarding .sector-choice {
+  background: #ffffff;
+}
+.sector-onboarding .sector-choice.selected {
+  background: #f5f4ff;
+}
+.sector-onboarding .sector-choice .sector-choice-copy small {
+  color: #596174 !important;
+  -webkit-text-fill-color: #596174 !important;
+}
