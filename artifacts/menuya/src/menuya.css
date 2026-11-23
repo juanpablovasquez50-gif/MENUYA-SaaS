@@ -6244,3 +6244,139 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
     margin-left: 244px;
   }
 }
+
+
+/* CLICKOK — navegación lateral siempre visible y compacta en tablet horizontal.
+   En paisaje no se convierte en cajón oculto: todas las opciones y el perfil
+   permanecen dentro de la columna; el espaciado se adapta a la altura real. */
+@media (orientation: landscape) and (min-width: 801px) and (max-width: 1100px) {
+  .merchant-dashboard.dashboard-shell {
+    display: flex !important;
+    min-height: 100vh;
+    min-height: 100dvh;
+    align-items: stretch;
+  }
+
+  .merchant-dashboard .sidebar {
+    position: fixed !important;
+    inset: 0 auto 0 0 !important;
+    z-index: 30;
+    display: flex !important;
+    box-sizing: border-box;
+    width: 244px !important;
+    min-width: 244px !important;
+    max-width: 244px !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    max-height: 100vh !important;
+    max-height: 100dvh !important;
+    padding: 13px 12px max(10px, env(safe-area-inset-bottom)) !important;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .merchant-dashboard .side-brand-row {
+    flex: 0 0 auto;
+    padding: 0 8px clamp(8px, 1.5vh, 13px) !important;
+  }
+
+  .merchant-dashboard .sidebar .brand img {
+    height: clamp(23px, 3.4vh, 29px) !important;
+  }
+
+  .merchant-dashboard .business-select {
+    flex: 0 0 auto;
+    margin: 0 1px clamp(8px, 1.4vh, 12px) !important;
+    padding: 6px 8px !important;
+    min-height: 36px;
+  }
+
+  .merchant-dashboard .business-initial {
+    width: 27px;
+    height: 27px;
+    flex-basis: 27px;
+  }
+
+  .merchant-dashboard .side-caption {
+    flex: 0 0 auto;
+    margin: 0 9px 5px !important;
+    font-size: 7px;
+  }
+
+  .merchant-dashboard .side-nav {
+    display: grid;
+    flex: 0 0 auto;
+    gap: clamp(1px, .35vh, 3px) !important;
+    min-height: 0;
+  }
+
+  .merchant-dashboard .side-link {
+    box-sizing: border-box;
+    min-height: clamp(27px, 4.05vh, 34px) !important;
+    height: clamp(27px, 4.05vh, 34px);
+    gap: 9px !important;
+    padding: 0 9px !important;
+    font-size: clamp(9px, .95vw, 10.5px) !important;
+    line-height: 1.15;
+  }
+
+  .merchant-dashboard .side-link > svg {
+    width: 15px;
+    height: 15px;
+    flex: 0 0 15px;
+  }
+
+  .merchant-dashboard .sidebar-bottom {
+    flex: 0 0 auto;
+    margin-top: auto !important;
+    padding-top: clamp(5px, 1vh, 9px);
+  }
+
+  .merchant-dashboard .store-link {
+    margin-bottom: clamp(5px, 1vh, 9px);
+    padding: 7px 7px;
+    font-size: 9px;
+  }
+
+  .merchant-dashboard .sidebar-legal-links {
+    display: none !important;
+  }
+
+  .merchant-dashboard .user-chip {
+    padding: 7px 4px 2px;
+    gap: 7px;
+  }
+
+  .merchant-dashboard .user-avatar {
+    width: 27px;
+    height: 27px;
+    flex-basis: 27px;
+  }
+
+  .merchant-dashboard .user-meta b {
+    font-size: 9px;
+  }
+
+  .merchant-dashboard .user-meta small {
+    font-size: 8px;
+  }
+
+  .merchant-dashboard .logout-btn {
+    padding: 5px;
+  }
+
+  .merchant-dashboard .workspace {
+    width: calc(100% - 244px) !important;
+    min-width: 0;
+    margin-left: 244px !important;
+  }
+
+  .merchant-dashboard .mobile-menu,
+  .merchant-dashboard .mobile-shade {
+    display: none !important;
+  }
+}
