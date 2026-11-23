@@ -1,6 +1,12 @@
 name: Menuya validation (typecheck, build and Edge lint)
 
 on:
+  push:
+    branches:
+      - fix/auth-refresh-token-recovery
+    paths:
+      - 'artifacts/menuya/**'
+      - '.github/workflows/menuya-validation.yml'
   pull_request:
     branches:
       - integration/supabase-auth

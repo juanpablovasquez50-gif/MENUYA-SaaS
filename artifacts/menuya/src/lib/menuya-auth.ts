@@ -27,12 +27,45 @@ function ensureConfigured() {
   }
 }
 
+
+function isInvalidRefreshToken(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const candidate = error as { code?: string; message?: string };
+  return candidate.code === 'refresh_token_not_found'
+    || /invalid refresh token|refresh token not found/i.test(candidate.message || '');
+}
+
+/**
+ * A refresh token can become invalid after storage is restored from an old
+ * browser session or another tab has rotated the token. Clear only this
+ * browser's local Supabase session so the user can sign in again.
+ */
+async function getSessionSafely(): Promise<Session | null> {
+  const { data, error } = await supabase.auth.getSession();
+  if (!error) return data.session;
+  if (!isInvalidRefreshToken(error)) throw error;
+
+  const { error: clearError } = await supabase.auth.signOut({ scope: 'local' });
+  if (clearError) {
+    console.warn('MENUYA: no se pudo limpiar la sesión local inválida.', clearError);
+  }
+  return null;
+}
+
 export async function signInWithEmail(email: string, password: string) {
   ensureConfigured();
-  const { data, error } = await supabase.auth.signInWithPassword({
+  let { data, error } = await supabase.auth.signInWithPassword({
     email: email.trim().toLowerCase(),
     password,
   });
+  if (error && isInvalidRefreshToken(error)) {
+    const { error: clearError } = await supabase.auth.signOut({ scope: 'local' });
+    if (clearError) console.warn('MENUYA: no se pudo limpiar la sesión local antes de reintentar el acceso.', clearError);
+    ({ data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    }));
+  }
   if (error) throw error;
   return data;
 }
@@ -92,9 +125,7 @@ export async function signOut() {
 
 export async function getAuthContext(): Promise<MenuyaAuthContext | null> {
   ensureConfigured();
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
-  const session = sessionData.session;
+  const session = await getSessionSafely();
   if (!session?.user) return null;
 
   const userId = session.user.id;
@@ -168,8 +199,8 @@ export async function ensureBusinessForCurrentUser(): Promise<MenuyaAuthContext 
 
 export async function preparePasswordRecovery(): Promise<boolean> {
   ensureConfigured();
-  const current = await supabase.auth.getSession();
-  if (current.data.session) return true;
+  const currentSession = await getSessionSafely();
+  if (currentSession) return true;
 
   const url = new URL(window.location.href);
   const code = url.searchParams.get('code');
@@ -194,15 +225,13 @@ export async function preparePasswordRecovery(): Promise<boolean> {
     if (error) throw error;
     if (data.session) return true;
   }
-  const refreshed = await supabase.auth.getSession();
-  return Boolean(refreshed.data.session);
+  return Boolean(await getSessionSafely());
 }
 
 export async function updatePassword(password: string) {
   ensureConfigured();
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw sessionError;
-  if (!sessionData.session) {
+  const session = await getSessionSafely();
+  if (!session) {
     throw new Error('El enlace de recuperación no inició sesión. Solicita un correo nuevo y abre el enlace completo.');
   }
   const { error } = await supabase.auth.updateUser({ password });
