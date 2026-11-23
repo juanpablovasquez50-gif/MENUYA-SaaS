@@ -6203,3 +6203,44 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
     gap: 14px 20px !important;
   }
 }
+
+
+/* CLICKOK — sidebar completa en pantallas horizontales amplias.
+   Fija el panel a toda la altura visible y mantiene el perfil dentro del fondo,
+   aunque el contenido del menú necesite desplazamiento vertical. */
+@media (min-width: 1101px) {
+  .merchant-dashboard.dashboard-shell {
+    min-height: 100vh;
+    min-height: 100dvh;
+    align-items: stretch;
+  }
+
+  .merchant-dashboard .sidebar {
+    position: fixed !important;
+    inset: 0 auto 0 0 !important;
+    z-index: 30;
+    box-sizing: border-box;
+    height: 100vh !important;
+    height: 100dvh !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    max-height: 100vh !important;
+    max-height: 100dvh !important;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    align-self: stretch;
+  }
+
+  .merchant-dashboard .sidebar-bottom {
+    flex: 0 0 auto;
+    margin-top: auto;
+    background: transparent;
+  }
+
+  .merchant-dashboard .workspace {
+    width: calc(100% - 244px);
+    min-width: 0;
+    margin-left: 244px;
+  }
+}
