@@ -6005,3 +6005,26 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
     gap: 18px;
   }
 }
+
+
+/* Ajuste visual solicitado: tarjetas de producto cuadradas en tablets
+   horizontales, conservando la proporción 1:1 de la vista vertical. */
+@media (min-width: 701px) and (max-width: 1180px) {
+  .public-storefront-sections .public-products > .public-product > .public-product-art {
+    aspect-ratio: 1 / 1 !important;
+    max-height: none !important;
+    height: auto !important;
+    width: 100% !important;
+  }
+
+  .public-storefront-sections .public-products > .public-product {
+    max-width: none !important;
+  }
+
+  .public-storefront-sections .public-products,
+  .public-storefront-sections .public-products-list,
+  .public-storefront-sections .public-products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 14px !important;
+  }
+}
