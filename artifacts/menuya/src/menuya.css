@@ -6028,3 +6028,15 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
     gap: 14px !important;
   }
 }
+
+
+/* El círculo decorativo pertenece únicamente al estado sin fotografía.
+   Las imágenes reales deben mostrarse limpias, sin el aro superpuesto. */
+.public-store .public-product-art::before {
+  content: none !important;
+  display: none !important;
+}
+.public-store .public-product-art:has(> .public-product-placeholder)::before {
+  content: '' !important;
+  display: block !important;
+}
