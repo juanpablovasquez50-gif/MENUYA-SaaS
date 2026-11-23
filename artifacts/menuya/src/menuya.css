@@ -6040,3 +6040,166 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
   content: '' !important;
   display: block !important;
 }
+
+
+/* CLICKOK storefront footer — mirror the landing footer on tablet landscape and desktop.
+   Keep the two brands centered, tagline/access on one row, legal links centered,
+   and the trust indicators grouped below. */
+@media (min-width: 621px) {
+  .public-store > footer.public-store-landing-footer {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    grid-template-rows: auto auto auto auto !important;
+    grid-template-areas:
+      "brands brands"
+      "tagline access"
+      "legal legal"
+      "trust trust" !important;
+    align-items: center !important;
+    justify-items: stretch !important;
+    column-gap: 28px !important;
+    row-gap: 0 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 30px clamp(28px, 6vw, 96px) 32px !important;
+    text-align: left !important;
+  }
+  .public-store > footer.public-store-landing-footer > .footer-brand-group {
+    grid-area: brands !important;
+    display: flex !important;
+    position: static !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 0 24px !important;
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+  .public-store > footer.public-store-landing-footer > .footer-brand-group > .brand {
+    display: flex !important;
+    position: static !important;
+    flex: 0 0 auto !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: auto !important;
+    margin: 0 !important;
+  }
+  .public-store > footer.public-store-landing-footer > .footer-brand-group > .brand img {
+    display: block !important;
+    width: auto !important;
+    height: 38px !important;
+    max-width: 220px !important;
+    object-fit: contain !important;
+  }
+  .public-store > footer.public-store-landing-footer > .footer-brand-group > .atomlabs-credit {
+    display: flex !important;
+    position: static !important;
+    flex: 0 0 auto !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: auto !important;
+    margin: 0 0 0 22px !important;
+    padding: 0 0 0 22px !important;
+    border-left: 1px solid #e2e6ee !important;
+    white-space: nowrap !important;
+  }
+  .public-store > footer.public-store-landing-footer > .footer-brand-group > .atomlabs-credit b {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    color: #425466 !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+    letter-spacing: -.4px !important;
+  }
+  .public-store > footer.public-store-landing-footer > .footer-brand-group > .atomlabs-credit .atomlabs-symbol {
+    display: block !important;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    flex: 0 0 28px !important;
+  }
+  .public-store > footer.public-store-landing-footer > span:first-of-type {
+    grid-area: tagline !important;
+    display: block !important;
+    position: static !important;
+    align-self: center !important;
+    justify-self: start !important;
+    width: auto !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    text-align: left !important;
+    line-height: 1.5 !important;
+    white-space: normal !important;
+  }
+  .public-store > footer.public-store-landing-footer > span:nth-of-type(2) {
+    display: none !important;
+  }
+  .public-store > footer.public-store-landing-footer > .legal-footer-links {
+    grid-area: legal !important;
+    display: flex !important;
+    position: static !important;
+    align-items: center !important;
+    justify-content: center !important;
+    justify-self: stretch !important;
+    flex-wrap: wrap !important;
+    gap: 16px 30px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    margin: 22px 0 18px !important;
+    padding: 18px 0 0 !important;
+    border-top: 1px solid #e6eaf0 !important;
+  }
+  .public-store > footer.public-store-landing-footer > a:not(.atomlabs-credit) {
+    grid-area: access !important;
+    display: flex !important;
+    position: static !important;
+    align-items: center !important;
+    justify-self: end !important;
+    width: max-content !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    white-space: nowrap !important;
+  }
+  .public-store > footer.public-store-landing-footer > .menuya-trust-badges {
+    grid-area: trust !important;
+    display: flex !important;
+    position: static !important;
+    align-items: center !important;
+    justify-content: center !important;
+    justify-self: center !important;
+    flex-wrap: nowrap !important;
+    gap: 28px !important;
+    width: min(100%, 700px) !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+  }
+}
+
+@media (min-width: 621px) and (max-width: 900px) {
+  .public-store > footer.public-store-landing-footer {
+    padding: 26px 28px 28px !important;
+    column-gap: 18px !important;
+  }
+  .public-store > footer.public-store-landing-footer > .footer-brand-group > .brand img {
+    height: 34px !important;
+    max-width: 190px !important;
+  }
+  .public-store > footer.public-store-landing-footer > .footer-brand-group > .atomlabs-credit {
+    margin-left: 18px !important;
+    padding-left: 18px !important;
+  }
+  .public-store > footer.public-store-landing-footer > .menuya-trust-badges {
+    flex-wrap: wrap !important;
+    gap: 14px 20px !important;
+  }
+}
