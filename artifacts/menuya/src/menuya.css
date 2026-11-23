@@ -5870,3 +5870,138 @@ body, .landing, .dashboard-shell, .auth-layout, .public-store, .store-unavailabl
   color: #596174 !important;
   -webkit-text-fill-color: #596174 !important;
 }
+
+
+/* CLICKOK — corrección de catálogo en tablet horizontal y escritorio.
+   Mantiene intacta la composición móvil y convierte las filas tipo lista
+   en tarjetas legibles dentro de las vitrinas por categorías. */
+@media (min-width: 701px) {
+  .public-storefront-sections {
+    gap: clamp(22px, 2.2vw, 34px);
+  }
+
+  .public-storefront-sections .public-category-section {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .public-storefront-sections .public-category-heading {
+    margin: 18px 0 12px;
+    align-items: center;
+  }
+
+  .public-storefront-sections .public-products,
+  .public-storefront-sections .public-products-list,
+  .public-storefront-sections .public-products-grid {
+    display: grid !important;
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 245px), 1fr)) !important;
+    justify-content: start;
+    align-items: stretch;
+    gap: clamp(12px, 1.35vw, 20px);
+  }
+
+  .public-storefront-sections .public-products > .public-product {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 330px !important;
+    min-width: 0;
+    height: 100%;
+    justify-self: start;
+    overflow: hidden;
+  }
+
+  .public-storefront-sections .public-products > .public-product > .public-product-art {
+    order: 0;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: 230px !important;
+    aspect-ratio: 1.22 / 1 !important;
+    flex: 0 0 auto;
+  }
+
+  .public-storefront-sections .public-products > .public-product > .public-product-info {
+    order: 1;
+    display: flex !important;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    height: auto;
+    padding: 12px 13px 14px !important;
+  }
+
+  .public-storefront-sections .public-product-info > div:first-child {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .public-storefront-sections .public-product-info .product-title-button {
+    display: block;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    line-height: 1.3;
+  }
+
+  .public-storefront-sections .public-product-info p {
+    display: -webkit-box;
+    max-width: 100%;
+    max-height: 2.9em;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow-wrap: anywhere;
+    line-height: 1.45;
+  }
+
+  .public-storefront-sections .public-product-info .add-mobile,
+  .public-storefront-sections .public-product-info .quantity-control {
+    flex: 0 0 auto;
+    align-self: flex-end;
+    white-space: nowrap;
+  }
+
+  .public-storefront-sections .public-product-art > .product-sticker,
+  .public-storefront-sections .public-product-art > strong {
+    box-sizing: border-box;
+    max-width: calc(100% - 16px);
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: center;
+    line-height: 1.15;
+    font-size: clamp(10px, .8vw, 12px);
+  }
+}
+
+/* En tablet horizontal compacta se conservan dos columnas sin deformar tarjetas. */
+@media (min-width: 701px) and (max-width: 1024px) {
+  .public-storefront-sections .public-products,
+  .public-storefront-sections .public-products-list,
+  .public-storefront-sections .public-products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .public-storefront-sections .public-products > .public-product {
+    max-width: none !important;
+  }
+
+  .public-storefront-sections .public-products > .public-product > .public-product-art {
+    aspect-ratio: 1.3 / 1 !important;
+  }
+}
+
+/* Escritorio amplio: cuadrícula consistente y sin huecos exagerados. */
+@media (min-width: 1200px) {
+  .public-storefront-sections .public-products,
+  .public-storefront-sections .public-products-list,
+  .public-storefront-sections .public-products-grid {
+    grid-template-columns: repeat(auto-fit, minmax(245px, 285px)) !important;
+    gap: 18px;
+  }
+}
